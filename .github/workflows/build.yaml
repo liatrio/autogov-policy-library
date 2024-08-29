@@ -31,7 +31,7 @@ jobs:
         run: opa test policy -v
       - name: Build OPA Bundle
         run: opa build --ignore "*_test.rego" policy
-     - name: Run go-semantic-release
+      - name: Run go-semantic-release
         uses: go-semantic-release/action@v1
         id: go-semantic-release
         with:
