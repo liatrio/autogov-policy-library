@@ -1,0 +1,13 @@
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'catalog-info.yaml'
+
+jobs:
+  test:
+    steps:
+      - name: Run OPA Tests
+        id: run-opa-tests
+        run: opa test policy -v
