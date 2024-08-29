@@ -7,7 +7,14 @@ on:
 
 jobs:
   test:
+    runs-on: ubuntu-latest
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Setup OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: 0.67.1
       - name: Run OPA Tests
         id: run-opa-tests
         run: opa test policy -v
