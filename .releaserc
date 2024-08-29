@@ -1,0 +1,17 @@
+{
+  "branches": "main",
+  "repositoryUrl": "https://github.com/liatrio/demo-gh-autogov-policy-library",
+  "debug": "false",
+  "plugins": [
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "bundle.tar.gz"
+          }
+        ]
+      }
+    ]
+  ]
+}
