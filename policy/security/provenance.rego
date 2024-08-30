@@ -16,6 +16,10 @@ is_cyclonedx_bom(parsed_payload) if {
 	parsed_payload.predicateType == "https://cyclonedx.org/bom"
 }
 
+is_cosign_attestation(parsed_payload) if {
+	parsed_payload.predicateType == "https://cosign.sigstore.dev/attestation/v1"
+}
+
 default allow := false
 
 allow if {
@@ -59,6 +63,10 @@ predicate_type_valid(parsed_payload) if {
 	is_cyclonedx_bom(parsed_payload)
 }
 
+predicate_type_valid(parsed_payload) if {
+	is_cosign_attestation(parsed_payload)
+}
+
 build_type_valid(parsed_payload) if {
 	is_slsa_provenance(parsed_payload)
 	parsed_payload.predicate.buildDefinition.buildType == "https://actions.github.io/buildtypes/workflow/v1"
@@ -78,6 +86,10 @@ owner_valid(parsed_payload, _) if {
 	is_cyclonedx_bom(parsed_payload)
 }
 
+owner_valid(parsed_payload, _) if {
+	is_cosign_attestation(parsed_payload)
+}
+
 repo_valid(parsed_payload, approved_repo_ids) if {
 	is_slsa_provenance(parsed_payload)
 	parsed_payload.predicate.buildDefinition.internalParameters.github.repository_id in approved_repo_ids
@@ -85,4 +97,8 @@ repo_valid(parsed_payload, approved_repo_ids) if {
 
 repo_valid(parsed_payload, _) if {
 	is_cyclonedx_bom(parsed_payload)
+}
+
+repo_valid(parsed_payload, _) if {
+	is_cosign_attestation(parsed_payload)
 }
