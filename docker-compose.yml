@@ -1,0 +1,60 @@
+version: '3.9'
+
+x-variables:
+  images:
+    custom-opa: &image-custom-opa custom-opa:latest
+  volumes:
+    cwd: &vol-cwd
+      type: bind
+      source: ${PWD}
+      target: /home
+
+services:
+  eval-real:
+    build:
+      context: .
+      dockerfile: Dockerfile.opa
+    image: *image-custom-opa
+    volumes:
+      - *vol-cwd
+    command: ["opa", "eval", "--fail", "--input", "test/sigstore_bundle_real.jsonl", "--data", "policy/security/provenance.rego", "--data","policy/governance/governance.rego", "data.governance.all_passed"]
+  eval-fake:
+    build:
+      context: .
+      dockerfile: Dockerfile.opa
+    image: *image-custom-opa
+    volumes:
+      - *vol-cwd
+    command: ["opa", "eval", "--fail", "--input", "test/sigstore_bundle_fake.jsonl", "--data", "policy/security/provenance.rego", "--data","policy/governance/governance.rego", "data.governance.all_passed"]
+  fmt:
+    build:
+      context: .
+      dockerfile: Dockerfile.opa
+    image: *image-custom-opa
+    volumes:
+      - *vol-cwd
+    command: ["opa", "fmt", "--write", "/home"]
+  lint:
+    build:
+      context: .
+      dockerfile: Dockerfile.opa
+    image: *image-custom-opa
+    volumes:
+      - *vol-cwd
+    command: ["regal", "lint", "/home"]
+  check:
+    build:
+      context: .
+      dockerfile: Dockerfile.opa
+    image: *image-custom-opa
+    volumes:
+      - *vol-cwd
+    command: ["opa", "check", "/home"]
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.opa
+    image: *image-custom-opa
+    volumes:
+      - *vol-cwd
+    command: ["opa", "test", "/home"]
