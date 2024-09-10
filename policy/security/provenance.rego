@@ -2,11 +2,11 @@ package security.provenance
 
 import rego.v1
 
-# Liatrio
+# liatrio
 approved_owner_ids := {"5726618"}
 
-# [liatrio/tag-automated-governance-github-attestations-beta-v0.0.1]
-approved_repo_ids := {"845521085"}
+# [demo-gh-autogov-workflows,demo-gh-autogov-caller-workflow]
+approved_repo_ids := {"845521085", "849445664"}
 
 is_slsa_provenance(parsed_payload) if {
 	parsed_payload.predicateType == "https://slsa.dev/provenance/v1"
@@ -78,27 +78,9 @@ build_type_valid(parsed_payload) if {
 }
 
 owner_valid(parsed_payload, approved_owner_ids) if {
-	is_slsa_provenance(parsed_payload)
 	parsed_payload.predicate.buildDefinition.internalParameters.github.repository_owner_id in approved_owner_ids
 }
 
-owner_valid(parsed_payload, _) if {
-	is_cyclonedx_bom(parsed_payload)
-}
-
-owner_valid(parsed_payload, _) if {
-	is_cosign_attestation(parsed_payload)
-}
-
 repo_valid(parsed_payload, approved_repo_ids) if {
-	is_slsa_provenance(parsed_payload)
 	parsed_payload.predicate.buildDefinition.internalParameters.github.repository_id in approved_repo_ids
-}
-
-repo_valid(parsed_payload, _) if {
-	is_cyclonedx_bom(parsed_payload)
-}
-
-repo_valid(parsed_payload, _) if {
-	is_cosign_attestation(parsed_payload)
 }

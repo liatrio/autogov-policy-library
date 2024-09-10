@@ -5,6 +5,9 @@ on:
       - 'README.md'
       - 'catalog-info.yaml'
 
+env:
+  OPA_VERSION: 0.67.1
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -14,30 +17,40 @@ jobs:
       - name: Setup OPA
         uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 #v2.2.0
         with:
-          version: 0.67.1
+          version: ${{ env.OPA_VERSION }}
       - name: Run OPA Tests
-        id: run-opa-tests
-        run: opa test policy -v
+        run: opa test -v ./policy
+      - name: Check OPA Policies
+        run: opa check ./policy
 
   release:
     runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.merged == true }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #v4.1.7
       - name: Setup OPA
         uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 #v2.2.0
-      - name: Setup Node.js
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
-          node-version: 20
-      - name: Run OPA Tests
-        run: opa test policy -v
+          version: ${{ env.OPA_VERSION }}
       - name: Build OPA Bundle
         run: |
-          opa build --ignore "*_test.rego" policy
-      - name: Setup Semantic Release
-        run: npm install -g semantic-release @semantic-release/github -D
-      - name: Release OPA Bundle
-        run: npx semantic-release
-        env:
-          GH_TOKEN: ${{ github.token }}
+          opa \
+            build \
+            --bundle ./policy \
+            --ignore "*_test.rego" \
+            --output bundle.tar.gz
+      - name: Run go-semantic-release
+        uses: go-semantic-release/action@48d83acd958dae62e73701aad20a5b5844a3bf45 # v1.23.0
+        id: go-semantic-release
+        with:
+          github-token: ${{ github.token }}
+          changelog-generator-opt: emojis=true
+          allow-initial-development-versions: true
+      - name: Upload Release Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
+        with:
+          files: bundle.tar.gz
+          tag_name: v${{ steps.go-semantic-release.outputs.version }}
+          token: ${{ github.token }}

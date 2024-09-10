@@ -1,81 +1,55 @@
-package governance
+package governance.governance_test
 
-import data.governance.allow
+import data.governance
+import rego.v1
 
-# Test that allow is false when there are no provenance attestations
-test_no_provenance_attestation {
-    input := [
-        {
-            "Attestation": {
-                "dsseEnvelope": {
-                    "payload": base64.encode(json.marshal({"predicateType": "https://slsa.dev/provenance/v1"}))
-                }
-            }
-        }
-    ]
-    not allow with input as input
+create_test_input(payload) := [{"Attestation": {"dsseEnvelope": {"payload": payload}}}]
+
+test_no_provenance_attestation if {
+	# Test that allow is false when there are no provenance attestations
+	predicate_type := ""
+	payload := base64.encode(json.marshal({"predicateType": predicate_type}))
+	test_input := create_test_input(payload)
+	not governance.allow with input as test_input
 }
 
-# Test that allow is false when provenance attestation is not allowed by security.provenance
-test_provenance_violation_found {
-    input := [
-        {
-            "Attestation": {
-                "dsseEnvelope": {
-                    "payload": base64.encode(json.marshal({"predicate": {"buildType": "incorrect_build_type"}}))
-                }
-            }
-        }
-    ]
-    not allow with input as input
+test_provenance_violation_found if {
+	# Test that allow is false when provenance attestation is not allowed by security.provenance
+	build_type := "incorrect_build_type"
+	predicate := {"buildType": build_type}
+	payload := base64.encode(json.marshal({"predicate": predicate}))
+	test_input := create_test_input(payload)
+	not governance.allow with input as test_input
 }
 
-# Test that allow is false when repository is not approved
-test_repository_not_approved {
-    input := [
-        {
-            "Attestation": {
-                "dsseEnvelope": {
-                    "payload": base64.encode(json.marshal({
-                        "predicateType": "https://slsa.dev/provenance/v1",
-                        "verificationResult": {
-                            "statement": {
-                                "predicate": {
-                                    "buildDefinition": {
-                                        "externalParameters": {
-                                            "workflow": {
-                                                "repository": "https://github.com/unapproved/repo"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }))
-                }
-            }
-        }
-    ]
-    not allow with input as input
+test_repository_not_approved if {
+	# Test that allow is false when repository is not approved
+	predicate_type := "https://slsa.dev/provenance/v1"
+	repository := "https://github.com/unapproved/repo"
+
+	build_definition := {"externalParameters": {"workflow": {"repository": repository}}}
+	predicate := {"buildDefinition": build_definition}
+	statement := {"predicate": predicate}
+	verification_result := {"statement": statement}
+
+	payload := base64.encode(json.marshal({
+		"predicateType": predicate_type,
+		"verificationResult": verification_result,
+	}))
+	test_input := create_test_input(payload)
+	not governance.allow with input as test_input
 }
 
-# Test that allow is false when organization is not approved
-test_organization_not_approved {
-    input := [
-        {
-            "Attestation": {
-                "dsseEnvelope": {
-                    "payload": base64.encode(json.marshal({
-                        "predicateType": "https://slsa.dev/provenance/v1",
-                        "verificationResult": {
-                            "verifiedIdentity": {
-                                "sourceRepositoryOwnerURI": "https://github.com/unapproved/org"
-                            }
-                        }
-                    }))
-                }
-            }
-        }
-    ]
-    not allow with input as input
+test_organization_not_approved if {
+	# Test that allow is false when organization is not approved
+	predicate_type := "https://slsa.dev/provenance/v1"
+	organization := "00000000"
+
+	verification_result := {"verifiedIdentity": {"sourceRepositoryOwnerURI": organization}}
+	payload := base64.encode(json.marshal({
+		"predicateType": predicate_type,
+		"verificationResult": verification_result,
+	}))
+	test_input := create_test_input(payload)
+	not governance.allow with input as test_input
 }

@@ -1,6 +1,6 @@
 # GitHub AutoGov Policy Library
 
-This repository serves as a collection of OPA Rego policies that are specifically designed for attestations created with GitHub Asset Action.
+This repository serves as a collection of OPA Rego policies that are specifically designed for attestations created with GitHub Artifact Attestations.
 
 ## Overview
 
@@ -12,44 +12,32 @@ To start using the policies from this library, follow these steps:
 
 1. Clone this repository to your local machine.
 2. Install prerequisites.
-3. Review the available policies in the `policies` directory.
+3. Review the available policy files in the `policies` directory.
 4. Customize the policies to fit your specific governance requirements.
-
-## Contributing
-
-Contributions to the GitHub AutoGov Policy Library are welcome! If you have any improvements or additional policies to suggest, please submit a pull request. Make sure to follow the contribution guidelines outlined in the `CONTRIBUTING.md` file.
 
 ### Prerequisites
 
 ```zsh
-brew install make
-brew install opa
+brew install make docker
 ```
 
-### Testing
+### Makefile Commands Guide
 
-#### Run Tests
+- **`make all`**: Runs formatting, linting, checks, and tests.
+- **`make eval-good`**: Runs OPA evaluation against real data.
+- **`make eval-bad`**: Runs OPA evaluation against fake data.
+- **`make fmt`**: Formats OPA files to fix non-compliance issues.
+- **`make lint`**: Lints policies using `regal`.
+- **`make check`**: Validates OPA policies.
+- **`make test`**: Runs OPA unit tests.
 
-To run unit testing:
+### Creating Policy
 
-```zsh
-make test
-or
-opa test policy -v
-```
+Use this [example attestation](./test/build_provenance_and_sbom_attestations.json) to help pick an object to validate. For more detailed information on authoring Rego policy, please refer to the following resources:
 
-### Adding a New Policy
+- [The Rego Playground - For quickly testing Rego](https://play.openpolicyagent.org)
+- [OPA Policy Authoring Course](https://academy.styra.com/courses/opa-rego)
 
-1. Review data you want run a policy against
+## Contributing
 
-```zsh
-make parse-real
-```
-
-2. Pick the object you want to check that value for from the parse json data
-3. Write a unit test for the violation policy that expects to see a violation message
-   - add policy in this file `policy/security/provenance_test.rego`
-4. Write a policy that will evaluate to true or false for that value
-   - add policy in this file `policy/security/provenance.rego`
-5. Write a violation rule that will set the message, indicating a violation
-   - add policy in this file `policy/security/provenance.rego`
+Contributions to the GitHub AutoGov Policy Library are welcome! If you have any improvements or additional policies to suggest, please submit a pull request.

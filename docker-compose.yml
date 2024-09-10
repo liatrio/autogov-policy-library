@@ -10,22 +10,32 @@ x-variables:
       target: /home
 
 services:
-  eval-real:
+  eval-good:
     build:
       context: .
       dockerfile: Dockerfile.opa
     image: *image-custom-opa
     volumes:
       - *vol-cwd
-    command: ["opa", "eval", "--fail", "--input", "test/sigstore_bundle_real.jsonl", "--data", "policy/security/provenance.rego", "--data","policy/governance/governance.rego", "data.governance.all_passed"]
-  eval-fake:
+    command:
+      [
+        "sh",
+        "-c",
+        "opa eval --fail --input test/sigstore_bundle_real.jsonl --data policy/security/provenance.rego data.security.provenance.violations; echo $? && opa eval --fail --input test/sigstore_bundle_real.jsonl --data policy/security/provenance.rego --data policy/governance/governance.rego data.governance.all_passed; echo $?",
+      ]
+  eval-bad:
     build:
       context: .
       dockerfile: Dockerfile.opa
     image: *image-custom-opa
     volumes:
       - *vol-cwd
-    command: ["opa", "eval", "--fail", "--input", "test/sigstore_bundle_fake.jsonl", "--data", "policy/security/provenance.rego", "--data","policy/governance/governance.rego", "data.governance.all_passed"]
+    command:
+      [
+        "sh",
+        "-c",
+        "opa eval --fail-defined --input test/sigstore_bundle_fake.jsonl --data policy/security/provenance.rego data.security.provenance.violations; echo $? && opa eval --fail --input test/sigstore_bundle_fake.jsonl --data policy/security/provenance.rego --data policy/governance/governance.rego data.governance.all_passed; echo $?",
+      ]
   fmt:
     build:
       context: .
