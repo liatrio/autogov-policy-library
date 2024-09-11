@@ -1,25 +1,13 @@
-.PHONY: parse-fake
-parse-fake: ## parse fake data to output json payload
-	cat test/sigstore_bundle_fake.jsonl | jq -r '.dsseEnvelope.payload' | base64 -d | jq -r
-
-.PHONY: parse-real
-parse-real: ## parse real data to output json payload
-	cat test/sigstore_bundle_real.jsonl | jq -r '.dsseEnvelope.payload' | base64 -d | jq -r
-
-.PHONY: unit-test
-unit-test: ## run opa unit tests locally
-	opa test policy -v
-
-eval-real:
+eval-good:
 	@echo "Starting opa eval against real data..."
 	@docker compose up \
-		eval-real;
+		eval-good;
 	@echo "Finished opa eval against real data"
 	@echo ""
-eval-fake: ## run opa eval against fake data
+eval-bad: ## run opa eval against fake data
 	@echo "Starting opa eval against fake data..."
 	@docker compose up \
-		eval-fake;
+		eval-bad;
 	@echo "Finished opa against fake data"
 	@echo ""
 

@@ -3,10 +3,11 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: demo-gh-autogov-policy-library
-  description: "Repo to host and publish OPA rego policies for attestations created by GitHub asset action."
+  description: Repo to host and publish OPA rego policies for attestations created by GitHub asset action.
   annotations:
     github.com/project-slug: liatrio/demo-gh-autogov-policy-library
   tags:
+    - automated-governance
     - policy
     - rego
     - opa
