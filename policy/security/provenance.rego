@@ -87,6 +87,10 @@ owner_valid(parsed_payload, approved_owner_ids) if {
 	parsed_payload.predicate.metaData.owner in approved_owner_ids
 }
 
+owner_valid(parsed_payload, _) if {
+	is_cyclonedx_bom(parsed_payload)
+}
+
 repo_valid(parsed_payload, approved_repo_ids) if {
 	is_slsa_provenance(parsed_payload)
 	parsed_payload.predicate.buildDefinition.internalParameters.github.repository_id in approved_repo_ids
@@ -95,4 +99,8 @@ repo_valid(parsed_payload, approved_repo_ids) if {
 repo_valid(parsed_payload, approved_repo_ids) if {
 	is_cosign_attestation(parsed_payload)
 	parsed_payload.predicate.metaData.repositoryId in approved_repo_ids
+}
+
+repo_valid(parsed_payload, _) if {
+	is_cyclonedx_bom(parsed_payload)
 }
