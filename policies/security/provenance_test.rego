@@ -30,9 +30,10 @@ violations[msg] if {
 
 violations[msg] if {
 	# Check for incorrect or missing repository
-	expected_payload := {
-		"predicate": {"buildDefinition": {"internalParameters": {"github": {"repository_id": "correct_repo_id"}}}},
-	}
+	github := {"repository_id": "correct_repo_id"}
+	internal_parameters := {"github": github}
+	build_definition := {"internalParameters": internal_parameters}
+	expected_payload := {"predicate": {"buildDefinition": build_definition}}
 	not valid_payload(expected_payload)
 	msg := "repo is not correct or missing"
 }
@@ -55,20 +56,24 @@ test_violation_incorrect_build_type if {
 
 test_violation_incorrect_owner if {
 	# Test that violation message is correct when owner is incorrect
-	expected_payload := {
-		"predicate": {"buildDefinition": {"internalParameters": {"github": {"repository_owner_id": "0000000"}}}},
-	}
+	github := {"repository_owner_id": "0000000"}
+	internal_parameters := {"github": github}
+	build_definition := {"internalParameters": internal_parameters}
+	expected_payload := {"predicate": {"buildDefinition": build_definition}}
 	test_input := {"dsseEnvelope": {"payload": base64.encode(json.marshal(expected_payload))}}
+
 	violations[msg] with input as test_input
 	msg == "owner is not correct or missing"
 }
 
 test_violation_incorrect_repository_id if {
 	# Test that violation message is correct when repository ID is incorrect
-	expected_payload := {
-		"predicate": {"buildDefinition": {"internalParameters": {"github": {"repository_id": "0000000"}}}},
-	}
+	github := {"repository_id": "0000000"}
+	internal_parameters := {"github": github}
+	build_definition := {"internalParameters": internal_parameters}
+	expected_payload := {"predicate": {"buildDefinition": build_definition}}
 	test_input := {"dsseEnvelope": {"payload": base64.encode(json.marshal(expected_payload))}}
+
 	violations[msg] with input as test_input
 	msg == "repo is not correct or missing"
 }
