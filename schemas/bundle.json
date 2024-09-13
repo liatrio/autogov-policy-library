@@ -1,0 +1,1054 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "type": "string"
+        },
+        "$ref": {
+            "type": "string"
+        },
+        "definitions": {
+            "type": "object",
+            "properties": {
+                "Welcome10": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "_type": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "format": {
+                                            "type": "string"
+                                        },
+                                        "qt-uri-protocols": {
+                                            "type": "array",
+                                            "items": [
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "format",
+                                        "qt-uri-protocols"
+                                    ]
+                                },
+                                "subject": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "$ref": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "$ref"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "items"
+                                    ]
+                                },
+                                "predicateType": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "format": {
+                                            "type": "string"
+                                        },
+                                        "qt-uri-protocols": {
+                                            "type": "array",
+                                            "items": [
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "format",
+                                        "qt-uri-protocols"
+                                    ]
+                                },
+                                "predicate": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$ref": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "$ref"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "_type",
+                                "subject",
+                                "predicateType",
+                                "predicate"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "Predicate": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "buildDefinition": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$ref": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "$ref"
+                                    ]
+                                },
+                                "runDetails": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$ref": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "$ref"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "buildDefinition",
+                                "runDetails"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "BuildDefinition": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "buildType": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "format": {
+                                            "type": "string"
+                                        },
+                                        "qt-uri-protocols": {
+                                            "type": "array",
+                                            "items": [
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "format",
+                                        "qt-uri-protocols"
+                                    ]
+                                },
+                                "externalParameters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$ref": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "$ref"
+                                    ]
+                                },
+                                "internalParameters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$ref": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "$ref"
+                                    ]
+                                },
+                                "resolvedDependencies": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "$ref": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "$ref"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "items"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "buildType",
+                                "externalParameters",
+                                "internalParameters",
+                                "resolvedDependencies"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "ExternalParameters": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "workflow": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$ref": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "$ref"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "workflow"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "Workflow": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "ref": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type"
+                                    ]
+                                },
+                                "repository": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "format": {
+                                            "type": "string"
+                                        },
+                                        "qt-uri-protocols": {
+                                            "type": "array",
+                                            "items": [
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        },
+                                        "qt-uri-extensions": {
+                                            "type": "array",
+                                            "items": [
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "format",
+                                        "qt-uri-protocols",
+                                        "qt-uri-extensions"
+                                    ]
+                                },
+                                "path": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "ref",
+                                "repository",
+                                "path"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "InternalParameters": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "github": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$ref": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "$ref"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "github"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "Github": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "event_name": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type"
+                                    ]
+                                },
+                                "repository_id": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "format": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "format"
+                                    ]
+                                },
+                                "repository_owner_id": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "format": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "format"
+                                    ]
+                                },
+                                "runner_environment": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "event_name",
+                                "repository_id",
+                                "repository_owner_id",
+                                "runner_environment"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "ResolvedDependency": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "uri": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type"
+                                    ]
+                                },
+                                "digest": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$ref": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "$ref"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "uri",
+                                "digest"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "ResolvedDependencyDigest": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "gitCommit": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "gitCommit"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "RunDetails": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "builder": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$ref": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "$ref"
+                                    ]
+                                },
+                                "metadata": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$ref": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "$ref"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "builder",
+                                "metadata"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "Builder": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "format": {
+                                            "type": "string"
+                                        },
+                                        "qt-uri-protocols": {
+                                            "type": "array",
+                                            "items": [
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "format",
+                                        "qt-uri-protocols"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "Metadata": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "invocationId": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "format": {
+                                            "type": "string"
+                                        },
+                                        "qt-uri-protocols": {
+                                            "type": "array",
+                                            "items": [
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "format",
+                                        "qt-uri-protocols"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "invocationId"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "Subject": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type"
+                                    ]
+                                },
+                                "digest": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$ref": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "$ref"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "digest"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                },
+                "SubjectDigest": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "sha256": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "sha256"
+                            ]
+                        },
+                        "required": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "additionalProperties",
+                        "properties",
+                        "required",
+                        "title"
+                    ]
+                }
+            },
+            "required": [
+                "Welcome10",
+                "Predicate",
+                "BuildDefinition",
+                "ExternalParameters",
+                "Workflow",
+                "InternalParameters",
+                "Github",
+                "ResolvedDependency",
+                "ResolvedDependencyDigest",
+                "RunDetails",
+                "Builder",
+                "Metadata",
+                "Subject",
+                "SubjectDigest"
+            ]
+        }
+    },
+    "required": [
+        "$schema",
+        "$ref",
+        "definitions"
+    ]
+}

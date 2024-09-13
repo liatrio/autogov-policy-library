@@ -26,9 +26,9 @@ jobs:
         with:
           version: ${{ env.OPA_VERSION }}
       - name: Run OPA Tests
-        run: opa test -v ./policy
+        run: opa test -v -s ./schemas ./policies
       - name: Check OPA Policies
-        run: opa check ./policy
+        run: opa check --rego-v1 ./policies
 
   release:
     runs-on: ubuntu-latest

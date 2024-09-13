@@ -1,0 +1,183 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "_type": {
+            "type": "string",
+            "const": "https://in-toto.io/Statement/v0.1"
+        },
+        "predicateType": {
+            "type": "string",
+            "const": "https://cosign.sigstore.dev/attestation/v1"
+        },
+        "subject": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "digest": {
+                        "type": "object",
+                        "properties": {
+                            "sha256": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "sha256"
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "digest"
+                ]
+            }
+        },
+        "metaData": {
+            "type": "object",
+            "properties": {
+                "workflowData": {
+                    "type": "object",
+                    "properties": {
+                        "workflowRefPath": {
+                            "type": "string"
+                        },
+                        "branch": {
+                            "type": "string"
+                        },
+                        "buildWorkflowRunId": {
+                            "type": "string"
+                        },
+                        "event": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "workflowRefPath",
+                        "branch",
+                        "buildWorkflowRunId",
+                        "event"
+                    ]
+                },
+                "commitData": {
+                    "type": "object",
+                    "properties": {
+                        "commitSHA": {
+                            "type": "string"
+                        },
+                        "commitTimestamp": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    "required": [
+                        "commitSHA",
+                        "commitTimestamp"
+                    ]
+                },
+                "repositoryData": {
+                    "type": "object",
+                    "properties": {
+                        "repository": {
+                            "type": "string"
+                        },
+                        "repositoryId": {
+                            "type": "string"
+                        },
+                        "githubServerURL": {
+                            "type": "string",
+                            "format": "uri"
+                        }
+                    },
+                    "required": [
+                        "repository",
+                        "repositoryId",
+                        "githubServerURL"
+                    ]
+                },
+                "ownerData": {
+                    "type": "object",
+                    "properties": {
+                        "owner": {
+                            "type": "string"
+                        },
+                        "ownerId": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "owner",
+                        "ownerId"
+                    ]
+                },
+                "jobData": {
+                    "type": "object",
+                    "properties": {
+                        "jobId": {
+                            "type": "string"
+                        },
+                        "runNumber": {
+                            "type": "string"
+                        },
+                        "action": {
+                            "type": "string"
+                        },
+                        "actor": {
+                            "type": "string"
+                        },
+                        "status": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "jobId",
+                        "runNumber",
+                        "action",
+                        "actor",
+                        "status"
+                    ]
+                },
+                "runnerData": {
+                    "type": "object",
+                    "properties": {
+                        "os": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "arch": {
+                            "type": "string"
+                        },
+                        "environment": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "os",
+                        "name",
+                        "arch",
+                        "environment"
+                    ]
+                }
+            },
+            "required": [
+                "workflowData",
+                "commitData",
+                "repositoryData",
+                "ownerData",
+                "jobData",
+                "runnerData"
+            ]
+        }
+    },
+    "required": [
+        "_type",
+        "predicateType",
+        "subject",
+        "metaData"
+    ]
+}
