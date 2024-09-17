@@ -45,7 +45,7 @@ jobs:
         run: |
           opa \
             build \
-            --bundle ./policy \
+            --bundle ./policies \
             --ignore "*_test.rego" \
             --output bundle.tar.gz
       - name: Run go-semantic-release
