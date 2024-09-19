@@ -1,13 +1,17 @@
 package governance
 
 import data.security.provenance
+import data.security.sbom
 import rego.v1
 
 default allow := false
 
-all_passed if {
-	provenance_results := {res | some res in provenance.violations}
-	every result in provenance_results {
-		result == true
-	}
+allow if {
+    data.security.sbom.allow
+    data.security.provenance.allow
+}
+
+violations = {
+    "sbom":  data.security.sbom.violations,
+    "provenance": data.security.provenance.violations,
 }

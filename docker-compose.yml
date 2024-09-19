@@ -21,7 +21,7 @@ services:
       [
         "sh",
         "-c",
-        "opa eval --fail --input test/sigstore_bundle_real.jsonl --data policies/security/provenance.rego data.security.provenance.violations; echo $? && opa eval --fail --input test/sigstore_bundle_real.jsonl --data policies/security/provenance.rego --data policies/governance/governance.rego data.governance.all_passed; echo $?",
+        "opa eval --fail --input home/test/sigstore_bundle_real.jsonl -d home/policies/security/sbom.rego -d home/policies/security/provenance.rego -d home/policies/governance/governance.rego data.governance.violations; echo $? && opa eval --fail --input home/test/sigstore_bundle_real.jsonl -d home/policies/security/sbom.rego -d home/policies/security/provenance.rego -d home/policies/governance/governance.rego data.governance.allow; echo $?",
       ]
   eval-bad:
     build:
@@ -34,7 +34,7 @@ services:
       [
         "sh",
         "-c",
-        "opa eval --fail-defined --input test/sigstore_bundle_fake.jsonl --data policies/security/provenance.rego data.security.provenance.violations; echo $? && opa eval --fail --input test/sigstore_bundle_fake.jsonl --data policies/security/provenance.rego --data policies/governance/governance.rego data.governance.all_passed; echo $?",
+        "opa eval --fail --input home/test/sigstore_bundle_fake.jsonl -d home/policies/security/sbom.rego -d home/policies/security/provenance.rego -d home/policies/governance/governance.rego data.governance.violations; echo $? && opa eval --fail --input home/test/sigstore_bundle_fake.jsonl -d home/policies/security/sbom.rego -d home/policies/security/provenance.rego -d home/policies/governance/governance.rego data.governance.allow; echo $?",
       ]
   fmt:
     build:

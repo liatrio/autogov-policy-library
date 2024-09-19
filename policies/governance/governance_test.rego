@@ -3,53 +3,95 @@ package governance.governance_test
 import data.governance
 import rego.v1
 
-create_test_input(payload) := [{"Attestation": {"dsseEnvelope": {"payload": payload}}}]
-
-test_no_provenance_attestation if {
-	# Test that allow is false when there are no provenance attestations
-	predicate_type := ""
-	payload := base64.encode(json.marshal({"predicateType": predicate_type}))
-	test_input := create_test_input(payload)
-	not governance.allow with input as test_input
+# Utility function to create input for tests
+create_test_input(predicate_type) := {
+    "dsseEnvelope": {
+        "payload": base64.encode(json.marshal({"predicateType": predicate_type}))
+    }
 }
 
-test_provenance_violation_found if {
-	# Test that allow is false when provenance attestation is not allowed by security.provenance
-	build_type := "incorrect_build_type"
-	predicate := {"buildType": build_type}
-	payload := base64.encode(json.marshal({"predicate": predicate}))
-	test_input := create_test_input(payload)
-	not governance.allow with input as test_input
+# Test that governance.allow is true when both sbom and provenance allow are true
+test_allow_true_if_both_pass if {
+    sbom_allow := true
+    provenance_allow := true
+    test_input := create_test_input("https://cyclonedx.org/bom")
+    
+    governance.allow with input as test_input
+        with data.security.sbom.allow as sbom_allow
+        with data.security.provenance.allow as provenance_allow
 }
 
-test_repository_not_approved if {
-	# Test that allow is false when repository is not approved
-	predicate_type := "https://slsa.dev/provenance/v1"
-	repository := "https://github.com/unapproved/repo"
-
-	build_definition := {"externalParameters": {"workflow": {"repository": repository}}}
-	predicate := {"buildDefinition": build_definition}
-	statement := {"predicate": predicate}
-	verification_result := {"statement": statement}
-
-	payload := base64.encode(json.marshal({
-		"predicateType": predicate_type,
-		"verificationResult": verification_result,
-	}))
-	test_input := create_test_input(payload)
-	not governance.allow with input as test_input
+# Test that governance.allow is false when sbom fails but provenance passes
+test_allow_false_if_sbom_fails if {
+    sbom_allow := false
+    provenance_allow := true
+    test_input := create_test_input("https://cyclonedx.org/bom")
+    
+    not governance.allow with input as test_input
+        with data.security.sbom.allow as sbom_allow
+        with data.security.provenance.allow as provenance_allow
 }
 
-test_organization_not_approved if {
-	# Test that allow is false when organization is not approved
-	predicate_type := "https://slsa.dev/provenance/v1"
-	organization := "00000000"
+# Test that governance.allow is false when provenance fails but sbom passes
+test_allow_false_if_provenance_fails if {
+    sbom_allow := true
+    provenance_allow := false
+    test_input := create_test_input("https://cyclonedx.org/bom")
+    
+    not governance.allow with input as test_input
+        with data.security.sbom.allow as sbom_allow
+        with data.security.provenance.allow as provenance_allow
+}
 
-	verification_result := {"verifiedIdentity": {"sourceRepositoryOwnerURI": organization}}
-	payload := base64.encode(json.marshal({
-		"predicateType": predicate_type,
-		"verificationResult": verification_result,
-	}))
-	test_input := create_test_input(payload)
-	not governance.allow with input as test_input
+# Test that governance.allow is false when both sbom and provenance fail
+test_allow_false_if_both_fail if {
+    sbom_allow := false
+    provenance_allow := false
+    test_input := create_test_input("https://cyclonedx.org/bom")
+    
+    not governance.allow with input as test_input
+        with data.security.sbom.allow as sbom_allow
+        with data.security.provenance.allow as provenance_allow
+}
+
+# Test that governance.violations contains only sbom violations when provenance has no violations
+test_violations_only_sbom if {
+    sbom_violations := {"cyclonedx sbom is missing"}
+    provenance_violations := set()
+    test_input := create_test_input("https://example.org/other")
+    
+    governance.violations == {
+        "sbom": sbom_violations,
+        "provenance": provenance_violations
+    } with input as test_input
+        with data.security.sbom.violations as sbom_violations
+        with data.security.provenance.violations as provenance_violations
+}
+
+# Test that governance.violations contains only provenance violations when sbom has no violations
+test_violations_only_provenance if {
+    sbom_violations := set()
+    provenance_violations := {"predicate type is not correct or missing"}
+    test_input := create_test_input("https://slsa.dev/provenance/v1")
+    
+    governance.violations == {
+        "sbom": sbom_violations,
+        "provenance": provenance_violations
+    } with input as test_input
+        with data.security.sbom.violations as sbom_violations
+        with data.security.provenance.violations as provenance_violations
+}
+
+# Test that governance.violations contains both sbom and provenance violations
+test_violations_both_sbom_and_provenance if {
+    sbom_violations := {"cyclonedx sbom is missing"}
+    provenance_violations := {"predicate type is not correct or missing"}
+    test_input := create_test_input("https://example.org/other")
+    
+    governance.violations == {
+        "sbom": sbom_violations,
+        "provenance": provenance_violations
+    } with input as test_input
+        with data.security.sbom.violations as sbom_violations
+        with data.security.provenance.violations as provenance_violations
 }
