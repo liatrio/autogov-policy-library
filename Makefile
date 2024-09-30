@@ -11,7 +11,7 @@ eval-bad: ## run opa eval against fake data
 	@echo "Finished opa against fake data"
 	@echo ""
 
-.PHONY: all fmt lint check test
+.PHONY: all fmt lint check test parse
 
 all: fmt lint check test ## run all validation checks
 
@@ -47,3 +47,7 @@ test: ## run opa unit tests
 		test;
 	@echo "Finished opa test"
 	@echo ""
+
+# keeping this out of the docker compose so results can be viewed by developer
+parse:
+	cat test/sigstore_bundle_real.jsonl | jq -r '.dsseEnvelope.payload' | base64 -d | jq -r | jq -s .

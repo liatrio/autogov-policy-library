@@ -5,11 +5,11 @@ import data.security.sbom
 import rego.v1
 
 allow if {
-    data.security.sbom.allow
-    data.security.provenance.allow
+	sbom.allow
+	provenance.allow
 }
 
-violations = {
-    "sbom":  data.security.sbom.violations,
-    "provenance": data.security.provenance.violations,
+violations := {
+	"sbom": sbom.violations,
+	"provenance": provenance.violations,
 }

@@ -1,87 +1,105 @@
 package security.provenance_test
 
+import data.security.provenance
 import rego.v1
 
-allow if {
-	count(violations) == 0
-}
-
-valid_payload(expected) if {
-	input.dsseEnvelope.payload == base64.encode(json.marshal(expected))
-}
-
-violations[msg] if {
-	# Check for incorrect build type
-	build_type_url := "https://actions.github.io/buildtypes/workflow/v1"
-	predicate := {"predicate": {"buildDefinition": {"buildType": build_type_url}}}
-	not valid_payload(predicate)
-	msg := "provenance build type is incorrect"
-}
-
-violations[msg] if {
-	# Check for incorrect or missing owner
-	expected_payload := {
+# Test case for successful provenance with valid predicate, owner, and repo
+test_valid_slsa_provenance if {
+	test_input := [{
 		"predicateType": "https://slsa.dev/provenance/v1",
-		"predicate": {"buildDefinition": {"internalParameters": {"github": {"repository_owner_id": "correct_owner_id"}}}},
-	}
-	not valid_payload(expected_payload)
-	msg := "owner is not correct or missing"
+		"predicate": {"buildDefinition": {
+			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
+			"internalParameters": {"github": {
+				"repository_owner_id": "5726618",
+				"repository_id": "845521085",
+			}},
+		}},
+	}]
+	result := provenance.allow with input as test_input
+	result == true
 }
 
-violations[msg] if {
-	# Check for incorrect or missing repository
-	github := {"repository_id": "correct_repo_id"}
-	internal_parameters := {"github": github}
-	build_definition := {"internalParameters": internal_parameters}
-	expected_payload := {"predicate": {"buildDefinition": build_definition}}
-	not valid_payload(expected_payload)
-	msg := "repo is not correct or missing"
+# Test case for missing or invalid predicate type
+test_invalid_predicate_type if {
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "invalid/predicate/type",
+		"predicate": {},
+	}))}}]
+	result := provenance.allow with input as test_input
+	result == false
+
+	violations := provenance.violations with input as test_input
+	"predicate type is not correct or missing" in violations
 }
 
-violations[msg] if {
-	# Check for incorrect predicate type
-	expected_payload := {"predicateType": "https://slsa.dev/provenance/v1"}
-	not valid_payload(expected_payload)
-	msg := "predicate type is not correct or missing"
+# Test case for invalid owner
+test_invalid_owner if {
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {
+			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
+			"internalParameters": {"github": {
+				"repository_owner_id": "9999999",
+				"repository_id": "845521085",
+			}},
+		}},
+	}))}}]
+	result := provenance.allow with input as test_input
+	result == false
+
+	violations := provenance.violations with input as test_input
+	"owner is not correct or missing" in violations
 }
 
-test_violation_incorrect_build_type if {
-	# Test that violation message is correct when buildType is incorrect
-	expected_payload := {"predicate": {"buildDefinition": {"buildType": "incorrect_build_type"}}}
-	test_input := {"dsseEnvelope": {"payload": base64.encode(json.marshal(expected_payload))}}
+# Test case for invalid repo
+test_invalid_repo if {
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {
+			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
+			"internalParameters": {"github": {
+				"repository_owner_id": "5726618",
+				"repository_id": "9999999",
+			}},
+		}},
+	}))}}]
+	result := provenance.allow with input as test_input
+	result == false
 
-	violations[msg] with input as test_input
-	msg == "provenance build type is incorrect"
+	violations := provenance.violations with input as test_input
+	"repo is not correct or missing" in violations
 }
 
-test_violation_incorrect_owner if {
-	# Test that violation message is correct when owner is incorrect
-	github := {"repository_owner_id": "0000000"}
-	internal_parameters := {"github": github}
-	build_definition := {"internalParameters": internal_parameters}
-	expected_payload := {"predicate": {"buildDefinition": build_definition}}
-	test_input := {"dsseEnvelope": {"payload": base64.encode(json.marshal(expected_payload))}}
-
-	violations[msg] with input as test_input
-	msg == "owner is not correct or missing"
+# Test case for CycloneDX BOM predicate (no checks for owner/repo)
+test_valid_cyclonedx_bom if {
+	test_input := [{
+		"predicateType": "https://cyclonedx.org/bom",
+		"predicate": {},
+	}]
+	result := provenance.allow with input as test_input
+	result == true
 }
 
-test_violation_incorrect_repository_id if {
-	# Test that violation message is correct when repository ID is incorrect
-	github := {"repository_id": "0000000"}
-	internal_parameters := {"github": github}
-	build_definition := {"internalParameters": internal_parameters}
-	expected_payload := {"predicate": {"buildDefinition": build_definition}}
-	test_input := {"dsseEnvelope": {"payload": base64.encode(json.marshal(expected_payload))}}
-
-	violations[msg] with input as test_input
-	msg == "repo is not correct or missing"
+# Test case for Cosign attestation with valid owner and repo
+test_valid_cosign_attestation if {
+	test_input := [{
+		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
+		"predicate": {"metadata": {
+			"owner": "5726618",
+			"repositoryId": "849445664",
+		}},
+	}]
+	result := provenance.allow with input as test_input
+	result == true
 }
 
-test_violation_incorrect_predicate_type if {
-	# Test that violation message is correct when predicate type is incorrect
-	expected_payload := {"predicateType": "incorrect_predicate_type"}
-	test_input := {"dsseEnvelope": {"payload": base64.encode(json.marshal(expected_payload))}}
-	violations[msg] with input as test_input
-	msg == "predicate type is not correct or missing"
+test_is_slsa_provenance_true if {
+	payload := {"predicateType": "https://slsa.dev/provenance/v1"}
+	provenance.is_slsa_provenance(payload)
+}
+
+test_is_slsa_provenance_false if {
+	payload := {"predicateType": "https://example.com/other"}
+
+	not provenance.is_slsa_provenance(payload)
 }
