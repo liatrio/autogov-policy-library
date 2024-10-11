@@ -1,42 +1,11 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
     "properties": {
         "_type": {
-            "type": "string",
-            "const": "https://in-toto.io/Statement/v0.1"
+            "type": "string"
         },
-        "predicateType": {
-            "type": "string",
-            "const": "https://cosign.sigstore.dev/attestation/v1"
-        },
-        "subject": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "digest": {
-                        "type": "object",
-                        "properties": {
-                            "sha256": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "sha256"
-                        ]
-                    }
-                },
-                "required": [
-                    "name",
-                    "digest"
-                ]
-            }
-        },
-        "metaData": {
+        "metadata": {
             "type": "object",
             "properties": {
                 "workflowData": {
@@ -53,13 +22,69 @@
                         },
                         "event": {
                             "type": "string"
+                        },
+                        "inputs": {
+                            "type": "object",
+                            "properties": {
+                                "build-type": {
+                                    "type": "string"
+                                },
+                                "subject-name": {
+                                    "type": "string"
+                                },
+                                "blob-artifact-name": {
+                                    "type": "string"
+                                },
+                                "subject-path": {
+                                    "type": "string"
+                                },
+                                "show-summary": {
+                                    "type": "boolean"
+                                },
+                                "registry": {
+                                    "type": "string"
+                                },
+                                "workflow-runner-label": {
+                                    "type": "string"
+                                },
+                                "signer-workflow-cert-identity": {
+                                    "type": "string"
+                                },
+                                "predicate-type": {
+                                    "type": "string"
+                                },
+                                "sbom-format": {
+                                    "type": "string"
+                                },
+                                "sbom-output-file": {
+                                    "type": "string"
+                                },
+                                "sbom-path": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "build-type",
+                                "subject-name",
+                                "blob-artifact-name",
+                                "subject-path",
+                                "show-summary",
+                                "registry",
+                                "workflow-runner-label",
+                                "signer-workflow-cert-identity",
+                                "predicate-type",
+                                "sbom-format",
+                                "sbom-output-file",
+                                "sbom-path"
+                            ]
                         }
                     },
                     "required": [
                         "workflowRefPath",
                         "branch",
                         "buildWorkflowRunId",
-                        "event"
+                        "event",
+                        "inputs"
                     ]
                 },
                 "commitData": {
@@ -69,8 +94,7 @@
                             "type": "string"
                         },
                         "commitTimestamp": {
-                            "type": "string",
-                            "format": "date-time"
+                            "type": "string"
                         }
                     },
                     "required": [
@@ -88,8 +112,7 @@
                             "type": "string"
                         },
                         "githubServerURL": {
-                            "type": "string",
-                            "format": "uri"
+                            "type": "string"
                         }
                     },
                     "required": [
@@ -176,8 +199,6 @@
     },
     "required": [
         "_type",
-        "predicateType",
-        "subject",
-        "metaData"
+        "metadata"
     ]
 }

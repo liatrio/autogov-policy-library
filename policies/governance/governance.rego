@@ -2,6 +2,7 @@ package governance
 
 import data.security.provenance
 import data.security.sbom
+
 import rego.v1
 
 allow if {

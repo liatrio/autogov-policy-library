@@ -2,7 +2,7 @@ package security.provenance
 
 import rego.v1
 
-# liatrio
+# [liatrio]
 approved_owner_ids := {"5726618"}
 
 # [demo-gh-autogov-workflows, demo-gh-autogov-caller-workflow]
@@ -10,14 +10,12 @@ approved_repo_ids := {"845521085", "849445664"}
 
 default allow := false
 
-# Top-level allow rule - iterates over all inputs and ensures no violations
+# Top-level allow rule - iterates over JSON input to ensure no violations
 allow if {
 	count(violations) == 0
 }
 
-# we need to update the expected input to be a list of json objects
-# for input we have a list of encoded objects where at the key dsseEnvelope.payload is base64 encoded
-
+# Helper function to decode, unmarshal, and base64 decode the list of payloads from the dsseEnvelope key
 parse_payload(payload) := parsed_payload if {
 	decoded_payload := base64.decode(payload)
 	parsed_payload := json.unmarshal(decoded_payload)
@@ -30,35 +28,143 @@ decoded_payload_list := [decoded |
 	decoded := json.unmarshal(decoded_payload_raw)
 ]
 
-# Iterate through all inputs and collect violations
+# Helper functions to identify predicate types
+is_slsa_provenance(payload) if {
+	payload.predicateType == "https://slsa.dev/provenance/v1"
+}
+
+is_cyclonedx_bom(payload) if {
+	payload.predicateType == "https://cyclonedx.org/bom"
+}
+
+is_cosign_attestation(payload) if {
+	payload.predicateType == "https://cosign.sigstore.dev/attestation/v1"
+}
+
+# Helper functions to check for missing or incorrect Owner/Repository IDs
+invalid_repo_id(payload, approved_repo_ids) if {
+	is_slsa_provenance(payload)
+	not payload.predicate.buildDefinition.internalParameters.github.repository_id in approved_repo_ids
+}
+
+invalid_repo_id(payload, approved_repo_ids) if {
+	is_cosign_attestation(payload)
+	not payload.predicate.metadata.repositoryData.repositoryId in approved_repo_ids
+}
+
+invalid_owner_id(payload, approved_owner_ids) if {
+	is_slsa_provenance(payload)
+	not payload.predicate.buildDefinition.internalParameters.github.repository_owner_id in approved_owner_ids
+}
+
+invalid_owner_id(payload, approved_owner_ids) if {
+	is_cosign_attestation(payload)
+	not payload.predicate.metadata.ownerData.ownerId in approved_owner_ids
+}
+
+# Iterate through JSON and collect violations
+violations contains msg if {
+	some payload in decoded_payload_list
+	not payload.predicateType
+	msg := "predicate type is missing"
+}
+
 violations contains msg if {
 	some payload in decoded_payload_list
 	not predicate_type_valid(payload)
-	msg := "predicate type is not correct or missing"
+	msg := "predicate type is not correct"
+}
+
+violations contains msg if {
+	some payload in decoded_payload_list
+	is_slsa_provenance(payload)
+	not payload.predicate.buildDefinition.buildType
+	msg := "build type is missing"
 }
 
 violations contains msg if {
 	some payload in decoded_payload_list
 	not build_type_valid(payload)
-	msg := "build type is not correct or missing"
+	msg := "build type is not correct"
 }
 
 violations contains msg if {
 	some payload in decoded_payload_list
-	payload.predicateType == "https://slsa.dev/provenance/v1"
-	not owner_valid(payload, approved_owner_ids)
-	msg := "owner is not correct or missing"
+	is_slsa_provenance(payload)
+	not payload.predicate.buildDefinition.internalParameters.github.repository_id in approved_repo_ids
+	msg := "repository is not correct in build provenance"
 }
 
 violations contains msg if {
 	some payload in decoded_payload_list
-	payload.predicateType == "https://slsa.dev/provenance/v1"
-	not repo_valid(payload, approved_repo_ids)
-	msg := "repo is not correct or missing"
+	is_cosign_attestation(payload)
+	not payload.predicate.metadata.repositoryData.repositoryId in approved_repo_ids
+	msg := "repository is not correct in metadata"
+}
+
+violations contains msg if {
+	some payload in decoded_payload_list
+	is_slsa_provenance(payload)
+	not payload.predicate.buildDefinition.internalParameters.github.repository_owner_id in approved_owner_ids
+	msg := "owner is not correct in build provenance"
+}
+
+violations contains msg if {
+	some payload in decoded_payload_list
+	is_cosign_attestation(payload)
+	not payload.predicate.metadata.ownerData.ownerId in approved_owner_ids
+	msg := "owner is not correct in metadata"
+}
+
+violations contains msg if {
+	some payload in decoded_payload_list
+	is_slsa_provenance(payload)
+	not payload.predicate.buildDefinition.internalParameters.github.repository_id
+	msg := "repository is missing in build provenance"
+}
+
+violations contains msg if {
+	some payload in decoded_payload_list
+	is_cosign_attestation(payload)
+	not payload.predicate.metadata.repositoryData.repositoryId
+	msg := "repository is missing in metadata"
+}
+
+violations contains msg if {
+	some payload in decoded_payload_list
+	is_slsa_provenance(payload)
+	not payload.predicate.buildDefinition.internalParameters.github.repository_owner_id
+	msg := "owner is missing in build provenance"
+}
+
+violations contains msg if {
+	some payload in decoded_payload_list
+	is_cosign_attestation(payload)
+	not payload.predicate.metadata.ownerData.ownerId
+	msg := "owner is missing in metadata"
+}
+
+violations contains msg if {
+	some payload in decoded_payload_list
+	payload.predicate.metadata.runnerData.environment != "github-hosted"
+	msg := "runner environment is not github-hosted"
+}
+
+violations contains msg if {
+	some payload in decoded_payload_list
+	is_cosign_attestation(payload)
+	payload.predicate.metadata.runnerData.environment == ""
+	msg := "runner environment is missing"
+}
+
+violations contains msg if {
+	some payload in decoded_payload_list
+	is_cosign_attestation(payload)
+	not inputs_exist(payload)
+	msg := "workflow inputs are missing in metadata"
 }
 
 # Validation rules
-
 predicate_type_valid(payload) if {
 	is_slsa_provenance(payload)
 }
@@ -81,6 +187,16 @@ build_type_valid(payload) if {
 	not payload.predicate.buildDefinition.buildType
 }
 
+inputs_exist(payload) if {
+	payload.predicate.metadata.workflowData.inputs
+	count(payload.predicate.metadata.workflowData.inputs) > 0
+}
+
+owner_repo_valid(payload, approved_owner_ids, approved_repo_ids) if {
+	owner_valid(payload, approved_owner_ids)
+	repo_valid(payload, approved_repo_ids)
+}
+
 owner_valid(payload, approved_owner_ids) if {
 	is_slsa_provenance(payload)
 	payload.predicate.buildDefinition.internalParameters.github.repository_owner_id in approved_owner_ids
@@ -88,7 +204,7 @@ owner_valid(payload, approved_owner_ids) if {
 
 owner_valid(payload, approved_owner_ids) if {
 	is_cosign_attestation(payload)
-	payload.predicate.metadata.owner in approved_owner_ids
+	payload.predicate.metadata.ownerData.ownerId in approved_owner_ids
 }
 
 owner_valid(payload, _) if {
@@ -102,22 +218,9 @@ repo_valid(payload, approved_repo_ids) if {
 
 repo_valid(payload, approved_repo_ids) if {
 	is_cosign_attestation(payload)
-	payload.predicate.metadata.repositoryId in approved_repo_ids
+	payload.predicate.metadata.repositoryData.repositoryId in approved_repo_ids
 }
 
 repo_valid(payload, _) if {
 	is_cyclonedx_bom(payload)
-}
-
-# Helper functions to identify types
-is_slsa_provenance(payload) if {
-	payload.predicateType == "https://slsa.dev/provenance/v1"
-}
-
-is_cyclonedx_bom(payload) if {
-	payload.predicateType == "https://cyclonedx.org/bom"
-}
-
-is_cosign_attestation(payload) if {
-	payload.predicateType == "https://cosign.sigstore.dev/attestation/v1"
 }

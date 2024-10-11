@@ -99,3 +99,44 @@ test_violations_both_sbom_and_provenance if {
 		with data.security.sbom.violations as sbom_violations
 		with data.security.provenance.violations as provenance_violations
 }
+
+# Test that allow is false when there are no provenance attestations
+test_no_provenance_attestation if {
+	predicate_type := ""
+	payload := base64.encode(json.marshal({"predicateType": predicate_type}))
+	test_input := create_test_input(payload)
+	not governance.allow with input as test_input
+}
+
+# Test that allow is false when provenance attestation is not allowed by security.provenance
+test_provenance_violation_found if {
+	predicate_type := "https://slsa.dev/provenance/v1"
+	predicate := {"buildDefinition": {"buildType": "incorrect_build_type"}}
+	payload := base64.encode(json.marshal({"predicateType": predicate_type, "predicate": predicate}))
+	test_input := create_test_input(payload)
+	not governance.allow with input as test_input
+}
+
+# Test that allow is false when repository is not approved
+test_repository_not_approved if {
+	predicate_type := "https://slsa.dev/provenance/v1"
+	predicate := {"buildDefinition": {"internalParameters": {"github": {"repository_id": "unapproved_repo_id"}}}}
+	payload := base64.encode(json.marshal({"predicateType": predicate_type, "predicate": predicate}))
+	test_input := create_test_input(payload)
+	not governance.allow with input as test_input
+}
+
+# Test that allow is false when organization is not approved
+test_organization_not_approved if {
+	predicate_type := "https://slsa.dev/provenance/v1"
+	predicate := {"buildDefinition": {"internalParameters": {"github": {"repository_owner_id": "00000000"}}}}
+	payload := base64.encode(json.marshal({"predicateType": predicate_type, "predicate": predicate}))
+	test_input := create_test_input(payload)
+	not governance.allow with input as test_input
+}
+
+# Test that governance.allow is false when input is empty
+test_empty_input if {
+	test_input := []
+	not governance.allow with input as test_input
+}

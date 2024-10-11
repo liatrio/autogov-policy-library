@@ -5,7 +5,11 @@ import rego.v1
 import data.security.sbom
 
 test_parse_payload if {
-	input_payload := "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCJwcmVkaWNhdGVUeXBlIjoiaHR0cHM6Ly9jeWNsb25lZHgub3JnL2JvbSJ9"
+	input_payload_parts := [
+		"eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEi",
+		"LCJwcmVkaWNhdGVUeXBlIjoiaHR0cHM6Ly9jeWNsb25lZHgub3JnL2JvbSJ9",
+	]
+	input_payload := concat("", input_payload_parts)
 	expected_output := {
 		"_type": "https://in-toto.io/Statement/v1",
 		"predicateType": "https://cyclonedx.org/bom",
