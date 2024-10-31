@@ -6,7 +6,7 @@ import rego.v1
 approved_owner_ids := {"5726618"}
 
 # [demo-gh-autogov-workflows, demo-gh-autogov-caller-workflow]
-approved_repo_ids := {"845521085", "849445664"}
+approved_repo_ids := {"845521085", "849445664", "880495339"}
 
 default allow := false
 
