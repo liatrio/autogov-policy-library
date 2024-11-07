@@ -1,15 +1,17 @@
+name: Policy Library Workflow
+
 on:
   workflow_dispatch:
   push:
     branches: ['**']
     paths-ignore:
-      - "README.md"
-      - "catalog-info.yaml"
-      - "renovate.json"
+      - .github/workflows/wf-slack-alert.yaml
+      - README.md
+      - catalog-info.yaml
+      - renovate.json
   pull_request:
     types: [opened, synchronize, reopened]
-    branches:
-      - main
+    branches: main
 
 env:
   OPA_VERSION: 0.67.1
