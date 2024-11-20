@@ -11,7 +11,7 @@ test_allow_no_violations if {
         "repo_url": "https://github.com/example/repo",
         "edit_uri": "https://github.com/example/repo/edit/main/docs"
     }
-    allow := mkdocs_config_policy.allow with test_input as input
+    allow := mkdocs_config_policy.allow with input as test_input
     allow == true
 }
 
@@ -21,9 +21,9 @@ test_deny_missing_site_name if {
         "repo_url": "https://github.com/example/repo",
         "edit_uri": "https://github.com/example/repo/edit/main/docs"
     }
-    allow := mkdocs_config_policy.allow with test_input as input
+    allow := mkdocs_config_policy.allow with input as test_input
     allow == false
-    violations := mkdocs_config_policy.violations with test_input as input
+    violations := mkdocs_config_policy.violations with input as test_input
     violations == ["site_name is missing"]
 }
 
@@ -33,9 +33,9 @@ test_deny_missing_site_url if {
         "repo_url": "https://github.com/example/repo",
         "edit_uri": "https://github.com/example/repo/edit/main/docs"
     }
-    allow := mkdocs_config_policy.allow with test_input as input
+    allow := mkdocs_config_policy.allow with input as test_input
     allow == false
-    violations := mkdocs_config_policy.violations with test_input as input
+    violations := mkdocs_config_policy.violations with input as test_input
     violations == ["site_url is missing"]
 }
 
@@ -47,7 +47,7 @@ test_deny_missing_repo_url if {
     }
     allow := mkdocs_config_policy.allow with input as input
     allow == false
-    violations := mkdocs_config_policy.violations with test_input as input
+    violations := mkdocs_config_policy.violations with input as test_input
     violations == ["repo_url is missing"]
 }
 
@@ -57,8 +57,8 @@ test_deny_missing_edit_uri if {
         "site_url": "https://example.com",
         "repo_url": "https://github.com/example/repo"
     }
-    allow := mkdocs_config_policy.allow with test_input as input
+    allow := mkdocs_config_policy.allow with input as test_input
     allow == false
-    violations := mkdocs_config_policy.violations with test_input as input
+    violations := mkdocs_config_policy.violations with input as test_input
     violations == ["edit_uri is missing"]
 }
