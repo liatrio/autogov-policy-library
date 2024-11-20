@@ -1,0 +1,14 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: liatrio-rego-policy-library
+  description: "Dedicated Rego policy library for Liatrio internal use"
+  annotations:
+    github.com/project-slug: liatrio/liatrio-rego-policy-library
+  tags:
+    - autogov
+spec:
+  type: library
+  lifecycle: in-progress
+  owner: tag-autogov
