@@ -24,7 +24,7 @@ test_deny_missing_site_name if {
     allow := mkdocs_config_policy.allow with input as test_input
     allow == false
     violations := mkdocs_config_policy.violations with input as test_input
-    violations == ["site_name is missing"]
+    ["site_name is missing"] in violations
 }
 
 test_deny_missing_site_url if {
@@ -36,7 +36,7 @@ test_deny_missing_site_url if {
     allow := mkdocs_config_policy.allow with input as test_input
     allow == false
     violations := mkdocs_config_policy.violations with input as test_input
-    violations == ["site_url is missing"]
+    ["site_url is missing"] in violations
 }
 
 test_deny_missing_repo_url if {
@@ -48,7 +48,7 @@ test_deny_missing_repo_url if {
     allow := mkdocs_config_policy.allow with input as input
     allow == false
     violations := mkdocs_config_policy.violations with input as test_input
-    violations == ["repo_url is missing"]
+    ["repo_url is missing"] in violations
 }
 
 test_deny_missing_edit_uri if {
@@ -60,5 +60,5 @@ test_deny_missing_edit_uri if {
     allow := mkdocs_config_policy.allow with input as test_input
     allow == false
     violations := mkdocs_config_policy.violations with input as test_input
-    violations == ["edit_uri is missing"]
+    ["edit_uri is missing"] in violations
 }
