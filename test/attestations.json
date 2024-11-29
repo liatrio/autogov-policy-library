@@ -3,7 +3,7 @@
     "_type": "https://in-toto.io/Statement/v1",
     "subject": [
       {
-        "name": "ghcr.io/liatrio/demo-gh-autogov-workflows",
+        "name": "ghcr.io/liatrio/liatrio-gh-autogov-workflows",
         "digest": {
           "sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"
         }
@@ -16,7 +16,7 @@
         "externalParameters": {
           "workflow": {
             "ref": "refs/pull/40/merge",
-            "repository": "https://github.com/liatrio/demo-gh-autogov-workflows",
+            "repository": "https://github.com/liatrio/liatrio-gh-autogov-workflows",
             "path": ".github/workflows/wc-pr-check.yaml"
           }
         },
@@ -30,7 +30,7 @@
         },
         "resolvedDependencies": [
           {
-            "uri": "git+https://github.com/liatrio/demo-gh-autogov-workflows@refs/pull/40/merge",
+            "uri": "git+https://github.com/liatrio/liatrio-gh-autogov-workflows@refs/pull/40/merge",
             "digest": {
               "gitCommit": "e637a8fa660e56278a3e1b7eca373ae9ec2d5b8d"
             }
@@ -39,10 +39,10 @@
       },
       "runDetails": {
         "builder": {
-          "id": "https://github.com/liatrio/demo-gh-autogov-workflows/.github/workflows/rw-attest-image.yaml@refs/pull/40/merge"
+          "id": "https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-attest-image.yaml@refs/pull/40/merge"
         },
         "metadata": {
-          "invocationId": "https://github.com/liatrio/demo-gh-autogov-workflows/actions/runs/10819535584/attempts/1"
+          "invocationId": "https://github.com/liatrio/liatrio-gh-autogov-workflows/actions/runs/10819535584/attempts/1"
         }
       }
     }
@@ -51,7 +51,7 @@
     "_type": "https://in-toto.io/Statement/v1",
     "subject": [
       {
-        "name": "ghcr.io/liatrio/demo-gh-autogov-workflows",
+        "name": "ghcr.io/liatrio/liatrio-gh-autogov-workflows",
         "digest": {
           "sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"
         }
@@ -79,7 +79,7 @@
         "component": {
           "bom-ref": "df8c4f6480144e64",
           "type": "container",
-          "name": "ghcr.io/liatrio/demo-gh-autogov-workflows",
+          "name": "ghcr.io/liatrio/liatrio-gh-autogov-workflows",
           "version": "sha256:d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"
         },
         "properties": [
@@ -97,15 +97,15 @@
           },
           {
             "name": "syft:image:labels:org.opencontainers.image.source",
-            "value": "https://github.com/liatrio/demo-gh-autogov-workflows"
+            "value": "https://github.com/liatrio/liatrio-gh-autogov-workflows"
           },
           {
             "name": "syft:image:labels:org.opencontainers.image.title",
-            "value": "demo-gh-autogov-workflows"
+            "value": "liatrio-gh-autogov-workflows"
           },
           {
             "name": "syft:image:labels:org.opencontainers.image.url",
-            "value": "https://github.com/liatrio/demo-gh-autogov-workflows"
+            "value": "https://github.com/liatrio/liatrio-gh-autogov-workflows"
           },
           {
             "name": "syft:image:labels:org.opencontainers.image.version",
@@ -12271,7 +12271,7 @@
     "_type": "https://in-toto.io/Statement/v1",
     "subject": [
       {
-        "name": "ghcr.io/liatrio/demo-gh-autogov-workflows",
+        "name": "ghcr.io/liatrio/liatrio-gh-autogov-workflows",
         "digest": {
           "sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"
         }
@@ -12283,7 +12283,7 @@
       "predicateType": "https://cosign.sigstore.dev/attestation/v1",
       "subject": [
         {
-          "name": "liatrio/demo-gh-autogov-workflows",
+          "name": "liatrio/liatrio-gh-autogov-workflows",
           "digest": {
             "sha256": "e637a8fa660e56278a3e1b7eca373ae9ec2d5b8d"
           }
@@ -12293,7 +12293,7 @@
         "workflowRunId": "10819535584",
         "commitSHA": "e637a8fa660e56278a3e1b7eca373ae9ec2d5b8d",
         "githubServerURL": "https://github.com",
-        "repository": "liatrio/demo-gh-autogov-workflows",
+        "repository": "liatrio/liatrio-gh-autogov-workflows",
         "repositoryId": "849445664",
         "owner": "liatrio",
         "ownerId": "5726618",
@@ -12302,7 +12302,7 @@
         "ref": "refs/pull/40/merge",
         "jobId": "attest-blob",
         "runNumber": "52",
-        "workflowRefPath": "liatrio/demo-gh-autogov-workflows/.github/workflows/wc-pr-check.yaml@refs/pull/40/merge",
+        "workflowRefPath": "liatrio/liatrio-gh-autogov-workflows/.github/workflows/wc-pr-check.yaml@refs/pull/40/merge",
         "action": "__run",
         "runnerOS": "Linux",
         "runnerName": "GitHub Actions 14",
