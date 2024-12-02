@@ -5,9 +5,6 @@ import rego.v1
 # [liatrio]
 approved_owner_ids := {"5726618"}
 
-# [liatrio-gh-autogov-workflows]
-approved_repo_ids := {"892862598"}
-
 default allow := false
 
 # Top-level allow rule - iterates over JSON input to ensure no violations
@@ -42,15 +39,6 @@ is_cosign_attestation(payload) if {
 }
 
 # Helper functions to check for missing or incorrect Owner/Repository IDs
-invalid_repo_id(payload, approved_repo_ids) if {
-	is_slsa_provenance(payload)
-	not payload.predicate.buildDefinition.internalParameters.github.repository_id in approved_repo_ids
-}
-
-invalid_repo_id(payload, approved_repo_ids) if {
-	is_cosign_attestation(payload)
-	not payload.predicate.metadata.repositoryData.repositoryId in approved_repo_ids
-}
 
 invalid_owner_id(payload, approved_owner_ids) if {
 	is_slsa_provenance(payload)
@@ -86,20 +74,6 @@ violations contains msg if {
 	some payload in decoded_payload_list
 	not build_type_valid(payload)
 	msg := "build type is not correct"
-}
-
-violations contains msg if {
-	some payload in decoded_payload_list
-	is_slsa_provenance(payload)
-	not payload.predicate.buildDefinition.internalParameters.github.repository_id in approved_repo_ids
-	msg := "repository is not correct in build provenance"
-}
-
-violations contains msg if {
-	some payload in decoded_payload_list
-	is_cosign_attestation(payload)
-	not payload.predicate.metadata.repositoryData.repositoryId in approved_repo_ids
-	msg := "repository is not correct in metadata"
 }
 
 violations contains msg if {
@@ -192,9 +166,8 @@ inputs_exist(payload) if {
 	count(payload.predicate.metadata.workflowData.inputs) > 0
 }
 
-owner_repo_valid(payload, approved_owner_ids, approved_repo_ids) if {
+owner_repo_valid(payload, approved_owner_ids) if {
 	owner_valid(payload, approved_owner_ids)
-	repo_valid(payload, approved_repo_ids)
 }
 
 owner_valid(payload, approved_owner_ids) if {
@@ -211,14 +184,12 @@ owner_valid(payload, _) if {
 	is_cyclonedx_bom(payload)
 }
 
-repo_valid(payload, approved_repo_ids) if {
+repo_valid(payload) if {
 	is_slsa_provenance(payload)
-	payload.predicate.buildDefinition.internalParameters.github.repository_id in approved_repo_ids
 }
 
-repo_valid(payload, approved_repo_ids) if {
+repo_valid(payload) if {
 	is_cosign_attestation(payload)
-	payload.predicate.metadata.repositoryData.repositoryId in approved_repo_ids
 }
 
 repo_valid(payload, _) if {
