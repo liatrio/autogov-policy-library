@@ -14,7 +14,7 @@ test_is_slsa_provenance_false if {
 	not provenance.is_slsa_provenance(payload)
 }
 
-# Test case for successful provenance with valid predicate, owner, and repo
+# Test case for successful provenance with valid predicate and owner
 test_valid_slsa_provenance if {
 	test_input := [{
 		"predicateType": "https://slsa.dev/provenance/v1",
@@ -73,43 +73,7 @@ test_invalid_owner if {
 	"owner is not correct in build provenance" in violations
 }
 
-# Test case for invalid repo for SLSA build provenance
-test_invalid_repo if {
-	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "https://slsa.dev/provenance/v1",
-		"predicate": {"buildDefinition": {
-			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
-			"internalParameters": {"github": {
-				"repository_owner_id": "5726618",
-				"repository_id": "9999999",
-			}},
-		}},
-	}))}}]
-	result := provenance.allow with input as test_input
-	result == false
-
-	violations := provenance.violations with input as test_input
-	"repository is not correct in build provenance" in violations
-}
-
-# Test case for missing repository in SLSA build provenance
-test_missing_repo_id_slsa if {
-	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "https://slsa.dev/provenance/v1",
-		"predicate": {"buildDefinition": {
-			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
-			"internalParameters": {"github": {"repository_owner_id": "5726618"}},
-		}},
-	}))}}]
-
-	result := provenance.allow with input as test_input
-	result == false
-
-	violations := provenance.violations with input as test_input
-	"repository is missing in build provenance" in violations
-}
-
-# Test case for CycloneDX BOM predicate (no checks for owner/repo)
+# Test case for CycloneDX BOM predicate (no checks for owner)
 test_valid_cyclonedx_bom if {
 	test_input := [{
 		"predicateType": "https://cyclonedx.org/bom",
@@ -132,7 +96,7 @@ test_valid_metadata_attestation if {
 	result == true
 }
 
-# Test case for metadata attestation with invalid owner and repo
+# Test case for metadata attestation with invalid owner
 test_invalid_metadata_attestation if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
 		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
@@ -149,7 +113,6 @@ test_invalid_metadata_attestation if {
 	violations := provenance.violations with input as test_input
 
 	"owner is not correct in metadata" in violations
-	"repository is not correct in metadata" in violations
 }
 
 # Test case for missing workflow inputs in metadata
