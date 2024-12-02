@@ -166,10 +166,6 @@ inputs_exist(payload) if {
 	count(payload.predicate.metadata.workflowData.inputs) > 0
 }
 
-owner_repo_valid(payload, approved_owner_ids) if {
-	owner_valid(payload, approved_owner_ids)
-}
-
 owner_valid(payload, approved_owner_ids) if {
 	is_slsa_provenance(payload)
 	payload.predicate.buildDefinition.internalParameters.github.repository_owner_id in approved_owner_ids
