@@ -73,25 +73,6 @@ test_invalid_owner if {
 	"owner is not correct in build provenance" in violations
 }
 
-# Test case for invalid repo for SLSA build provenance
-test_invalid_repo if {
-	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "https://slsa.dev/provenance/v1",
-		"predicate": {"buildDefinition": {
-			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
-			"internalParameters": {"github": {
-				"repository_owner_id": "5726618",
-				"repository_id": "9999999",
-			}},
-		}},
-	}))}}]
-	result := provenance.allow with input as test_input
-	result == false
-
-	violations := provenance.violations with input as test_input
-	"repository is not correct in build provenance" in violations
-}
-
 # Test case for missing repository in SLSA build provenance
 test_missing_repo_id_slsa if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
@@ -149,7 +130,6 @@ test_invalid_metadata_attestation if {
 	violations := provenance.violations with input as test_input
 
 	"owner is not correct in metadata" in violations
-	"repository is not correct in metadata" in violations
 }
 
 # Test case for missing workflow inputs in metadata

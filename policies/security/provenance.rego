@@ -38,7 +38,7 @@ is_cosign_attestation(payload) if {
 	payload.predicateType == "https://cosign.sigstore.dev/attestation/v1"
 }
 
-# Helper functions to check for missing or incorrect Owner/Repository IDs
+# Helper functions to check for missing or incorrect Owner IDs
 
 invalid_owner_id(payload, approved_owner_ids) if {
 	is_slsa_provenance(payload)
@@ -192,6 +192,6 @@ repo_valid(payload) if {
 	is_cosign_attestation(payload)
 }
 
-repo_valid(payload, _) if {
+repo_valid(payload) if {
 	is_cyclonedx_bom(payload)
 }
