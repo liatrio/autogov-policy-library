@@ -183,15 +183,3 @@ owner_valid(payload, approved_owner_ids) if {
 owner_valid(payload, _) if {
 	is_cyclonedx_bom(payload)
 }
-
-repo_valid(payload) if {
-	is_slsa_provenance(payload)
-}
-
-repo_valid(payload) if {
-	is_cosign_attestation(payload)
-}
-
-repo_valid(payload) if {
-	is_cyclonedx_bom(payload)
-}
