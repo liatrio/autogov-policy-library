@@ -5,55 +5,34 @@ import data.shared.access
 import rego.v1
 
 test_inputs_exist if {
-    payload := {
-        "predicate": {
-            "metadata": {
-                "workflowData": {
-                    "inputs": {"key1": "value1", "key2": "value2"}
-                }
-            }
-        }
-    }
-    metadata.inputs_exist(payload)
+	payload := {"predicate": {"metadata": {"workflowData": {"inputs": {"key1": "value1", "key2": "value2"}}}}}
+	metadata.inputs_exist(payload)
 }
 
 test_inputs_do_not_exist if {
-    payload := {
-        "predicate": {
-            "metadata": {
-                "workflowData": {
-                    "inputs": {}
-                }
-            }
-        }
-    }
-    not metadata.inputs_exist(payload)
+	payload := {"predicate": {"metadata": {"workflowData": {"inputs": {}}}}}
+	not metadata.inputs_exist(payload)
 }
 
 test_predicate_type_valid_true if {
-    payload := {
-        "predicateType": "https://cosign.sigstore.dev/attestation/v1"
-    }
+	payload := {"predicateType": "https://cosign.sigstore.dev/attestation/v1"}
 
-    metadata.predicate_type_valid(payload)
+	metadata.predicate_type_valid(payload)
 }
 
 test_predicate_type_valid_false if {
-    payload := {
-        "predicateType": "https://example.com/invalid"
-    }
+	payload := {"predicateType": "https://example.com/invalid"}
 
-    not metadata.predicate_type_valid(payload)
+	not metadata.predicate_type_valid(payload)
 }
 
 test_predicate_type_missing if {
-    payload := {}
+	payload := {}
 
-    not metadata.predicate_type_valid(payload)
+	not metadata.predicate_type_valid(payload)
 }
 
 test_is_metadata_present_true if {
-
 	test_input := [
 		{
 			"_type": "https://in-toto.io/Statement/v1",
@@ -78,8 +57,8 @@ test_is_metadata_present_false if {
 		{
 			"_type": "https://in-toto.io/Statement/v1",
 			"predicateType": "https://cosign.sigstore.dev/attestation/v1",
-			"subject": [{"name": "ghcr.io/liatrio/some-other-repo"}]
-		}
+			"subject": [{"name": "ghcr.io/liatrio/some-other-repo"}],
+		},
 	]
 
 	not metadata.is_metadata_present(test_input)
@@ -194,38 +173,38 @@ test_empty_runner_environment if {
 
 # Test case for missing repository ID in metadata
 test_missing_repository_id if {
-    test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-        "predicateType": "https://cosign.sigstore.dev/attestation/v1",
-        "subject": [{"name": "ghcr.io/liatrio/demo-gh-autogov-workflows"}],
-        "predicate": {"metadata": {
-            "runnerData": {"environment": "production"},
-            "ownerData": {"ownerId": "5726618"},
-            "repositoryData": {},  # Missing repositoryId
-        }},
-    }))}}]
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
+		"subject": [{"name": "ghcr.io/liatrio/demo-gh-autogov-workflows"}],
+		"predicate": {"metadata": {
+			"runnerData": {"environment": "production"},
+			"ownerData": {"ownerId": "5726618"},
+			"repositoryData": {}, # Missing repositoryId
+		}},
+	}))}}]
 
-    result := metadata.allow with input as test_input
-    result == false
+	result := metadata.allow with input as test_input
+	result == false
 
-    violations := metadata.violations with input as test_input
-    "repository is missing in metadata" in violations
+	violations := metadata.violations with input as test_input
+	"repository is missing in metadata" in violations
 }
 
 # Test case for missing ownerId in metadata
 test_missing_owner_id if {
-    test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-        "predicateType": "https://cosign.sigstore.dev/attestation/v1",
-        "subject": [{"name": "ghcr.io/liatrio/demo-gh-autogov-workflows"}],
-        "predicate": {"metadata": {
-            "runnerData": {"environment": "production"},
-            "repositoryData": {"repositoryId": "849445664"},
-            "ownerData": {},  # Missing ownerId
-        }},
-    }))}}]
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
+		"subject": [{"name": "ghcr.io/liatrio/demo-gh-autogov-workflows"}],
+		"predicate": {"metadata": {
+			"runnerData": {"environment": "production"},
+			"repositoryData": {"repositoryId": "849445664"},
+			"ownerData": {}, # Missing ownerId
+		}},
+	}))}}]
 
-    result := metadata.allow with input as test_input
-    result == false
+	result := metadata.allow with input as test_input
+	result == false
 
-    violations := metadata.violations with input as test_input
-    "owner is missing in metadata" in violations
+	violations := metadata.violations with input as test_input
+	"owner is missing in metadata" in violations
 }

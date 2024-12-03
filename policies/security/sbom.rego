@@ -1,8 +1,7 @@
 package security.sbom
 
-import rego.v1
-
 import data.shared.utils
+import rego.v1
 
 # of the objects in input, there must some object that has predicateType of value https://cyclonedx.org/bom
 
@@ -18,5 +17,5 @@ violations contains msg if {
 }
 
 is_cyclonedx_bom_present(payload) if {
-	count([obj | some obj in payload; obj.predicateType == "https://cyclonedx.org/bom"]) > 0
+	count([obj | some obj in payload; utils.is_cyclonedx_bom(obj)]) > 0
 }

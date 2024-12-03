@@ -73,3 +73,12 @@ test_violations if {
 	}]
 	count(sbom.violations) > 0 with input as test_input
 }
+
+# Test case for malformed input
+test_malformed_input if {
+	test_input := [{"dsseEnvelope": {"payload": "not-base64-encoded"}}]
+	not sbom.allow with input as test_input
+
+	violations := sbom.violations with input as test_input
+	"cyclonedx sbom is missing" in violations
+}

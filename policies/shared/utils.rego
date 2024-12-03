@@ -19,3 +19,7 @@ is_cosign_attestation(payload) if {
 is_slsa_provenance(payload) if {
 	payload.predicateType == "https://slsa.dev/provenance/v1"
 }
+
+is_cyclonedx_bom(payload) if {
+	payload.predicateType == "https://cyclonedx.org/bom"
+}
