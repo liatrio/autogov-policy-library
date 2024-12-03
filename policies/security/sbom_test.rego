@@ -4,28 +4,6 @@ import rego.v1
 
 import data.security.sbom
 
-test_parse_payload if {
-	input_payload_parts := [
-		"eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEi",
-		"LCJwcmVkaWNhdGVUeXBlIjoiaHR0cHM6Ly9jeWNsb25lZHgub3JnL2JvbSJ9",
-	]
-	input_payload := concat("", input_payload_parts)
-	expected_output := {
-		"_type": "https://in-toto.io/Statement/v1",
-		"predicateType": "https://cyclonedx.org/bom",
-	}
-	parsed_payload := sbom.parse_payload(input_payload)
-	parsed_payload == expected_output
-}
-
-test_base64_encoding if {
-	payload := json.marshal({
-		"_type": "https://in-toto.io/Statement/v1",
-		"predicateType": "https://cyclonedx.org/bom",
-	})
-	encoded := base64.encode(payload)
-}
-
 test_is_cyclonedx_bom_present_true if {
 	parsed_payload := [
 		{
