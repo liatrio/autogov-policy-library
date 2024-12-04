@@ -1,13 +1,26 @@
+# METADATA
+# scope: package
+# title: Provenance Policy
+# description: Verifies SLSA provenance attestation requirements
+# authors:
+# - Autogov Team <autogov@liatrio.com>
+# schemas:
+# - input: schema["provenance-schema"]
+# custom:
+#  control_number: 1
+#  version: 0.6.3
+#  path: policies/security
+#  filename: provenance.rego
+#  irm_control_ids: [LIATRIO-PROVENANCE-001]
 package security.provenance
-
-import rego.v1
 
 import data.shared.access
 import data.shared.utils
+import rego.v1
 
 default allow := false
 
-# Top-level allow rule - iterates over JSON input to ensure no violations
+# Top-level allow rule - checks for violations
 allow if {
 	count(violations) == 0
 }
@@ -74,9 +87,4 @@ predicate_type_valid(payload) if {
 build_type_valid(payload) if {
 	utils.is_slsa_provenance(payload)
 	payload.predicate.buildDefinition.buildType == "https://actions.github.io/buildtypes/workflow/v1"
-}
-
-build_type_valid(payload) if {
-	not utils.is_slsa_provenance(payload)
-	not payload.predicate.buildDefinition.buildType
 }

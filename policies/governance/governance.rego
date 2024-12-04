@@ -1,3 +1,12 @@
+# METADATA
+# scope: package
+# title: Governance Policy
+# description: >-
+#   Aggregates security policies to ensure all checks pass:
+#   - Build provenance validation
+#   - SBOM attestation validation
+#   - Metadata validation
+# entrypoint: true
 package governance
 
 import data.security.metadata
@@ -6,10 +15,6 @@ import data.security.sbom
 
 import rego.v1
 
-# Aggregates policy to ensure all security checks pass:
-# - Build provenance validation
-# - SBOM attestation validation
-# - Metadata validation
 allow if {
 	sbom.allow
 	provenance.allow

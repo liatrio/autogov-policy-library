@@ -5,7 +5,7 @@ import data.shared.access
 import data.shared.utils
 import rego.v1
 
-# Test case for successful provenance with valid predicate, owner, and repo
+# Test valid SLSA provenance with correct owner and repo
 test_valid_slsa_provenance if {
 	test_input := [{
 		"predicateType": "https://slsa.dev/provenance/v1",
@@ -21,7 +21,7 @@ test_valid_slsa_provenance if {
 	result == true
 }
 
-# Test case for missing or invalid predicate type
+# Test invalid predicate type
 test_invalid_predicate_type if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
 		"predicateType": "invalid/predicate/type",
@@ -34,7 +34,7 @@ test_invalid_predicate_type if {
 	"predicate type is not correct" in violations
 }
 
-# Test case for missing predicate type
+# Test missing predicate type
 test_missing_predicate_type if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({"predicate": {}}))}}]
 	result := provenance.allow with input as test_input
@@ -44,7 +44,7 @@ test_missing_predicate_type if {
 	"predicate type is missing" in violations
 }
 
-# Test case for valid owner in SLSA provenance
+# Test valid owner in SLSA provenance
 test_valid_owner if {
 	test_input := [{
 		"predicateType": "https://slsa.dev/provenance/v1",
@@ -61,7 +61,7 @@ test_valid_owner if {
 	result == true
 }
 
-# Test case for invalid owner for SLSA build provenance
+# Test invalid owner in SLSA provenance
 test_invalid_owner if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
 		"predicateType": "https://slsa.dev/provenance/v1",
@@ -81,7 +81,7 @@ test_invalid_owner if {
 	"owner is not correct in build provenance" in violations
 }
 
-# Test case for valid repository in SLSA provenance
+# Test valid repository in SLSA provenance
 test_valid_repo if {
 	test_input := [{
 		"predicateType": "https://slsa.dev/provenance/v1",
@@ -98,7 +98,7 @@ test_valid_repo if {
 	result == true
 }
 
-# Test case for invalid repo for SLSA build provenance
+# Test invalid repository in SLSA provenance
 test_invalid_repo if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
 		"predicateType": "https://slsa.dev/provenance/v1",
@@ -117,7 +117,7 @@ test_invalid_repo if {
 	"repository is not correct in build provenance" in violations
 }
 
-# Test case for valid owner and repository in SLSA provenance
+# Test valid owner and repository combination
 test_valid_owner_repo if {
 	test_input := [{
 		"predicateType": "https://slsa.dev/provenance/v1",
@@ -134,7 +134,7 @@ test_valid_owner_repo if {
 	result == true
 }
 
-# Test case for missing repository in SLSA build provenance
+# Test missing repository ID
 test_missing_repo_id_slsa if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
 		"predicateType": "https://slsa.dev/provenance/v1",
@@ -151,7 +151,7 @@ test_missing_repo_id_slsa if {
 	"repository is missing in build provenance" in violations
 }
 
-# Test case for incorrect build type in SLSA provenance
+# Test incorrect build type
 test_incorrect_build_type if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
 		"predicateType": "https://slsa.dev/provenance/v1",
@@ -171,7 +171,7 @@ test_incorrect_build_type if {
 	"build type is not correct" in violations
 }
 
-# Test case for missing build type in SLSA provenance
+# Test missing build type
 test_missing_build_type if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
 		"predicateType": "https://slsa.dev/provenance/v1",
@@ -188,7 +188,7 @@ test_missing_build_type if {
 	"build type is missing" in violations
 }
 
-# Test case for missing repository_owner_id in build provenance
+# Test missing repository owner ID
 test_missing_repository_owner_id if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
 		"predicateType": "https://slsa.dev/provenance/v1",
