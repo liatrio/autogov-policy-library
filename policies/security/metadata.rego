@@ -3,7 +3,7 @@
 # title: Metadata Policy
 # description: Verifies metadata attestation requirements for images and blobs
 # authors:
-# - Autogov Team <autogov@liatrio.com>
+# - Autogov Team https://github.com/orgs/liatrio/teams/tag-autogov
 # schemas:
 # - input: schema["metadata-schema"]
 # custom:

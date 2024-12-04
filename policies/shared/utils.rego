@@ -1,7 +1,7 @@
 package shared.utils
 
-import rego.v1
 import data.shared.access
+import rego.v1
 
 decoded_payload_list := [decoded |
 	some attestation in input

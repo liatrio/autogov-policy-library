@@ -21,19 +21,6 @@ test_valid_slsa_provenance if {
 	result == true
 }
 
-# Test invalid predicate type
-test_invalid_predicate_type if {
-	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "invalid/predicate/type",
-		"predicate": {},
-	}))}}]
-	result := provenance.allow with input as test_input
-	result == false
-
-	violations := provenance.violations with input as test_input
-	"predicate type is not correct" in violations
-}
-
 # Test missing predicate type
 test_missing_predicate_type if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({"predicate": {}}))}}]
@@ -201,4 +188,17 @@ test_missing_repository_owner_id if {
 
 	violations := provenance.violations with input as test_input
 	"owner is missing in build provenance" in violations
+}
+
+# Test missing SLSA provenance
+test_missing_slsa_provenance if {
+	test_input := [{
+		"predicateType": "https://cyclonedx.org/bom",
+		"predicate": {}
+	}]
+	result := provenance.allow with input as test_input
+	result == false
+
+	violations := provenance.violations with input as test_input
+	"slsa provenance is missing" in violations
 }
