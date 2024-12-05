@@ -4,7 +4,6 @@ import rego.v1
 
 default allow := false
 
-
 # Allow only if there are no violations
 allow if {
     count(violations) == 0
@@ -12,38 +11,38 @@ allow if {
 
 violations[msg] if {
     not is_site_name_present
-    msg := "site_name is missing"
+    msg := "The site_name is missing or is empty within the mkdocs.yml file. Example: site_name: 'Chaos Engineering'."
 }
 
 violations[msg] if {
     not is_site_url_present
-    msg := "site_url is missing"
+    msg := "The site_url is missing or is empty within the mkdocs.yml file. Example: site_url: 'https://chaos-engineering.liatr.io/'."
 }
 
 violations[msg] if {
     not is_repo_url_present
-    msg := "repo_url is missing"
+    msg := "The repo_url is missing or is empty within the mkdocs.yml file. Example: repo_url: 'https://github.com/liatrio/chaos-engineering'."
 }
 
 violations[msg] if {
     not is_edit_uri_present
-    msg := "edit_uri is missing"
+    msg := "The edit_uri is missing or is empty within the mkdocs.yml file. Example: edit_uri: 'edit/main/docs'."
 }
 
-# Helper rules to check for presence of keys
+# Helper rules to check for presence of keys and non-empty values
 
 is_site_name_present if {
-    input.site_name
+    input.site_name != ""
 }
 
 is_site_url_present if {
-    input.site_url
+    input.site_url != ""
 }
 
 is_repo_url_present if {
-    input.repo_url
+    input.repo_url != ""
 }
 
 is_edit_uri_present if {
-    input.edit_uri
+    input.edit_uri != ""
 }
