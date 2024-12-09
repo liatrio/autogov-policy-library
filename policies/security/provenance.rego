@@ -55,22 +55,8 @@ violations contains msg if {
 violations contains msg if {
 	some payload in utils.decoded_payload_list
 	utils.is_slsa_provenance(payload)
-	not payload.predicate.buildDefinition.internalParameters.github.repository_id in access.approved_repo_ids
-	msg := "repository is not correct in build provenance"
-}
-
-violations contains msg if {
-	some payload in utils.decoded_payload_list
-	utils.is_slsa_provenance(payload)
 	not payload.predicate.buildDefinition.internalParameters.github.repository_owner_id in access.approved_owner_ids
 	msg := "owner is not correct in build provenance"
-}
-
-violations contains msg if {
-	some payload in utils.decoded_payload_list
-	utils.is_slsa_provenance(payload)
-	not payload.predicate.buildDefinition.internalParameters.github.repository_id
-	msg := "repository is missing in build provenance"
 }
 
 violations contains msg if {
