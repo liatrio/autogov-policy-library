@@ -69,3 +69,38 @@ test_missing_slsa_provenance if {
 	violations := provenance.violations with input as test_input
 	"slsa provenance is missing" in violations
 }
+
+# Test missing build type
+test_missing_build_type if {
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {"internalParameters": {"github": {
+			"repository_owner_id": "5726618"
+		}}}},
+	}))}}]
+
+	result := provenance.allow with input as test_input
+	result == false
+
+	violations := provenance.violations with input as test_input
+	"build type is missing" in violations
+}
+
+# Test incorrect build type
+test_incorrect_build_type if {
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {
+			"buildType": "https://invalid.buildtype/v1",
+			"internalParameters": {"github": {
+				"repository_owner_id": "5726618"
+			}},
+		}},
+	}))}}]
+
+	result := provenance.allow with input as test_input
+	result == false
+
+	violations := provenance.violations with input as test_input
+	"build type is not correct" in violations
+}
