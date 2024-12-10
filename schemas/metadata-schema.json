@@ -1,0 +1,221 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "_type": {
+            "type": "string",
+            "const": "https://in-toto.io/Statement/v1"
+        },
+        "subject": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "digest": {
+                        "type": "object",
+                        "properties": {
+                            "sha256": {
+                                "type": "string"
+                            }
+                        },
+                        "required": ["sha256"]
+                    }
+                },
+                "required": ["name", "digest"]
+            }
+        },
+        "predicateType": {
+            "type": "string",
+            "const": "https://cosign.sigstore.dev/attestation/v1"
+        },
+        "predicate": {
+            "type": "object",
+            "properties": {
+                "artifact": {
+                    "type": "object",
+                    "properties": {
+                        "version": {
+                            "type": "string"
+                        },
+                        "created": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "type": {
+                            "type": "string",
+                            "enum": ["container-image", "blob"]
+                        }
+                    },
+                    "required": ["version", "created", "type"]
+                },
+                "repositoryData": {
+                    "type": "object",
+                    "properties": {
+                        "repository": {
+                            "type": "string"
+                        },
+                        "repositoryId": {
+                            "type": "string"
+                        },
+                        "githubServerURL": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["repository", "repositoryId", "githubServerURL"]
+                },
+                "ownerData": {
+                    "type": "object",
+                    "properties": {
+                        "owner": {
+                            "type": "string"
+                        },
+                        "ownerId": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["owner", "ownerId"]
+                },
+                "runnerData": {
+                    "type": "object",
+                    "properties": {
+                        "os": {
+                            "type": "string"
+                        },
+                        "arch": {
+                            "type": "string"
+                        },
+                        "environment": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["os", "arch", "environment"]
+                },
+                "workflowData": {
+                    "type": "object",
+                    "properties": {
+                        "workflowRefPath": {
+                            "type": "string"
+                        },
+                        "inputs": {
+                            "type": "object"
+                        },
+                        "branch": {
+                            "type": "string"
+                        },
+                        "event": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["workflowRefPath", "inputs", "branch", "event"]
+                },
+                "jobData": {
+                    "type": "object",
+                    "properties": {
+                        "runNumber": {
+                            "type": "string"
+                        },
+                        "runId": {
+                            "type": "string"
+                        },
+                        "status": {
+                            "type": "string"
+                        },
+                        "triggeredBy": {
+                            "type": "string"
+                        },
+                        "startedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "completedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    "required": ["runNumber", "runId", "status", "triggeredBy", "startedAt", "completedAt"]
+                },
+                "commitData": {
+                    "type": "object",
+                    "properties": {
+                        "sha": {
+                            "type": "string"
+                        },
+                        "timestamp": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    "required": ["sha", "timestamp"]
+                },
+                "organization": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name"]
+                },
+                "compliance": {
+                    "type": "object",
+                    "properties": {
+                        "policyRef": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "controlIds": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": ["policyRef", "controlIds"]
+                },
+                "security": {
+                    "type": "object",
+                    "properties": {
+                        "permissions": {
+                            "type": "object",
+                            "properties": {
+                                "id-token": {
+                                    "type": "string",
+                                    "enum": ["write"]
+                                },
+                                "attestations": {
+                                    "type": "string",
+                                    "enum": ["write"]
+                                },
+                                "contents": {
+                                    "type": "string",
+                                    "enum": ["read"]
+                                },
+                                "packages": {
+                                    "type": "string",
+                                    "enum": ["read"]
+                                }
+                            }
+                        }
+                    },
+                    "required": ["permissions"]
+                }
+            },
+            "required": [
+                "artifact",
+                "repositoryData",
+                "ownerData",
+                "runnerData",
+                "workflowData",
+                "jobData",
+                "commitData",
+                "organization",
+                "compliance",
+                "security"
+            ]
+        }
+    },
+    "required": ["_type", "subject", "predicateType", "predicate"]
+} 

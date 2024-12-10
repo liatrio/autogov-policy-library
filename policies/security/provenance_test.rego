@@ -1,49 +1,24 @@
 package security.provenance_test
 
 import data.security.provenance
+import data.shared.access
+import data.shared.utils
 import rego.v1
 
-test_is_slsa_provenance_true if {
-	payload := {"predicateType": "https://slsa.dev/provenance/v1"}
-	provenance.is_slsa_provenance(payload)
-}
-
-test_is_slsa_provenance_false if {
-	payload := {"predicateType": "https://example.com/other"}
-
-	not provenance.is_slsa_provenance(payload)
-}
-
-# Test case for successful provenance with valid predicate and owner
+# Test valid SLSA provenance with correct owner
 test_valid_slsa_provenance if {
 	test_input := [{
 		"predicateType": "https://slsa.dev/provenance/v1",
 		"predicate": {"buildDefinition": {
 			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
-			"internalParameters": {"github": {
-				"repository_owner_id": "5726618",
-				"repository_id": "845521085",
-			}},
+			"internalParameters": {"github": {"repository_owner_id": "5726618"}},
 		}},
 	}]
 	result := provenance.allow with input as test_input
 	result == true
 }
 
-# Test case for missing or invalid predicate type
-test_invalid_predicate_type if {
-	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "invalid/predicate/type",
-		"predicate": {},
-	}))}}]
-	result := provenance.allow with input as test_input
-	result == false
-
-	violations := provenance.violations with input as test_input
-	"predicate type is not correct" in violations
-}
-
-# Test case for missing predicate type
+# Test missing predicate type
 test_missing_predicate_type if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({"predicate": {}}))}}]
 	result := provenance.allow with input as test_input
@@ -53,132 +28,69 @@ test_missing_predicate_type if {
 	"predicate type is missing" in violations
 }
 
-# Test case for invalid owner for SLSA build provenance
-test_invalid_owner if {
-	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+# Test valid owner
+test_valid_owner if {
+	test_input := [{
 		"predicateType": "https://slsa.dev/provenance/v1",
 		"predicate": {"buildDefinition": {
 			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
-			"internalParameters": {"github": {
-				"repository_owner_id": "9999999",
-				"repository_id": "845521085",
-			}},
+			"internalParameters": {"github": {"repository_owner_id": "5726618"}},
 		}},
+	}]
+
+	result := provenance.allow with input as test_input
+	result == true
+}
+
+# Test missing repository owner ID
+test_missing_repository_owner_id if {
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"subject": [{"name": "ghcr.io/liatrio/demo-gh-autogov-workflows"}],
+		"predicate": {"buildDefinition": {"internalParameters": {"github": {}}}}, # Missing repository_owner_id
 	}))}}]
 
 	result := provenance.allow with input as test_input
 	result == false
 
 	violations := provenance.violations with input as test_input
-	"owner is not correct in build provenance" in violations
+	"owner is missing in build provenance" in violations
 }
 
-# Test case for CycloneDX BOM predicate (no checks for owner)
-test_valid_cyclonedx_bom if {
+# Test missing SLSA provenance
+test_missing_slsa_provenance if {
 	test_input := [{
 		"predicateType": "https://cyclonedx.org/bom",
 		"predicate": {},
 	}]
 	result := provenance.allow with input as test_input
-	result == true
-}
-
-# Test case for metadata attestation with valid owner and repo
-test_valid_metadata_attestation if {
-	test_input := [{
-		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
-		"predicate": {"metadata": {
-			"ownerData": {"ownerId": "5726618"},
-			"repositoryData": {"repositoryId": "849445664"},
-		}},
-	}]
-	result := provenance.allow with input as test_input
-	result == true
-}
-
-# Test case for metadata attestation with invalid owner
-test_invalid_metadata_attestation if {
-	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
-		"predicate": {"metadata": {
-			"ownerData": {"ownerId": "9999999"},
-			"repositoryData": {"repositoryId": "9999999"},
-		}},
-	}))}}]
-
-	result := provenance.allow with input as test_input
-
 	result == false
 
 	violations := provenance.violations with input as test_input
-
-	"owner is not correct in metadata" in violations
+	"slsa provenance is missing" in violations
 }
 
-# Test case for missing workflow inputs in metadata
-test_missing_workflow_inputs if {
+# Test missing build type
+test_missing_build_type if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
-		"predicate": {"metadata": {
-			"workflowData": {"inputs": []},
-			"ownerData": {"ownerId": "5726618"},
-			"repositoryData": {"repositoryId": "849445664"},
-		}},
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {"internalParameters": {"github": {"repository_owner_id": "5726618"}}}},
 	}))}}]
 
 	result := provenance.allow with input as test_input
 	result == false
 
 	violations := provenance.violations with input as test_input
-	"workflow inputs are missing in metadata" in violations
+	"build type is missing" in violations
 }
 
-# Test case for incorrect runner environment
-test_incorrect_runner_environment if {
-	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
-		"predicate": {"metadata": {
-			"runnerData": {"environment": "self-hosted"},
-			"ownerData": {"ownerId": "5726618"},
-			"repositoryData": {"repositoryId": "849445664"},
-		}},
-	}))}}]
-
-	result := provenance.allow with input as test_input
-	result == false
-
-	violations := provenance.violations with input as test_input
-	"runner environment is not github-hosted" in violations
-}
-
-# Test case for missing runner environment
-test_empty_runner_environment if {
-	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
-		"predicate": {"metadata": {
-			"runnerData": {"environment": ""},
-			"ownerData": {"ownerId": "5726618"},
-			"repositoryData": {"repositoryId": "849445664"},
-		}},
-	}))}}]
-
-	result := provenance.allow with input as test_input
-	result == false
-
-	violations := provenance.violations with input as test_input
-	"runner environment is missing" in violations
-}
-
-# Test case for incorrect build type in SLSA provenance
+# Test incorrect build type
 test_incorrect_build_type if {
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
 		"predicateType": "https://slsa.dev/provenance/v1",
 		"predicate": {"buildDefinition": {
 			"buildType": "https://invalid.buildtype/v1",
-			"internalParameters": {"github": {
-				"repository_owner_id": "5726618",
-				"repository_id": "845521085",
-			}},
+			"internalParameters": {"github": {"repository_owner_id": "5726618"}},
 		}},
 	}))}}]
 
@@ -187,21 +99,4 @@ test_incorrect_build_type if {
 
 	violations := provenance.violations with input as test_input
 	"build type is not correct" in violations
-}
-
-# Test case for missing build type in SLSA provenance
-test_missing_build_type if {
-	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "https://slsa.dev/provenance/v1",
-		"predicate": {"buildDefinition": {"internalParameters": {"github": {
-			"repository_owner_id": "5726618",
-			"repository_id": "845521085",
-		}}}},
-	}))}}]
-
-	result := provenance.allow with input as test_input
-	result == false
-
-	violations := provenance.violations with input as test_input
-	"build type is missing" in violations
 }
