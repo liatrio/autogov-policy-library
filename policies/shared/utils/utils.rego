@@ -30,13 +30,14 @@ is_valid_fulcio_cert(raw) := valid if {
 	is_string(raw)
 	count(raw) > 0
 	cert_bytes := base64.decode(raw)
+
 	contains(cert_bytes, "GitHub, Inc.")
 	contains(cert_bytes, "Fulcio Intermediate l2")
-	contains(cert_bytes, "https://github.com/")
-	contains(cert_bytes, "/.github/workflows/")
-	contains(cert_bytes, "@refs/heads/")
-	contains(cert_bytes, "token.actions.githubusercontent.com")
 	contains(cert_bytes, "github-hosted")
+	contains(cert_bytes, "token.actions.githubusercontent.com")
+	contains(cert_bytes, "/liatrio/")
+	contains(cert_bytes, ".github/workflows")
+
 	valid := true
 } else := false
 

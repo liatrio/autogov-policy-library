@@ -69,11 +69,10 @@ test_is_valid_fulcio_cert_true if {
 	cert_str := concat("\n", [
 		"GitHub, Inc.",
 		"Fulcio Intermediate l2",
-		"https://github.com/",
-		"/.github/workflows/",
-		"@refs/heads/",
-		"token.actions.githubusercontent.com",
 		"github-hosted",
+		"token.actions.githubusercontent.com",
+		"/liatrio/",
+		".github/workflows",
 	])
 	cert := base64.encode(cert_str)
 	utils.is_valid_fulcio_cert(cert)
@@ -84,7 +83,7 @@ test_is_valid_fulcio_cert_missing_fields if {
 	cert_str := concat("\n", [
 		"GitHub, Inc.",
 		"Fulcio Intermediate l2",
-		"https://github.com/",
+		"github-hosted",
 	])
 	cert := base64.encode(cert_str)
 	not utils.is_valid_fulcio_cert(cert)
