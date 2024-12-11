@@ -194,7 +194,7 @@ test_missing_repository_owner_id if {
 test_missing_slsa_provenance if {
 	test_input := [{
 		"predicateType": "https://cyclonedx.org/bom",
-		"predicate": {}
+		"predicate": {},
 	}]
 	result := provenance.allow with input as test_input
 	result == false
