@@ -1,4 +1,4 @@
-package governance.governance_test
+package governance_test
 
 import data.governance
 import rego.v1
@@ -6,7 +6,14 @@ import rego.v1
 # Test all true case
 test_allow_all_true if {
 	violations := set()
-	governance.allow with data.security.sbom.violations as violations
+	test_input := [{
+		"mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+		"verificationMaterial": {"certificate": {"rawBytes": "valid-github-cert"}},
+	}]
+
+	governance.allow with input as test_input
+		with data.shared.utils.is_valid_fulcio_cert as {"valid-github-cert": true}
+		with data.security.sbom.violations as violations
 		with data.security.provenance.violations as violations
 		with data.security.metadata.violations as violations
 }
@@ -38,11 +45,22 @@ test_allow_metadata_false if {
 		with data.security.metadata.violations as metadata_violations
 }
 
+# Test certificate false case
+test_allow_certificate_false if {
+	certificate_violations := {"test violation"}
+	other_violations := set()
+	not governance.allow with data.security.certificate.violations as certificate_violations
+		with data.security.sbom.violations as other_violations
+		with data.security.provenance.violations as other_violations
+		with data.security.metadata.violations as other_violations
+}
+
 # Test violations reporting
 test_violations_report if {
 	sbom_violations := {"cyclonedx sbom is missing"}
 	provenance_violations := {"predicate type is not correct"}
 	metadata_violations := {"workflow inputs are missing"}
+	certificate_violations := {"bundle certificate is invalid"}
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
 		"predicateType": "https://example.org/other",
 		"subject": [{
@@ -56,10 +74,12 @@ test_violations_report if {
 		"sbom": sbom_violations,
 		"provenance": provenance_violations,
 		"metadata": metadata_violations,
+		"certificate": certificate_violations,
 	} with input as test_input
 		with data.security.sbom.violations as sbom_violations
 		with data.security.provenance.violations as provenance_violations
 		with data.security.metadata.violations as metadata_violations
+		with data.security.certificate.violations as certificate_violations
 }
 
 # Test empty input case
@@ -75,7 +95,9 @@ test_no_violations if {
 		"sbom": violations,
 		"provenance": violations,
 		"metadata": violations,
+		"certificate": violations,
 	} with data.security.sbom.violations as violations
 		with data.security.provenance.violations as violations
 		with data.security.metadata.violations as violations
+		with data.security.certificate.violations as violations
 }

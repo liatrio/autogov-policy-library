@@ -1,8 +1,7 @@
 package shared.utils_test
 
-import rego.v1
-
 import data.shared.utils
+import rego.v1
 
 # Test payload decoding
 test_decoded_payload_list if {
@@ -62,4 +61,52 @@ test_is_cyclonedx_bom_true if {
 test_is_cyclonedx_bom_false if {
 	payload := {"predicateType": "https://example.com/other"}
 	not utils.is_cyclonedx_bom(payload)
+}
+
+# Test Fulcio certificate validation
+test_is_valid_fulcio_cert_true if {
+	# Valid certificate with all required fields
+	cert_str := concat("\n", [
+		"GitHub, Inc.",
+		"Fulcio Intermediate l2",
+		"https://github.com/",
+		"/.github/workflows/",
+		"@refs/heads/",
+		"token.actions.githubusercontent.com",
+		"github-hosted",
+	])
+	cert := base64.encode(cert_str)
+	utils.is_valid_fulcio_cert(cert)
+}
+
+test_is_valid_fulcio_cert_missing_fields if {
+	# Missing required fields
+	cert_str := concat("\n", [
+		"GitHub, Inc.",
+		"Fulcio Intermediate l2",
+		"https://github.com/",
+	])
+	cert := base64.encode(cert_str)
+	not utils.is_valid_fulcio_cert(cert)
+}
+
+test_is_valid_fulcio_cert_empty if {
+	not utils.is_valid_fulcio_cert("")
+}
+
+test_is_valid_fulcio_cert_non_string if {
+	not utils.is_valid_fulcio_cert(123)
+}
+
+# Test string manipulation helpers
+test_remove_prefix if {
+	str := "https://github.com/org/repo"
+	prefix := "https://github.com/"
+	utils.remove_prefix(str, prefix) == "org/repo"
+}
+
+test_remove_suffix if {
+	str := "org/repo/"
+	suffix := "/"
+	utils.remove_suffix(str, suffix) == "org/repo"
 }
