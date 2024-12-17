@@ -17,7 +17,7 @@ permissions:
       id-token: write
 - name: Generate Read Bundle Token
         id: generate_token
-        uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f # v1.0.0
+        uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f # v1.0.0, you technically can use tags, but the sha is safer, as it is immutable.
         with:
           scope: liatrio
           identity: rego-policy-library # liatrio/.github/chainguard/rego-policy-library.sts.yaml
