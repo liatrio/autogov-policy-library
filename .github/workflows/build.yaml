@@ -77,3 +77,9 @@ jobs:
           files: bundle.tar.gz
           tag_name: v${{ steps.go-semantic-release.outputs.version }}
           token: ${{ github.token }}
+      - name: Setup ORA
+        uses: oras-project/setup-oras@v1
+      - name: Oras login
+        run: echo "${{ github.token }}" | oras login ghcr.io --username ${{ github.actor }} --password-stdin
+      - name: Oras push
+        run: oras push ghcr.io/${{ github.repository }}:v${{ steps.go-semantic-release.outputs.version }} --config config.json:application/vnd.oci.image.config.v1+json bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
