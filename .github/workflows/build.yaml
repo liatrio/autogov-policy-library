@@ -75,7 +75,7 @@ jobs:
         run: |
           opa sign \
             --signing-key cosign.key \
-            bundle.tar.gz
+            --bundle bundle.tar.gz
       - name: Setup ORA
         uses: oras-project/setup-oras@v1
       - name: Oras login
