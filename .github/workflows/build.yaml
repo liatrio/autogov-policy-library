@@ -56,22 +56,18 @@ jobs:
         uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 #v2.2.0
         with:
           version: ${{ env.OPA_VERSION }}
+      - name: Retrieve private key
+        run: echo "$PRIVATE_KEY" > private_key.pem
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
       - name: Build OPA Bundle
         run: |
           opa \
             build \
             --bundle ./policies \
             --ignore "*_test.rego" \
-            --output bundle.tar.gz
-      - name: Retrieve private key
-        run: echo "$PRIVATE_KEY" > private_key.pem
-        env:
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-      - name: Sign Bundle
-        run: |
-          opa sign \
-            --signing-key private_key.pem \
-            --bundle bundle.tar.gz
+            --output bundle.tar.gz \
+            --signing-key private_key.pem
       - name: Setup ORA
         uses: oras-project/setup-oras@v1
       - name: Oras login
@@ -93,13 +89,18 @@ jobs:
         uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 #v2.2.0
         with:
           version: ${{ env.OPA_VERSION }}
+      - name: Retrieve private key
+        run: echo "$PRIVATE_KEY" > private_key.pem
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
       - name: Build OPA Bundle
         run: |
           opa \
             build \
             --bundle ./policies \
             --ignore "*_test.rego" \
-            --output bundle.tar.gz
+            --output bundle.tar.gz \
+            --signing-key private_key.pem
       - name: Run go-semantic-release
         uses: go-semantic-release/action@48d83acd958dae62e73701aad20a5b5844a3bf45 # v1.23.0
         id: go-semantic-release
@@ -118,5 +119,8 @@ jobs:
         uses: oras-project/setup-oras@v1
       - name: Oras login
         run: echo "${{ github.token }}" | oras login ghcr.io --username ${{ github.actor }} --password-stdin
-      - name: Oras push
+      - name: Oras push bundle
         run: oras push ghcr.io/${{ github.repository }}:v${{ steps.go-semantic-release.outputs.version }} --config config.json:application/vnd.oci.image.config.v1+json bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
+      - name: Oras push public key
+        run: |
+          oras push ghcr.io/${{ github.repository }}/public-key:v${{ steps.go-semantic-release.outputs.version }} ./public_keys/public_key.pem
