@@ -80,7 +80,7 @@ jobs:
         run: oras push ghcr.io/${{ github.repository }}:${{ github.sha }} --config config.json:application/vnd.oci.image.config.v1+json bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
       - name: Oras push public key
         run: |
-          oras push ghcr.io/${{ github.repository }}/public-key:${{ github.sha }} ./keys/public_key.pem
+          oras push ghcr.io/${{ github.repository }}/public-key:${{ github.sha }} ./public-keys/public_key.pem
 
   release:
     runs-on: ubuntu-latest
