@@ -91,7 +91,6 @@ jobs:
           oras \
             push \
             ghcr.io/${{ github.repository }}:v${{ steps.go-semantic-release.outputs.version }} \
-            --config config.json:application/vnd.oci.image.config.v1+json \
             bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
       - name: Oras push public key
         run: |
