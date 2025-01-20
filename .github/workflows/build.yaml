@@ -45,7 +45,7 @@ jobs:
       - name: Check OPA Policies
         run: opa check --rego-v1 --v1-compatible -s schemas ./policies
 
-    non-main-build:
+  non-main-build:
     runs-on: ubuntu-latest
     needs: test
     steps:
