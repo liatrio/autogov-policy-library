@@ -69,8 +69,12 @@ jobs:
             --signing-key private_key.pem
       - name: Setup ORA
         uses: oras-project/setup-oras@9c92598691bfef1424de2f8fae81941568f5889c # v1.2.1
-      - name: Oras login
-        run: echo "${{ github.token }}" | oras login ghcr.io --username ${{ github.actor }} --password-stdin
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
       - name: Oras push bundle
         run: |
           oras \
