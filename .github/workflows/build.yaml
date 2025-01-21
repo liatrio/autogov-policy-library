@@ -57,4 +57,4 @@ jobs:
     with:
       subject-name: ghcr.io/${{ github.repository }}
       cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@09bdcba6b8468b019fde6b6bd4e2c6ec5f11436e # <semver> / a commit SHA from an official liatrio-gh-autogov-workflows release
-
+      workflow-runner-label: 'ubuntu-latest'
