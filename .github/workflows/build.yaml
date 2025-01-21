@@ -56,13 +56,18 @@ jobs:
         uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 #v2.2.0
         with:
           version: ${{ env.OPA_VERSION }}
+      - name: Retrieve private key
+        run: echo "$PRIVATE_KEY" > private_key.pem
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
       - name: Build OPA Bundle
         run: |
           opa \
             build \
             --bundle ./policies \
             --ignore "*_test.rego" \
-            --output bundle.tar.gz
+            --output bundle.tar.gz \
+            --signing-key private_key.pem
       - name: Run go-semantic-release
         uses: go-semantic-release/action@48d83acd958dae62e73701aad20a5b5844a3bf45 # v1.23.0
         id: go-semantic-release
@@ -77,3 +82,23 @@ jobs:
           files: bundle.tar.gz
           tag_name: v${{ steps.go-semantic-release.outputs.version }}
           token: ${{ github.token }}
+      - name: Setup ORA
+        uses: oras-project/setup-oras@9c92598691bfef1424de2f8fae81941568f5889c # v1.2.1
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Oras push bundle
+        run: |
+          oras \
+            push \
+            ghcr.io/${{ github.repository }}:v${{ steps.go-semantic-release.outputs.version }} \
+            bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
+      - name: Oras push public key
+        run: |
+          oras \
+            push \
+            ghcr.io/${{ github.repository }}/public-key:v${{ steps.go-semantic-release.outputs.version }} \
+            ./public_keys/public_key.pem
