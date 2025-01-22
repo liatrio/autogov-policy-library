@@ -56,7 +56,7 @@ You now have an jsonl of the json attestation objects.
 
 #### Parse Attestation
 
-The downloaded attestation won't be very human readable because its based64 encoded, so we can run it through some jq and decoding.
+The downloaded attestation won't be very human readable because it is based64 encoded, so we can run it through some jq and decoding.
 
 ex:
 
