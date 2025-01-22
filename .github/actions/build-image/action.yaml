@@ -91,7 +91,7 @@ runs:
         if [ -n "${{ steps.semantic-release.outputs.version }}" ]; then
           oras push ghcr.io/${{ github.repository }}:${{ github.sha }},v${{ steps.semantic-release.outputs.version }} \
           bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
-        else r
+        else
           oras push ghcr.io/${{ github.repository }}:${{ github.sha }} \
           bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \
           --config config.json:application/vnd.oci.image.config.v1+json
