@@ -72,7 +72,7 @@ runs:
     - name: Oras push bundle
       shell: bash
       run: |
-        VERSION=${{ steps.semantic-release.outputs.version || tmp }}
+        VERSION=${{ steps.semantic-release.outputs.version || "tmp" }}
         oras \
           push \
           ghcr.io/${{ github.repository }}:${{ github.sha }},v${{ steps.semantic-release.outputs.version }} \
