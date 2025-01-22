@@ -67,11 +67,19 @@ runs:
           --bundle ./policies \
           --ignore "*_test.rego" \
           --output bundle.tar.gz \
-    # - name: Get Hash of Bundle
-    #   id: hash
-    #   run: echo "hash=$(sha256sum bundle.tar.gz | awk '{print "sha256:" $1}')" >> $GITHUB_OUTPUT
-    # - name: Update config.json with hash
-    #   run: echo "{{ steps.hash.outputs.hash }}" > config.json
+    - name: Get Hash of Bundle
+      id: hash
+      run: echo "hash=$(sha256sum bundle.tar.gz | awk '{print "sha256:" $1}')" >> $GITHUB_OUTPUT
+    - name: Create config.json with hash
+      run: |
+        echo '{
+          "rootfs": {
+          "type": "layers",
+          "diff_ids": [
+            "${{ steps.hash.outputs.hash }}"
+          ]
+          }
+        }' > config.json
     - name: Setup ORA
       uses: oras-project/setup-oras@9c92598691bfef1424de2f8fae81941568f5889c # v1.2.1
     - name: Oras push bundle
@@ -81,7 +89,7 @@ runs:
         if [ -n "${{ steps.semantic-release.outputs.version }}" ]; then
           oras push ghcr.io/${{ github.repository }}:${{ github.sha }},v${{ steps.semantic-release.outputs.version }} \
           bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
-        else
+        else r
           oras push ghcr.io/${{ github.repository }}:${{ github.sha }} \
           bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \
           --config config.json:application/vnd.oci.image.config.v1+json
