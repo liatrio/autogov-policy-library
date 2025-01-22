@@ -79,7 +79,7 @@ runs:
         else
           oras push ghcr.io/${{ github.repository }}:${{ github.sha }} \
           bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \
-          --config /dev/null:application/vnd.oci.image.config.v1+json
+          --config config.json:application/vnd.oci.image.config.v1+json
         fi
         oras resolve ghcr.io/${{ github.repository }}:${{ github.sha }}
         DIGEST=$(oras resolve ghcr.io/${{ github.repository }}:${{ github.sha }})
