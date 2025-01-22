@@ -68,9 +68,11 @@ runs:
           --ignore "*_test.rego" \
           --output bundle.tar.gz \
     - name: Get Hash of Bundle
+      shell: bash
       id: hash
       run: echo "hash=$(sha256sum bundle.tar.gz | awk '{print "sha256:" $1}')" >> $GITHUB_OUTPUT
     - name: Create config.json with hash
+      shell: bash
       run: |
         echo '{
           "rootfs": {
