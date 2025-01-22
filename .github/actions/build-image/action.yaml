@@ -59,6 +59,7 @@ runs:
       with:
         version: ${{ env.OPA_VERSION }}
     - name: Build OPA Bundle
+      shell: bash
       id: build-bundle
       run: |
         opa \
@@ -69,6 +70,7 @@ runs:
     - name: Setup ORA
       uses: oras-project/setup-oras@9c92598691bfef1424de2f8fae81941568f5889c # v1.2.1
     - name: Oras push bundle
+      shell: bash
       run: |
         oras \
           push \
