@@ -23,7 +23,7 @@ inputs:
 outputs:
   image-digest:
     description: The image digest of the image that was built from the build-bundle job.
-    value: ${{ steps.build-bundle.outputs.digest }}
+    value: ${{ steps.push-bundle.outputs.digest }}
 
 runs:
   using: composite
@@ -71,6 +71,7 @@ runs:
       uses: oras-project/setup-oras@9c92598691bfef1424de2f8fae81941568f5889c # v1.2.1
     - name: Oras push bundle
       shell: bash
+      id: push-bundle
       run: |
         if [ -n "${{ steps.semantic-release.outputs.version }}" ]; then
           oras push ghcr.io/${{ github.repository }}:${{ github.sha }},v${{ steps.semantic-release.outputs.version }} \
@@ -79,5 +80,6 @@ runs:
           oras push ghcr.io/${{ github.repository }}:${{ github.sha }} \
           bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
         fi
+        oras resolve ghcr.io/${{ github.repository }}:${{ github.sha }}
         DIGEST=$(oras resolve ghcr.io/${{ github.repository }}:${{ github.sha }})
         echo "digest=$DIGEST" >> $GITHUB_OUTPUT
