@@ -67,6 +67,11 @@ runs:
           --bundle ./policies \
           --ignore "*_test.rego" \
           --output bundle.tar.gz \
+    # - name: Get Hash of Bundle
+    #   id: hash
+    #   run: echo "hash=$(sha256sum bundle.tar.gz | awk '{print "sha256:" $1}')" >> $GITHUB_OUTPUT
+    # - name: Update config.json with hash
+    #   run: echo "{{ steps.hash.outputs.hash }}" > config.json
     - name: Setup ORA
       uses: oras-project/setup-oras@9c92598691bfef1424de2f8fae81941568f5889c # v1.2.1
     - name: Oras push bundle
