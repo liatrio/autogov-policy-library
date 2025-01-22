@@ -72,12 +72,12 @@ runs:
     - name: Oras push bundle
       shell: bash
       run: |
-        oras \
-          push \
-          if [ -n "${{ steps.semantic-release.outputs.version }}" ]; then
-            oras push ghcr.io/${{ github.repository }}:${{ github.sha }},v${{ steps.semantic-release.outputs.version }} bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
-          else
-            oras push ghcr.io/${{ github.repository }}:${{ github.sha }} bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
-          fi
+        if [ -n "${{ steps.semantic-release.outputs.version }}" ]; then
+          oras push ghcr.io/${{ github.repository }}:${{ github.sha }},v${{ steps.semantic-release.outputs.version }} \
+          bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
+        else
+          oras push ghcr.io/${{ github.repository }}:${{ github.sha }} \
+          bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
+        fi
         DIGEST=$(oras resolve ghcr.io/${{ github.repository }}:${{ github.sha }})
         echo "digest=$DIGEST" >> $GITHUB_OUTPUT
