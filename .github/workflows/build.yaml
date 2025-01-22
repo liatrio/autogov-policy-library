@@ -9,9 +9,6 @@ on:
       - README.md
       - catalog-info.yaml
       - renovate.json
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches: main
 
 env:
   OPA_VERSION: 0.67.1
