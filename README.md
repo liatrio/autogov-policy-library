@@ -59,7 +59,7 @@ brew install make docker
 
 ### Attestation Guide
 
-> (Optional) sometimes the best place to start is looking at an attestation; its contents and format are important for authoring policies
+> (Optional) sometimes the best place to start is looking at an attestation; its contents and format are important for authoring policies.
 
 #### Download Attestation
 
@@ -82,13 +82,23 @@ You now have an jsonl of the json attestation objects.
 
 #### Parse Attestation
 
-The downloaded attestation won't be very human readable, so we can run it through some jq and decoding.
+The downloaded attestation won't be very human readable because it is based64 encoded, so we can run it through some jq and decoding.
 
 ex:
 
 ```zsh
 cat sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae.jsonl | jq -r '.dsseEnvelope.payload' | base64 -d | jq -r
 ```
+
+#### Put it all together
+
+You can also run it all at once:
+
+```zsh
+gh attestation \ verify oci://ghcr.io/liatrio/liatrio-gh-autogov-workflows@sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae \ -o liatrio \ --format json \ -jq '.[0].attestation.bundle.dsseEnvelope.payload' \ | base64 -d | jq
+```
+
+> note this will only give you the first attestation object of the bundle downloaded. You can increase the index at .[0] to get other attestation objects.
 
 ### Creating Policy
 
