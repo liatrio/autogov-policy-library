@@ -2,5 +2,10 @@
   "created": "2024-01-01T00:00:00Z",
   "architecture": "amd64",
   "os": "linux",
-  "config": {}
+  "rootfs": {
+    "type": "layers",
+    "diff_ids": [
+      "sha256:feddeaaa46e69ea8debeb9d34a4cfa0c4214140453386ee89cb92348a1a439ef"
+    ]
+  }
 }
