@@ -26,6 +26,17 @@ runs:
         dry: true
         allow-initial-development-versions: true
         github-token: ${{ github.token }}
+    - name: Build Artifact Metadata
+      id: meta
+      uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
+      with:
+        images: ${{ inputs.subject-name }}
+        sep-tags: ','
+        tags: |
+          type=ref,event=branch
+          type=sha
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          type=raw,value=${{ steps.semantic-release.outputs.version }},enable=${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
       with:
@@ -67,7 +78,8 @@ runs:
       id: push-bundle
       run: |
         oras push \
-          ghcr.io/${{ github.repository }}:${{ steps.semantic-release.outputs.version || github.sha }} \
+          ghcr.io/${{ github.repository }}:${{ steps.meta.outputs }} \
           bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \
           --config config.json:application/vnd.oci.image.config.v1+json
-        echo "digest=$(oras resolve ghcr.io/${{ github.repository }}:${{ github.sha }})" >> $GITHUB_OUTPUT
+        
+        echo "digest=$(oras resolve ${{ steps.meta.outputs.json }})" >> $GITHUB_OUTPUT
