@@ -10,16 +10,6 @@ inputs:
     description: The name for the image.
     required: true
     default: ghcr.io/${{ github.repository }}
-  use-low-perms:
-    description: >
-      Primarily for demo purposes and specific only to the build-bundle composite action so that it is unnecessary to manually change it when wanting to flip from high permissions to low permissions.
-    default: "false"
-    required: false
-  github-token:
-    description: >
-      The GitHub token set throughout the reuseable workflow including the composite (build) action.
-    required: false
-    default: ''
 outputs:
   image-digest:
     description: The image digest of the image that was built from the build-bundle job.
@@ -35,25 +25,13 @@ runs:
       with:
         dry: true
         allow-initial-development-versions: true
-        github-token: ${{ inputs.github-token || github.token }}
-    - name: Build Artifact Metadata
-      id: meta
-      uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
-      with:
-        images: ${{ inputs.subject-name }}
-        tags: |
-          type=ref,event=branch
-          type=sha
-          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-          type=raw,value=${{ steps.semantic-release.outputs.version }},enable=${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        github-token: ${{ github.token }}
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ github.token }}
-    - name: Check out repository code
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
     - name: Setup OPA
       uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 #v2.2.0
       with:
@@ -66,7 +44,7 @@ runs:
           build \
           --bundle ./policies \
           --ignore "*_test.rego" \
-          --output bundle.tar.gz \
+          --output bundle.tar.gz
     - name: Get Hash of Bundle
       shell: bash
       id: hash
@@ -88,14 +66,8 @@ runs:
       shell: bash
       id: push-bundle
       run: |
-        if [ -n "${{ steps.semantic-release.outputs.version }}" ]; then
-          oras push ghcr.io/${{ github.repository }}:${{ github.sha }},v${{ steps.semantic-release.outputs.version }} \
-          bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip
-        else
-          oras push ghcr.io/${{ github.repository }}:${{ github.sha }} \
+        oras push \
+          ghcr.io/${{ github.repository }}:${{ steps.semantic-release.outputs.version || github.sha }} \
           bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \
           --config config.json:application/vnd.oci.image.config.v1+json
-        fi
-        oras resolve ghcr.io/${{ github.repository }}:${{ github.sha }}
-        DIGEST=$(oras resolve ghcr.io/${{ github.repository }}:${{ github.sha }})
-        echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+        echo "digest=$(oras resolve ghcr.io/${{ github.repository }}:${{ github.sha }})" >> $GITHUB_OUTPUT
