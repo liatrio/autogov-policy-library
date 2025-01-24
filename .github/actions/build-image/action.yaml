@@ -71,14 +71,15 @@ runs:
           }
         }' > config.json
     - name: Setup ORA
-      uses: oras-project/setup-oras@9c92598691bfef1424de2f8fae81941568f5889c # v1.2.1
+      uses: oras-project/setup-oras@5c0b487ce3fe0ce3ab0d034e63669e426e294e4d # v1.2.2
     - name: Oras push bundle
       shell: bash
       id: push-bundle
       run: |
-        oras push \
-          "ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.tags }}" \
-          bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \
-          --config config.json:application/vnd.oci.image.config.v1+json
-        
-        echo "digest=$(oras resolve ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }})" >> $GITHUB_OUTPUT
+        ORAS_PUSH_DIGEST=$(oras push \ 
+             "ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.tags }}" \ 
+             bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \ 
+             --config config.json:application/vnd.oci.image.config.v1+json \ 
+             --format json | jq -r '.digest') 
+  
+         echo "digest=$ORAS_PUSH_DIGEST" >> $GITHUB_OUTPUT
