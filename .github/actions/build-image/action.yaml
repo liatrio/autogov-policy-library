@@ -77,9 +77,9 @@ runs:
       id: push-bundle
       run: |
         ORAS_PUSH_DIGEST=$(oras push \ 
-             "ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.tags }}" \ 
-             bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \ 
-             --config config.json:application/vnd.oci.image.config.v1+json \ 
-             --format json | jq -r '.digest') 
+          "ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.tags }}" \ 
+          bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \ 
+          --config config.json:application/vnd.oci.image.config.v1+json \ 
+          --format json | jq -r '.digest') 
   
-         echo "digest=$ORAS_PUSH_DIGEST" >> $GITHUB_OUTPUT
+        echo "digest=$ORAS_PUSH_DIGEST" >> $GITHUB_OUTPUT
