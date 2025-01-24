@@ -83,7 +83,7 @@ jobs:
           tag_name: v${{ steps.go-semantic-release.outputs.version }}
           token: ${{ github.token }}
       - name: Setup ORA
-        uses: oras-project/setup-oras@9c92598691bfef1424de2f8fae81941568f5889c # v1.2.1
+        uses: oras-project/setup-oras@5c0b487ce3fe0ce3ab0d034e63669e426e294e4d # v1.2.2
       - name: Login to GitHub Container Registry
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
