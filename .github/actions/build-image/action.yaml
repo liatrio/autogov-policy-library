@@ -81,4 +81,4 @@ runs:
           bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \
           --config config.json:application/vnd.oci.image.config.v1+json
         
-        echo "digest=$(oras resolve ${{ steps.meta.outputs.json }})" >> $GITHUB_OUTPUT
+        echo "digest=$(oras resolve ghcr.io/${{ github.repository }}:${{ github.sha }})" >> $GITHUB_OUTPUT
