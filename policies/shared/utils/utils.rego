@@ -25,6 +25,10 @@ is_cyclonedx_bom(payload) if {
 	payload.predicateType == "https://cyclonedx.org/bom"
 }
 
+is_dep_vulnerability_scan(payload) if {
+	payload.predicateType == "https://in-toto.io/attestation/vulns/v0.2"
+}
+
 # Helper function to validate Fulcio certificates
 is_valid_fulcio_cert(raw) := valid if {
 	is_string(raw)
