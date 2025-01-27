@@ -60,14 +60,6 @@ violations contains msg if {
 	some payload in utils.decoded_payload_list
 	utils.is_cosign_attestation(payload)
 	is_metadata_present(payload)
-	not payload.predicate.repositoryData.repositoryId
-	msg := "repository is missing in metadata"
-}
-
-violations contains msg if {
-	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
-	is_metadata_present(payload)
 	not payload.predicate.ownerData.ownerId
 	msg := "owner is missing in metadata"
 }
@@ -223,7 +215,7 @@ violations contains msg if {
 	msg := "invalid runner environment"
 }
 
-# Add this rule to validate owner and repository IDs
+# Add this rule to validate owner ID
 violations contains msg if {
 	some payload in utils.decoded_payload_list
 	utils.is_cosign_attestation(payload)

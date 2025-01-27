@@ -1,0 +1,85 @@
+name: Build Bundle Composite Action
+
+description: >-
+  A composite action that is placed in ./.github/actions/build-image/action.yaml whereby
+  ./.github/workflows/rw-<permissions_path>-attest-image.yaml will trigger this action to build an image. The steps
+  can be adjusted per the users need just as long as the output is the image digest.
+
+inputs:
+  subject-name:
+    description: The name for the image.
+    required: true
+    default: ghcr.io/${{ github.repository }}
+outputs:
+  image-digest:
+    description: The image digest of the image that was built from the build-bundle job.
+    value: ${{ steps.push-bundle.outputs.digest }}
+
+runs:
+  using: composite
+  steps:
+    - name: Get Next Semantic Release Tag # premptively tags pushed/registry image w/ release tag
+      id: semantic-release
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: go-semantic-release/action@48d83acd958dae62e73701aad20a5b5844a3bf45 # v1.23.0
+      with:
+        dry: true
+        allow-initial-development-versions: true
+        github-token: ${{ github.token }}
+    - name: Build Artifact Metadata
+      id: meta
+      uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
+      with:
+        sep-tags: ','
+        tags: |
+          type=ref,event=branch
+          type=sha
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          type=raw,value=${{ steps.semantic-release.outputs.version }},enable=${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+    - name: Setup OPA
+      uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 #v2.2.0
+      with:
+        version: ${{ env.OPA_VERSION }}
+    - name: Build OPA Bundle
+      shell: bash
+      id: build-bundle
+      run: |
+        opa \
+          build \
+          --bundle ./policies \
+          --ignore "*_test.rego" \
+          --output bundle.tar.gz
+    - name: Get Hash of Bundle
+      shell: bash
+      id: hash
+      run: echo "hash=$(sha256sum bundle.tar.gz | awk '{print "sha256:" $1}')" >> $GITHUB_OUTPUT
+    - name: Create config.json with hash
+      shell: bash
+      run: |
+        echo '{
+          "rootfs": {
+          "type": "layers",
+          "diff_ids": [
+            "${{ steps.hash.outputs.hash }}"
+          ]
+          }
+        }' > config.json
+    - name: Setup ORA
+      uses: oras-project/setup-oras@5c0b487ce3fe0ce3ab0d034e63669e426e294e4d # v1.2.2
+    - name: Oras push bundle
+      shell: bash
+      id: push-bundle
+      run: |
+        ORAS_PUSH_DIGEST=$(oras push \
+            "ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.tags }}" \
+            bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \
+            --config config.json:application/vnd.oci.image.config.v1+json \
+            --format json | jq -r '.digest')
+
+        echo "digest=$ORAS_PUSH_DIGEST" >> $GITHUB_OUTPUT

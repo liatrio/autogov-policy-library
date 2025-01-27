@@ -6,6 +6,32 @@ This repository serves as a collection of OPA Rego policies that are specificall
 
 The GitHub AutoGov Policy Library provides a set of predefined policies that can be used to enforce governance and compliance rules for attestations within your GitHub repositories. These policies are written in OPA Rego language, which allows for flexible and customizable rule definitions.
 
+## Using Policy Bundle in GitHub Workflows
+
+To access & download the policy bundle you can add the following to your **Liatrio** repo's workflow job steps:
+
+(add permission listed to appropriate job permission set)
+
+```yaml
+permissions:
+      id-token: write
+- name: Generate Read Bundle Token
+        id: generate_token
+        uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f # v1.0.0, you technically can use tags, but the sha is safer, as it is immutable.
+        with:
+          scope: liatrio
+          identity: rego-policy-library # liatrio/.github/chainguard/rego-policy-library.sts.yaml
+- name: Download Policy Bundle
+        run: |
+          set +x
+          export GH_TOKEN=${{ steps.generate_token.outputs.token }}
+          gh release download \
+            --repo ${{ github.repository_owner }}/liatrio-rego-policy-library \
+            --pattern "bundle.tar.gz"
+```
+
+> this is only possible if your repo is in the Liatrio org
+
 ## Getting Started
 
 To start using the policies from this library, follow these steps:
@@ -220,7 +246,7 @@ We now have a list of objects as the parsed payload.
     "_type": "https://in-toto.io/Statement/v1",
     "subject": [
       {
-        "name": "ghcr.io/liatrio/demo-gh-autogov-workflows",
+        "name": "ghcr.io/liatrio/liatrio-gh-autogov-workflows",
         "digest": {
           "sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"
         }
@@ -233,7 +259,7 @@ We now have a list of objects as the parsed payload.
     "_type": "https://in-toto.io/Statement/v1",
     "subject": [
       {
-        "name": "ghcr.io/liatrio/demo-gh-autogov-workflows",
+        "name": "ghcr.io/liatrio/liatrio-gh-autogov-workflows",
         "digest": {
           "sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"
         }
