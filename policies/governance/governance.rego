@@ -11,6 +11,10 @@
 package governance
 
 import data.security.certificate
+import data.security.dependency_vulnerability.critical
+import data.security.dependency_vulnerability.high
+import data.security.dependency_vulnerability.low
+import data.security.dependency_vulnerability.medium
 import data.security.metadata
 import data.security.provenance
 import data.security.sbom
@@ -22,6 +26,10 @@ allow if {
 	provenance.allow
 	metadata.allow
 	certificate.allow
+	low.allow
+	medium.allow
+	high.allow
+	critical.allow
 }
 
 violations := {
@@ -29,4 +37,8 @@ violations := {
 	"provenance": provenance.violations,
 	"certificate": certificate.violations,
 	"metadata": metadata.violations,
+	"dependency_vulnerability_low": low.violations,
+	"dependency_vulnerability_medium": medium.violations,
+	"dependency_vulnerability_high": high.violations,
+	"dependency_vulnerability_critical": critical.violations,
 }

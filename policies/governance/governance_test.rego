@@ -16,6 +16,10 @@ test_allow_all_true if {
 		with data.security.sbom.violations as violations
 		with data.security.provenance.violations as violations
 		with data.security.metadata.violations as violations
+		with data.security.dependency_vulnerability.low.violations as violations
+		with data.security.dependency_vulnerability.medium.violations as violations
+		with data.security.dependency_vulnerability.high.violations as violations
+		with data.security.dependency_vulnerability.critical.violations as violations
 }
 
 # Test SBOM false case
@@ -25,6 +29,10 @@ test_allow_sbom_false if {
 	not governance.allow with data.security.sbom.violations as sbom_violations
 		with data.security.provenance.violations as other_violations
 		with data.security.metadata.violations as other_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
 }
 
 # Test provenance false case
@@ -34,6 +42,10 @@ test_allow_provenance_false if {
 	not governance.allow with data.security.sbom.violations as other_violations
 		with data.security.provenance.violations as provenance_violations
 		with data.security.metadata.violations as other_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
 }
 
 # Test metadata false case
@@ -43,6 +55,10 @@ test_allow_metadata_false if {
 	not governance.allow with data.security.sbom.violations as other_violations
 		with data.security.provenance.violations as other_violations
 		with data.security.metadata.violations as metadata_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
 }
 
 # Test certificate false case
@@ -53,14 +69,72 @@ test_allow_certificate_false if {
 		with data.security.sbom.violations as other_violations
 		with data.security.provenance.violations as other_violations
 		with data.security.metadata.violations as other_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
 }
+
+# Test low vulnerability false case
+test_allow_low_vulnerability_false if {
+	low_violations := {"test violation"}
+	other_violations := set()
+	not governance.allow with data.security.dependency_vulnerability.low.violations as low_violations
+		with data.security.sbom.violations as other_violations
+		with data.security.provenance.violations as other_violations
+		with data.security.metadata.violations as other_violations
+		with data.security.certificate.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
+}
+
+# Test medium vulnerability false case
+test_allow_medium_vulnerability_false if {
+	medium_violations := {"test violation"}
+	other_violations := set()
+	not governance.allow with data.security.dependency_vulnerability.medium.violations as medium_violations
+		with data.security.sbom.violations as other_violations
+		with data.security.provenance.violations as other_violations
+		with data.security.metadata.violations as other_violations
+		with data.security.certificate.violations as other_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
+}
+
+# Test high vulnerability false case
+test_allow_high_vulnerability_false if {
+	high_violations := {"test violation"}
+	other_violations := set()
+	not governance.allow with data.security.dependency_vulnerability.high.violations as high_violations
+		with data.security.sbom.violations as other_violations
+		with data.security.provenance.violations as other_violations
+		with data.security.metadata.violations as other_violations
+		with data.security.certificate.violations as other_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
+}
+
+sbom_violations := {"cyclonedx sbom is missing"}
+
+provenance_violations := {"predicate type is not correct"}
+
+metadata_violations := {"workflow inputs are missing"}
+
+certificate_violations := {"bundle certificate is invalid"}
+
+dependency_vulnerability_violations_low := {"Low Vulnerabilities found."}
+
+dependency_vulnerability_violations_medium := {"Medium Vulnerabilities found."}
+
+dependency_vulnerability_violations_high := {"High Vulnerabilities found."}
+
+dependency_vulnerability_violations_critical := {"Critical Vulnerabilities found."}
 
 # Test violations reporting
 test_violations_report if {
-	sbom_violations := {"cyclonedx sbom is missing"}
-	provenance_violations := {"predicate type is not correct"}
-	metadata_violations := {"workflow inputs are missing"}
-	certificate_violations := {"bundle certificate is invalid"}
 	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
 		"predicateType": "https://example.org/other",
 		"subject": [{
@@ -75,11 +149,19 @@ test_violations_report if {
 		"provenance": provenance_violations,
 		"metadata": metadata_violations,
 		"certificate": certificate_violations,
+		"dependency_vulnerability_low": dependency_vulnerability_violations_low,
+		"dependency_vulnerability_medium": dependency_vulnerability_violations_medium,
+		"dependency_vulnerability_high": dependency_vulnerability_violations_high,
+		"dependency_vulnerability_critical": dependency_vulnerability_violations_critical,
 	} with input as test_input
 		with data.security.sbom.violations as sbom_violations
 		with data.security.provenance.violations as provenance_violations
 		with data.security.metadata.violations as metadata_violations
 		with data.security.certificate.violations as certificate_violations
+		with data.security.dependency_vulnerability.low.violations as dependency_vulnerability_violations_low
+		with data.security.dependency_vulnerability.medium.violations as dependency_vulnerability_violations_medium
+		with data.security.dependency_vulnerability.high.violations as dependency_vulnerability_violations_high
+		with data.security.dependency_vulnerability.critical.violations as dependency_vulnerability_violations_critical
 }
 
 # Test empty input case
@@ -96,8 +178,16 @@ test_no_violations if {
 		"provenance": violations,
 		"metadata": violations,
 		"certificate": violations,
+		"dependency_vulnerability_low": violations,
+		"dependency_vulnerability_medium": violations,
+		"dependency_vulnerability_high": violations,
+		"dependency_vulnerability_critical": violations,
 	} with data.security.sbom.violations as violations
 		with data.security.provenance.violations as violations
 		with data.security.metadata.violations as violations
 		with data.security.certificate.violations as violations
+		with data.security.dependency_vulnerability.low.violations as violations
+		with data.security.dependency_vulnerability.medium.violations as violations
+		with data.security.dependency_vulnerability.high.violations as violations
+		with data.security.dependency_vulnerability.critical.violations as violations
 }
