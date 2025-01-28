@@ -57,6 +57,49 @@ brew install make docker
 - **`make check`**: Validates OPA policies.
 - **`make test`**: Runs OPA unit tests.
 
+### Attestation Guide
+
+> (Optional) sometimes the best place to start is looking at an attestation; its contents and format are important for authoring policies.
+
+#### Download Attestation
+
+To download attestations from GitHub, you must [login to ghcr.io](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic)
+
+```zsh
+export CR_PAT=YOUR_TOKEN
+echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
+```
+
+Now that you are authenticated, you can download the attestation.
+
+ex:
+
+```zsh
+gh attestation download oci://ghcr.io/liatrio/liatrio-gh-autogov-workflows@sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae -o liatrio
+```
+
+You now have an jsonl of the json attestation objects.
+
+#### Parse Attestation
+
+The downloaded attestation won't be very human readable because it is based64 encoded, so we can run it through some jq and decoding.
+
+ex:
+
+```zsh
+cat sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae.jsonl | jq -r '.dsseEnvelope.payload' | base64 -d | jq -r
+```
+
+#### Put it all together
+
+You can also run it all at once:
+
+```zsh
+gh attestation \ verify oci://ghcr.io/liatrio/liatrio-gh-autogov-workflows@sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae \ -o liatrio \ --format json \ -jq '.[0].attestation.bundle.dsseEnvelope.payload' \ | base64 -d | jq
+```
+
+> note this will only give you the first attestation object of the bundle downloaded. You can increase the index at .[0] to get other attestation objects.
+
 ### Creating Policy
 
 Use this [example attestation](./test/build_provenance_and_sbom_attestations.json) to help pick an object to validate. For more detailed information on authoring Rego policy, please refer to the following resources:
