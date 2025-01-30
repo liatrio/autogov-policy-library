@@ -42,7 +42,7 @@ jobs:
       - name: Check OPA Policies
         run: opa check --rego-v1 --v1-compatible -s schemas ./policies
 
-  attest-image-hp: #image
+  attest-image-hp:
     if: github.event.pull_request.draft == false
     needs: test
     permissions:
