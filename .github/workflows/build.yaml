@@ -9,16 +9,27 @@ on:
       - README.md
       - catalog-info.yaml
       - renovate.json
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches: main
 
 env:
   OPA_VERSION: 0.67.1
+  REGAL_VERSION: 0.28.0
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Setup Regal
+        uses: StyraInc/setup-regal@33a142b1189004e0f14bf42b15972c67eecce776 # v1.0
+        with:
+          version: ${{ env.REGAL_VERSION }}
+      - name: Run Regal lint
+        run: regal lint --format github ./policies
+
   test:
     runs-on: ubuntu-latest
+    needs: lint
     steps:
       - name: Check out repository code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -29,37 +40,18 @@ jobs:
       - name: Run OPA Tests
         run: opa test -v -s ./schemas ./policies/
       - name: Check OPA Policies
-        run: opa check --rego-v1 ./policies
+        run: opa check --rego-v1 --v1-compatible -s schemas ./policies
 
-  release:
-    runs-on: ubuntu-latest
+  attest-image-hp:
+    if: github.event.pull_request.draft == false
     needs: test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Setup OPA
-        uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 #v2.2.0
-        with:
-          version: ${{ env.OPA_VERSION }}
-      - name: Build OPA Bundle
-        run: |
-          opa \
-            build \
-            --bundle ./policies \
-            --ignore "*_test.rego" \
-            --output bundle.tar.gz
-      - name: Run go-semantic-release
-        uses: go-semantic-release/action@48d83acd958dae62e73701aad20a5b5844a3bf45 # v1.23.0
-        id: go-semantic-release
-        with:
-          github-token: ${{ github.token }}
-          changelog-generator-opt: emojis=true
-          allow-initial-development-versions: true
-      - name: Upload Release Asset
-        if: steps.go-semantic-release.outputs.version != ''
-        uses: softprops/action-gh-release@01570a1f39cb168c169c802c3bceb9e93fb10974 # v2.1.0
-        with:
-          files: bundle.tar.gz
-          tag_name: v${{ steps.go-semantic-release.outputs.version }}
-          token: ${{ github.token }}
+    permissions:
+      id-token: write
+      attestations: write
+      packages: write
+      contents: write
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@33e7697ab0abbb382f60badd1441b5170d89eb35 # v0.2.5
+    secrets: inherit
+    with:
+      subject-name: ghcr.io/${{ github.repository }}
+      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@33e7697ab0abbb382f60badd1441b5170d89eb35 # v0.2.5

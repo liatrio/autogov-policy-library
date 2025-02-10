@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "mediaType": {
+                "type": "string",
+                "enum": [
+                    "application/vnd.dev.sigstore.bundle.v0.3+json"
+                ]
+            },
+            "verificationMaterial": {
+                "type": "object",
+                "properties": {
+                    "certificate": {
+                        "type": "object",
+                        "properties": {
+                            "rawBytes": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "rawBytes"
+                        ]
+                    }
+                },
+                "required": [
+                    "certificate"
+                ]
+            }
+        },
+        "required": [
+            "mediaType",
+            "verificationMaterial"
+        ]
+    }
+}

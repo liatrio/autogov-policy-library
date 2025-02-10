@@ -1,0 +1,9 @@
+{
+    "roots": ["policies"],
+    "metadata": {
+      "required_builtins": {
+          "builtin1": [
+          ]
+      }
+    }
+}

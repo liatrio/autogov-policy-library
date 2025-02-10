@@ -1,0 +1,70 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "_type": {
+            "type": "string",
+            "const": "https://in-toto.io/Statement/v1"
+        },
+        "subject": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "digest": {
+                        "type": "object",
+                        "properties": {
+                            "sha256": {
+                                "type": "string"
+                            }
+                        },
+                        "required": ["sha256"]
+                    }
+                },
+                "required": ["name", "digest"]
+            }
+        },
+        "predicateType": {
+            "type": "string",
+            "const": "https://slsa.dev/provenance/v1"
+        },
+        "predicate": {
+            "type": "object",
+            "properties": {
+                "buildDefinition": {
+                    "type": "object",
+                    "properties": {
+                        "buildType": {
+                            "type": "string",
+                            "const": "https://actions.github.io/buildtypes/workflow/v1"
+                        },
+                        "internalParameters": {
+                            "type": "object",
+                            "properties": {
+                                "github": {
+                                    "type": "object",
+                                    "properties": {
+                                        "repository_id": {
+                                            "type": "string"
+                                        },
+                                        "repository_owner_id": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": ["repository_id", "repository_owner_id"]
+                                }
+                            },
+                            "required": ["github"]
+                        }
+                    },
+                    "required": ["buildType", "internalParameters"]
+                }
+            },
+            "required": ["buildDefinition"]
+        }
+    },
+    "required": ["_type", "subject", "predicateType", "predicate"]
+} 

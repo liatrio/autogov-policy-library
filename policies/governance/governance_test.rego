@@ -1,142 +1,193 @@
-package governance.governance_test
+package governance_test
 
 import data.governance
 import rego.v1
 
-# Utility function to create test input
-create_test_input(predicate_type) := [{
-	"_type": "https://in-toto.io/Statement/v1",
-	"subject": [{
-		"name": "ghcr.io/liatrio/liatrio-gh-autogov-workflows",
-		"digest": {"sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"},
-	}],
-	"predicateType": predicate_type,
-	"predicate": {},
-}]
-
-# Test that governance.allow is true when both sbom and provenance allow are true
-test_allow_true_if_both_pass if {
-	sbom_allow := true
-	provenance_allow := true
-	test_input := create_test_input("https://cyclonedx.org/bom")
+# Test all true case
+test_allow_all_true if {
+	violations := set()
+	test_input := [{
+		"mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+		"verificationMaterial": {"certificate": {"rawBytes": "valid-github-cert"}},
+	}]
 
 	governance.allow with input as test_input
-		with data.security.sbom.allow as sbom_allow
-		with data.security.provenance.allow as provenance_allow
+		with data.shared.utils.is_valid_fulcio_cert as {"valid-github-cert": true}
+		with data.security.sbom.violations as violations
+		with data.security.provenance.violations as violations
+		with data.security.metadata.violations as violations
+		with data.security.dependency_vulnerability.low.violations as violations
+		with data.security.dependency_vulnerability.medium.violations as violations
+		with data.security.dependency_vulnerability.high.violations as violations
+		with data.security.dependency_vulnerability.critical.violations as violations
 }
 
-# Test that governance.allow is false when sbom fails but provenance passes
-test_allow_false_if_sbom_fails if {
-	sbom_allow := false
-	provenance_allow := true
-	test_input := create_test_input("https://cyclonedx.org/bom")
-
-	not governance.allow with input as test_input
-		with data.security.sbom.allow as sbom_allow
-		with data.security.provenance.allow as provenance_allow
+# Test SBOM false case
+test_allow_sbom_false if {
+	sbom_violations := {"test violation"}
+	other_violations := set()
+	not governance.allow with data.security.sbom.violations as sbom_violations
+		with data.security.provenance.violations as other_violations
+		with data.security.metadata.violations as other_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
 }
 
-# Test that governance.allow is false when provenance fails but sbom passes
-test_allow_false_if_provenance_fails if {
-	sbom_allow := true
-	provenance_allow := false
-	test_input := create_test_input("https://cyclonedx.org/bom")
-
-	not governance.allow with input as test_input
-		with data.security.sbom.allow as sbom_allow
-		with data.security.provenance.allow as provenance_allow
+# Test provenance false case
+test_allow_provenance_false if {
+	provenance_violations := {"test violation"}
+	other_violations := set()
+	not governance.allow with data.security.sbom.violations as other_violations
+		with data.security.provenance.violations as provenance_violations
+		with data.security.metadata.violations as other_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
 }
 
-# Test that governance.allow is false when both sbom and provenance fail
-test_allow_false_if_both_fail if {
-	sbom_allow := false
-	provenance_allow := false
-	test_input := create_test_input("https://cyclonedx.org/bom")
-
-	not governance.allow with input as test_input
-		with data.security.sbom.allow as sbom_allow
-		with data.security.provenance.allow as provenance_allow
+# Test metadata false case
+test_allow_metadata_false if {
+	metadata_violations := {"test violation"}
+	other_violations := set()
+	not governance.allow with data.security.sbom.violations as other_violations
+		with data.security.provenance.violations as other_violations
+		with data.security.metadata.violations as metadata_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
 }
 
-# Test that governance.violations contains only sbom violations when provenance has no violations
-test_violations_only_sbom if {
-	sbom_violations := {"cyclonedx sbom is missing"}
-	provenance_violations := set()
-	test_input := create_test_input("https://example.org/other")
+# Test certificate false case
+test_allow_certificate_false if {
+	certificate_violations := {"test violation"}
+	other_violations := set()
+	not governance.allow with data.security.certificate.violations as certificate_violations
+		with data.security.sbom.violations as other_violations
+		with data.security.provenance.violations as other_violations
+		with data.security.metadata.violations as other_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
+}
+
+# Test low vulnerability false case
+test_allow_low_vulnerability_false if {
+	low_violations := {"test violation"}
+	other_violations := set()
+	not governance.allow with data.security.dependency_vulnerability.low.violations as low_violations
+		with data.security.sbom.violations as other_violations
+		with data.security.provenance.violations as other_violations
+		with data.security.metadata.violations as other_violations
+		with data.security.certificate.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
+}
+
+# Test medium vulnerability false case
+test_allow_medium_vulnerability_false if {
+	medium_violations := {"test violation"}
+	other_violations := set()
+	not governance.allow with data.security.dependency_vulnerability.medium.violations as medium_violations
+		with data.security.sbom.violations as other_violations
+		with data.security.provenance.violations as other_violations
+		with data.security.metadata.violations as other_violations
+		with data.security.certificate.violations as other_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.high.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
+}
+
+# Test high vulnerability false case
+test_allow_high_vulnerability_false if {
+	high_violations := {"test violation"}
+	other_violations := set()
+	not governance.allow with data.security.dependency_vulnerability.high.violations as high_violations
+		with data.security.sbom.violations as other_violations
+		with data.security.provenance.violations as other_violations
+		with data.security.metadata.violations as other_violations
+		with data.security.certificate.violations as other_violations
+		with data.security.dependency_vulnerability.low.violations as other_violations
+		with data.security.dependency_vulnerability.medium.violations as other_violations
+		with data.security.dependency_vulnerability.critical.violations as other_violations
+}
+
+sbom_violations := {"cyclonedx sbom is missing"}
+
+provenance_violations := {"predicate type is not correct"}
+
+metadata_violations := {"workflow inputs are missing"}
+
+certificate_violations := {"bundle certificate is invalid"}
+
+dependency_vulnerability_violations_low := {"Low Vulnerabilities found."}
+
+dependency_vulnerability_violations_medium := {"Medium Vulnerabilities found."}
+
+dependency_vulnerability_violations_high := {"High Vulnerabilities found."}
+
+dependency_vulnerability_violations_critical := {"Critical Vulnerabilities found."}
+
+# Test violations reporting
+test_violations_report if {
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "https://example.org/other",
+		"subject": [{
+			"name": "ghcr.io/liatrio/demo-gh-autogov-workflows",
+			"digest": {"sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"},
+		}],
+		"predicate": {},
+	}))}}]
 
 	governance.violations == {
 		"sbom": sbom_violations,
 		"provenance": provenance_violations,
+		"metadata": metadata_violations,
+		"certificate": certificate_violations,
+		"dependency_vulnerability_low": dependency_vulnerability_violations_low,
+		"dependency_vulnerability_medium": dependency_vulnerability_violations_medium,
+		"dependency_vulnerability_high": dependency_vulnerability_violations_high,
+		"dependency_vulnerability_critical": dependency_vulnerability_violations_critical,
 	} with input as test_input
 		with data.security.sbom.violations as sbom_violations
 		with data.security.provenance.violations as provenance_violations
+		with data.security.metadata.violations as metadata_violations
+		with data.security.certificate.violations as certificate_violations
+		with data.security.dependency_vulnerability.low.violations as dependency_vulnerability_violations_low
+		with data.security.dependency_vulnerability.medium.violations as dependency_vulnerability_violations_medium
+		with data.security.dependency_vulnerability.high.violations as dependency_vulnerability_violations_high
+		with data.security.dependency_vulnerability.critical.violations as dependency_vulnerability_violations_critical
 }
 
-# Test that governance.violations contains only provenance violations when sbom has no violations
-test_violations_only_provenance if {
-	sbom_violations := set()
-	provenance_violations := {"predicate type is not correct or missing"}
-	test_input := create_test_input("https://slsa.dev/provenance/v1")
-
-	governance.violations == {
-		"sbom": sbom_violations,
-		"provenance": provenance_violations,
-	} with input as test_input
-		with data.security.sbom.violations as sbom_violations
-		with data.security.provenance.violations as provenance_violations
-}
-
-# Test that governance.violations contains both sbom and provenance violations
-test_violations_both_sbom_and_provenance if {
-	sbom_violations := {"cyclonedx sbom is missing"}
-	provenance_violations := {"predicate type is not correct or missing"}
-	test_input := create_test_input("https://example.org/other")
-
-	governance.violations == {
-		"sbom": sbom_violations,
-		"provenance": provenance_violations,
-	} with input as test_input
-		with data.security.sbom.violations as sbom_violations
-		with data.security.provenance.violations as provenance_violations
-}
-
-# Test that allow is false when there are no provenance attestations
-test_no_provenance_attestation if {
-	predicate_type := ""
-	payload := base64.encode(json.marshal({"predicateType": predicate_type}))
-	test_input := create_test_input(payload)
-	not governance.allow with input as test_input
-}
-
-# Test that allow is false when provenance attestation is not allowed by security.provenance
-test_provenance_violation_found if {
-	predicate_type := "https://slsa.dev/provenance/v1"
-	predicate := {"buildDefinition": {"buildType": "incorrect_build_type"}}
-	payload := base64.encode(json.marshal({"predicateType": predicate_type, "predicate": predicate}))
-	test_input := create_test_input(payload)
-	not governance.allow with input as test_input
-}
-
-# Test that allow is false when repository is not approved
-test_repository_not_approved if {
-	predicate_type := "https://slsa.dev/provenance/v1"
-	predicate := {"buildDefinition": {"internalParameters": {"github": {"repository_id": "unapproved_repo_id"}}}}
-	payload := base64.encode(json.marshal({"predicateType": predicate_type, "predicate": predicate}))
-	test_input := create_test_input(payload)
-	not governance.allow with input as test_input
-}
-
-# Test that allow is false when organization is not approved
-test_organization_not_approved if {
-	predicate_type := "https://slsa.dev/provenance/v1"
-	predicate := {"buildDefinition": {"internalParameters": {"github": {"repository_owner_id": "00000000"}}}}
-	payload := base64.encode(json.marshal({"predicateType": predicate_type, "predicate": predicate}))
-	test_input := create_test_input(payload)
-	not governance.allow with input as test_input
-}
-
-# Test that governance.allow is false when input is empty
+# Test empty input case
 test_empty_input if {
 	test_input := []
 	not governance.allow with input as test_input
+}
+
+# Test no violations case
+test_no_violations if {
+	violations := set()
+	governance.violations == {
+		"sbom": violations,
+		"provenance": violations,
+		"metadata": violations,
+		"certificate": violations,
+		"dependency_vulnerability_low": violations,
+		"dependency_vulnerability_medium": violations,
+		"dependency_vulnerability_high": violations,
+		"dependency_vulnerability_critical": violations,
+	} with data.security.sbom.violations as violations
+		with data.security.provenance.violations as violations
+		with data.security.metadata.violations as violations
+		with data.security.certificate.violations as violations
+		with data.security.dependency_vulnerability.low.violations as violations
+		with data.security.dependency_vulnerability.medium.violations as violations
+		with data.security.dependency_vulnerability.high.violations as violations
+		with data.security.dependency_vulnerability.critical.violations as violations
 }

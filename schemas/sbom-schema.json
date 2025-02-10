@@ -1,0 +1,121 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "_type": {
+            "type": "string",
+            "const": "https://in-toto.io/Statement/v1"
+        },
+        "subject": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "digest": {
+                        "type": "object",
+                        "properties": {
+                            "sha256": {
+                                "type": "string"
+                            }
+                        },
+                        "required": ["sha256"]
+                    }
+                },
+                "required": ["name", "digest"]
+            }
+        },
+        "predicateType": {
+            "type": "string",
+            "const": "https://cyclonedx.org/bom"
+        },
+        "predicate": {
+            "type": "object",
+            "properties": {
+                "$schema": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "bomFormat": {
+                    "type": "string",
+                    "const": "CycloneDX"
+                },
+                "specVersion": {
+                    "type": "string"
+                },
+                "serialNumber": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "version": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "metadata": {
+                    "type": "object",
+                    "properties": {
+                        "timestamp": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "tools": {
+                            "type": "object",
+                            "properties": {
+                                "components": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "version": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": ["type", "name", "version"]
+                                    }
+                                }
+                            },
+                            "required": ["components"]
+                        }
+                    },
+                    "required": ["timestamp", "tools"]
+                },
+                "components": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "version": {
+                                "type": "string"
+                            }
+                        },
+                        "required": ["type", "name"]
+                    }
+                }
+            },
+            "required": [
+                "$schema",
+                "bomFormat",
+                "specVersion",
+                "serialNumber",
+                "version",
+                "metadata",
+                "components"
+            ]
+        }
+    },
+    "required": ["_type", "subject", "predicateType", "predicate"]
+} 
