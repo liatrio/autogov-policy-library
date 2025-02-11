@@ -9,6 +9,9 @@ on:
       - README.md
       - catalog-info.yaml
       - renovate.json
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
 
 env:
   OPA_VERSION: 0.67.1
@@ -50,8 +53,9 @@ jobs:
       attestations: write
       packages: write
       contents: write
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@33e7697ab0abbb382f60badd1441b5170d89eb35 # v0.2.5
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@13beea17d7d364f50a6e16dfef3bc53147c4677e # v0.3.0
     secrets: inherit
     with:
-      subject-name: ghcr.io/${{ github.repository }}
-      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@33e7697ab0abbb382f60badd1441b5170d89eb35 # v0.2.5
+      subject-name: ${{ github.repository }}
+      registry: ghcr.io
+      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@13beea17d7d364f50a6e16dfef3bc53147c4677e # v0.3.0

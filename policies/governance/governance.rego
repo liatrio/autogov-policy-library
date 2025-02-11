@@ -6,8 +6,13 @@
 #   - Build provenance validation
 #   - SBOM validation
 #   - Metadata validation
+#   - Dependency Vulnerability validation
 #   - Certificate validation
 # entrypoint: true
+# custom:
+#  version: 0.7.0
+#  path: policies/governance
+#  filename: governance.rego
 package governance
 
 import data.security.certificate
@@ -26,10 +31,25 @@ allow if {
 	provenance.allow
 	metadata.allow
 	certificate.allow
+	some x in input
+	x.ignore_dependency_vulnerabilities
+}
+
+allow if {
+	sbom.allow
+	provenance.allow
+	metadata.allow
+	certificate.allow
+	not any_ignore_deps
 	low.allow
 	medium.allow
 	high.allow
 	critical.allow
+}
+
+any_ignore_deps if {
+	some x in input
+	x.ignore_dependency_vulnerabilities
 }
 
 violations := {
@@ -37,8 +57,28 @@ violations := {
 	"provenance": provenance.violations,
 	"certificate": certificate.violations,
 	"metadata": metadata.violations,
-	"dependency_vulnerability_low": low.violations,
-	"dependency_vulnerability_medium": medium.violations,
-	"dependency_vulnerability_high": high.violations,
-	"dependency_vulnerability_critical": critical.violations,
+	"dependency_vulnerability_low": dependency_vulnerability_low_violations,
+	"dependency_vulnerability_medium": dependency_vulnerability_medium_violations,
+	"dependency_vulnerability_high": dependency_vulnerability_high_violations,
+	"dependency_vulnerability_critical": dependency_vulnerability_critical_violations,
+}
+
+dependency_vulnerability_low_violations contains v if {
+	not any_ignore_deps
+	some v in low.violations
+}
+
+dependency_vulnerability_medium_violations contains v if {
+	not any_ignore_deps
+	some v in medium.violations
+}
+
+dependency_vulnerability_high_violations contains v if {
+	not any_ignore_deps
+	some v in high.violations
+}
+
+dependency_vulnerability_critical_violations contains v if {
+	not any_ignore_deps
+	some v in critical.violations
 }
