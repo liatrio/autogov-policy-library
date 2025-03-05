@@ -53,7 +53,7 @@ jobs:
       attestations: write
       packages: write
       contents: write
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@13beea17d7d364f50a6e16dfef3bc53147c4677e # v0.3.0
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@aea6a8487fdda7e533ef358cd9a4d4e9fce18c2e # v0.3.1
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
