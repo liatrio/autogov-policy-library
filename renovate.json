@@ -1,7 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "configMigration": true,
-  "enabled": false,
   "packageRules": [
     {
       "extends": [
@@ -12,6 +11,20 @@
         "action"
       ],
       "pinDigests": true
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "\\.github/workflows/.*\\.yaml$"
+      ],
+      "matchStrings": [
+        "(?:https://github\\.com/|)liatrio/demo-gh-autogov-workflows/\\.github/workflows/.*?\\.yaml@(?<currentDigest>[a-f0-9]+) # v(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "liatrio/demo-gh-autogov-workflows",
+      "packageNameTemplate": "liatrio/demo-gh-autogov-workflows",
+      "datasourceTemplate": "github-tags"
     }
   ],
   "schedule": [

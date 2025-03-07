@@ -21,14 +21,14 @@ runs:
     - name: Get Next Semantic Release Tag # premptively tags pushed/registry image w/ release tag
       id: semantic-release
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      uses: go-semantic-release/action@48d83acd958dae62e73701aad20a5b5844a3bf45 # v1.23.0
+      uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f # v1.24.1
       with:
         dry: true
         allow-initial-development-versions: true
         github-token: ${{ github.token }}
     - name: Build Artifact Metadata
       id: meta
-      uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
+      uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
       with:
         sep-tags: ','
         tags: |

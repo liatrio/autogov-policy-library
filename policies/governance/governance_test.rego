@@ -9,17 +9,55 @@ test_allow_all_true if {
 	test_input := [{
 		"mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
 		"verificationMaterial": {"certificate": {"rawBytes": "valid-github-cert"}},
+		"ignore_dependency_vulnerabilities": false,
 	}]
 
 	governance.allow with input as test_input
-		with data.shared.utils.is_valid_fulcio_cert as {"valid-github-cert": true}
+		with data.security.sbom.allow as true
+		with data.security.provenance.allow as true
+		with data.security.metadata.allow as true
+		with data.security.certificate.allow as true
+		with data.security.dependency_vulnerability.low.allow as true
+		with data.security.dependency_vulnerability.medium.allow as true
+		with data.security.dependency_vulnerability.high.allow as true
+		with data.security.dependency_vulnerability.critical.allow as true
 		with data.security.sbom.violations as violations
 		with data.security.provenance.violations as violations
 		with data.security.metadata.violations as violations
+		with data.security.certificate.violations as violations
 		with data.security.dependency_vulnerability.low.violations as violations
 		with data.security.dependency_vulnerability.medium.violations as violations
 		with data.security.dependency_vulnerability.high.violations as violations
 		with data.security.dependency_vulnerability.critical.violations as violations
+}
+
+# Test all true case with ignored dependency vulnerabilities
+test_allow_all_true_ignore_deps if {
+	violations := set()
+	dep_violations := {"some vulnerability"}
+	test_input := [{
+		"mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+		"verificationMaterial": {"certificate": {"rawBytes": "valid-github-cert"}},
+		"ignore_dependency_vulnerabilities": true,
+	}]
+
+	governance.allow with input as test_input
+		with data.security.sbom.allow as true
+		with data.security.provenance.allow as true
+		with data.security.metadata.allow as true
+		with data.security.certificate.allow as true
+		with data.security.dependency_vulnerability.low.allow as false
+		with data.security.dependency_vulnerability.medium.allow as false
+		with data.security.dependency_vulnerability.high.allow as false
+		with data.security.dependency_vulnerability.critical.allow as false
+		with data.security.sbom.violations as violations
+		with data.security.provenance.violations as violations
+		with data.security.metadata.violations as violations
+		with data.security.certificate.violations as violations
+		with data.security.dependency_vulnerability.low.violations as dep_violations
+		with data.security.dependency_vulnerability.medium.violations as dep_violations
+		with data.security.dependency_vulnerability.high.violations as dep_violations
+		with data.security.dependency_vulnerability.critical.violations as dep_violations
 }
 
 # Test SBOM false case
@@ -135,14 +173,17 @@ dependency_vulnerability_violations_critical := {"Critical Vulnerabilities found
 
 # Test violations reporting
 test_violations_report if {
-	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "https://example.org/other",
-		"subject": [{
-			"name": "ghcr.io/liatrio/demo-gh-autogov-workflows",
-			"digest": {"sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"},
-		}],
-		"predicate": {},
-	}))}}]
+	test_input := [{
+		"dsseEnvelope": {"payload": base64.encode(json.marshal({
+			"predicateType": "https://example.org/other",
+			"subject": [{
+				"name": "ghcr.io/liatrio/demo-gh-autogov-workflows",
+				"digest": {"sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"},
+			}],
+			"predicate": {},
+		}))},
+		"ignore_dependency_vulnerabilities": false,
+	}]
 
 	governance.violations == {
 		"sbom": sbom_violations,
@@ -164,6 +205,40 @@ test_violations_report if {
 		with data.security.dependency_vulnerability.critical.violations as dependency_vulnerability_violations_critical
 }
 
+# Test violations reporting with ignored dependency vulnerabilities
+test_violations_report_ignore_deps if {
+	test_input := [{
+		"dsseEnvelope": {"payload": base64.encode(json.marshal({
+			"predicateType": "https://example.org/other",
+			"subject": [{
+				"name": "ghcr.io/liatrio/demo-gh-autogov-workflows",
+				"digest": {"sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"},
+			}],
+			"predicate": {},
+		}))},
+		"ignore_dependency_vulnerabilities": true,
+	}]
+
+	governance.violations == {
+		"sbom": sbom_violations,
+		"provenance": provenance_violations,
+		"metadata": metadata_violations,
+		"certificate": certificate_violations,
+		"dependency_vulnerability_low": set(),
+		"dependency_vulnerability_medium": set(),
+		"dependency_vulnerability_high": set(),
+		"dependency_vulnerability_critical": set(),
+	} with input as test_input
+		with data.security.sbom.violations as sbom_violations
+		with data.security.provenance.violations as provenance_violations
+		with data.security.metadata.violations as metadata_violations
+		with data.security.certificate.violations as certificate_violations
+		with data.security.dependency_vulnerability.low.violations as dependency_vulnerability_violations_low
+		with data.security.dependency_vulnerability.medium.violations as dependency_vulnerability_violations_medium
+		with data.security.dependency_vulnerability.high.violations as dependency_vulnerability_violations_high
+		with data.security.dependency_vulnerability.critical.violations as dependency_vulnerability_violations_critical
+}
+
 # Test empty input case
 test_empty_input if {
 	test_input := []
@@ -173,6 +248,8 @@ test_empty_input if {
 # Test no violations case
 test_no_violations if {
 	violations := set()
+	test_input := [{"ignore_dependency_vulnerabilities": false}]
+
 	governance.violations == {
 		"sbom": violations,
 		"provenance": violations,
@@ -182,7 +259,8 @@ test_no_violations if {
 		"dependency_vulnerability_medium": violations,
 		"dependency_vulnerability_high": violations,
 		"dependency_vulnerability_critical": violations,
-	} with data.security.sbom.violations as violations
+	} with input as test_input
+		with data.security.sbom.violations as violations
 		with data.security.provenance.violations as violations
 		with data.security.metadata.violations as violations
 		with data.security.certificate.violations as violations

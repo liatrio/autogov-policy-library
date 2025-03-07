@@ -6,6 +6,7 @@ metadata:
   description: Dedicated Rego policy library for Liatrio internal use
   annotations:
     github.com/project-slug: liatrio/liatrio-rego-policy-library
+    liatrio.com/autogov-result-file: results
   tags:
     - autogov
 spec:

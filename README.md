@@ -20,7 +20,7 @@ permissions:
         uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f # v1.0.0, you technically can use tags, but the sha is safer, as it is immutable.
         with:
           scope: liatrio
-          identity: rego-policy-library # liatrio/.github/chainguard/rego-policy-library.sts.yaml
+          identity: autogov-infra # liatrio/.github/chainguard/autogov-infra.sts.yaml
 - name: Download Policy Bundle
         run: |
           set +x
@@ -63,7 +63,7 @@ brew install make docker
 
 #### Download Attestation
 
-To download attestations from GitHub, you must [login to ghcr.io](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic)
+To download attestations from GitHub, you must [login to ghcr.io](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic).
 
 ```zsh
 export CR_PAT=YOUR_TOKEN
@@ -82,9 +82,7 @@ You now have an jsonl of the json attestation objects.
 
 #### Parse Attestation
 
-The downloaded attestation won't be very human readable because it is based64 encoded, so we can run it through some jq and decoding.
-
-ex:
+The downloaded attestation is base64 encoded, but we can make it human readable by piping it through jq and base64 as shown below:
 
 ```zsh
 cat sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae.jsonl | jq -r '.dsseEnvelope.payload' | base64 -d | jq -r
@@ -98,7 +96,7 @@ You can also run it all at once:
 gh attestation \ verify oci://ghcr.io/liatrio/liatrio-gh-autogov-workflows@sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae \ -o liatrio \ --format json \ -jq '.[0].attestation.bundle.dsseEnvelope.payload' \ | base64 -d | jq
 ```
 
-> note this will only give you the first attestation object of the bundle downloaded. You can increase the index at .[0] to get other attestation objects.
+> Note: This will only give you the first attestation object of the bundle downloaded. You can increase the index at .[0] to get other attestation objects.
 
 ### Creating Policy
 
