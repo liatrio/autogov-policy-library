@@ -14,8 +14,8 @@ on:
     branches: [main]
 
 env:
-  OPA_VERSION: 0.67.1
-  REGAL_VERSION: 0.28.0
+  OPA_VERSION: 1.2.0
+  REGAL_VERSION: 0.31.1
 
 jobs:
   lint:
@@ -53,9 +53,9 @@ jobs:
       attestations: write
       packages: write
       contents: write
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@13beea17d7d364f50a6e16dfef3bc53147c4677e # v0.3.0
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@09126b60cf8331a875c351091640477541d60976 # v0.3.3
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@13beea17d7d364f50a6e16dfef3bc53147c4677e # v0.3.0
+      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@09126b60cf8331a875c351091640477541d60976 # v0.3.3
