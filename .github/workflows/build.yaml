@@ -53,9 +53,9 @@ jobs:
       attestations: write
       packages: write
       contents: write
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@09126b60cf8331a875c351091640477541d60976 # v0.3.3
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@2dec446d8054efc5c5d51819e31e28dd16c0e4ca # v0.3.4
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@09126b60cf8331a875c351091640477541d60976 # v0.3.3
+      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@2dec446d8054efc5c5d51819e31e28dd16c0e4ca # v0.3.4
