@@ -1,0 +1,11 @@
+{
+  "branches": ["main"],
+  "plugins": {
+    "hooks": {
+      "names": ["exec"],
+      "options": {
+        "exec_on_success": "find policies -name '*.rego' -exec sed -i.bak 's/#  version: .*/#  version: {{.NewRelease.Version}}/' {} \\; && find policies -name '*.bak' -delete"
+      }
+    }
+  }
+}
