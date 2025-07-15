@@ -9,7 +9,15 @@ plugins:
     - prepareCmd: "find policies -name \"*.rego\" -exec sed -i 's/#  version: .*/#  version: ${nextRelease.version}/' {} \\;"
   - - "@semantic-release-extras/verified-git-commit"
     - assets:
-        - "policies/**/*.rego"
+        - "policies/governance/governance.rego"
+        - "policies/security/metadata/metadata.rego"
+        - "policies/security/dependency_vulnerability/medium/medium.rego"
+        - "policies/security/dependency_vulnerability/low/low.rego"
+        - "policies/security/dependency_vulnerability/critical/critical.rego"
+        - "policies/security/sbom/sbom.rego"
+        - "policies/security/dependency_vulnerability/high/high.rego"
+        - "policies/security/certificate/certificate.rego"
+        - "policies/security/provenance/provenance.rego"
       commitMessage: |-
         chore(release): ${nextRelease.version} [skip ci]
 
