@@ -1,0 +1,46 @@
+{
+  "branches": [
+    "main"
+  ],
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "find policies -name \"*.rego\" -exec sed -i 's/#  version: .*/#  version: ${nextRelease.version}/' {} \\;"
+      }
+    ],
+    [
+      "@semantic-release-extras/verified-git-commit",
+      {
+        "assets": [
+          "policies/**/*.rego"
+        ],
+        "commitMessage": "chore(release): ${nextRelease.version} [skip ci]\\n\\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "successComment": false,
+        "failTitle": false,
+        "failComment": false,
+        "labels": [
+          "automated",
+          "release"
+        ]
+      }
+    ]
+  ]
+}
