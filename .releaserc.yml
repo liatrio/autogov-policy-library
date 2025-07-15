@@ -8,7 +8,9 @@ plugins:
   - - "@semantic-release/exec"
     - prepareCmd: "find policies -name \"*.rego\" -exec sed -i 's/#  version: .*/#  version: ${nextRelease.version}/' {} \\;"
   - - "@semantic-release-extras/verified-git-commit"
-    - commitMessage: |-
+    - assets:
+        - "policies/**/*.rego"
+      commitMessage: |-
         chore(release): ${nextRelease.version} [skip ci]
 
         ${nextRelease.notes}
