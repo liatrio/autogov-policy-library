@@ -1,0 +1,29 @@
+branches:
+  - main
+plugins:
+  - - "@semantic-release/commit-analyzer"
+    - preset: "conventionalcommits"
+  - - "@semantic-release/release-notes-generator"
+    - preset: "conventionalcommits"
+  - - "@semantic-release/exec"
+    - prepareCmd: "find policies -name \"*.rego\" -exec sed -i 's/#  version: .*/#  version: ${nextRelease.version}/' {} \\;"
+  - - "@semantic-release-extras/verified-git-commit"
+    - assets:
+        - "policies/governance/governance.rego"
+        - "policies/security/metadata/metadata.rego"
+        - "policies/security/dependency_vulnerability/medium/medium.rego"
+        - "policies/security/dependency_vulnerability/low/low.rego"
+        - "policies/security/dependency_vulnerability/critical/critical.rego"
+        - "policies/security/sbom/sbom.rego"
+        - "policies/security/dependency_vulnerability/high/high.rego"
+        - "policies/security/certificate/certificate.rego"
+        - "policies/security/provenance/provenance.rego"
+      commitMessage: |-
+        chore(release): ${nextRelease.version} [skip ci]
+
+        ${nextRelease.notes}
+  - - "@semantic-release/github"
+    - successComment: false
+      failTitle: false
+      failComment: false
+      labels: ["automated", "release"]
