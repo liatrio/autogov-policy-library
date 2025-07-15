@@ -12,7 +12,7 @@
 # - input: schema["bundle-schema"]
 # custom:
 #  control_number: 4
-#  version: 0.6.8
+#  version: 0.6.9
 #  path: policies/security
 #  filename: certificate.rego
 #  irm_control_ids: [LIATRIO-CERT-004]
