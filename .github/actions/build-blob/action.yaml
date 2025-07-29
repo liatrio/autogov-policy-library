@@ -1,26 +1,16 @@
 name: Build Bundle Composite Action
 
 description: >-
-  A composite action that is placed in ./.github/actions/build-image/action.yaml whereby
-  ./.github/workflows/rw-<permissions_path>-attest-image.yaml will trigger this action to build an image. The steps
-  can be adjusted per the users need just as long as the output is the image digest.
+  A composite action that is placed in ./.github/actions/build-blob/action.yaml whereby
+  ./.github/workflows/rw-<permissions_path>-attest-blob.yaml will trigger this action to build the blob(s). The steps
+  can be adjusted per the user's need just as long as the result blob file(s) is referenced for
+  downstream jobs.
 
 inputs:
-  subject-name:
-    description: The name for the image.
-    required: true
-    default: ghcr.io/${{ github.repository }}
   opa-version:
     description: The version of OPA to use.
     required: false
     default: "1.2.0"
-outputs:
-  bundle-path:
-    description: The path to the generated bundle file.
-    value: "bundle.tar.gz"
-  schemas-path:
-    description: The path to the generated schemas archive.
-    value: "schemas.tar.gz"
 
 runs:
   using: composite
@@ -39,7 +29,7 @@ runs:
       uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 #v2.2.0
       with:
         version: ${{ inputs.opa-version }}
-    - name: Build OPA Bundle
+    - name: Build OPA Bundle and Create Schemas Archive
       shell: bash
       run: |
         opa \
@@ -47,7 +37,4 @@ runs:
           --bundle ./policies \
           --ignore "*_test.rego" \
           --output bundle.tar.gz
-    - name: Create Schemas Archive
-      shell: bash
-      run: |
         tar -czf schemas.tar.gz -C schemas .
