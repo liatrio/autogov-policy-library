@@ -10,10 +10,17 @@ inputs:
     description: The name for the image.
     required: true
     default: ghcr.io/${{ github.repository }}
+  opa-version:
+    description: The version of OPA to use.
+    required: false
+    default: "1.2.0"
 outputs:
-  image-digest:
-    description: The image digest of the image that was built from the build-bundle job.
-    value: ${{ steps.push-bundle.outputs.digest }}
+  bundle-path:
+    description: The path to the generated bundle file.
+    value: "bundle.tar.gz"
+  schemas-path:
+    description: The path to the generated schemas archive.
+    value: "schemas.tar.gz"
 
 runs:
   using: composite
@@ -31,7 +38,7 @@ runs:
     - name: Setup OPA
       uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 #v2.2.0
       with:
-        version: ${{ env.OPA_VERSION }}
+        version: ${{ inputs.opa-version }}
     - name: Build OPA Bundle
       shell: bash
       run: |
