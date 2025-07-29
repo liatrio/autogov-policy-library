@@ -110,7 +110,7 @@ violations contains msg if {
 violations contains msg if {
 	some payload in utils.decoded_payload_list
 	not is_image_subject(payload)
-	not regex.match(`^[a-zA-Z0-9_-]+$`, payload.subject[0].name)
+	not regex.match(`^[a-zA-Z0-9_.-]+$`, payload.subject[0].name)
 	msg := "blob subject name contains invalid characters"
 }
 
