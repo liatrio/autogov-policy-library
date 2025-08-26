@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       - name: Setup Regal
         uses: StyraInc/setup-regal@33a142b1189004e0f14bf42b15972c67eecce776 # v1.0
         with:
@@ -35,7 +35,7 @@ jobs:
     needs: lint
     steps:
       - name: Check out repository code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       - name: Setup OPA
         uses: open-policy-agent/setup-opa@34a30e8a924d1b03ce2cf7abe97250bbb1f332b5 #v2.2.0
         with:
@@ -54,7 +54,7 @@ jobs:
       packages: write
       contents: write
       actions: read
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@82f5947f7892f9a10ca272ac0136ac777f49e3d1 # v0.8.7
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@3b7c98ed6a80fe82452d3e14f85b6647d387b2cd # v0.11.3
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
@@ -70,7 +70,7 @@ jobs:
       packages: read
       contents: write
       actions: read
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-build-blob.yaml@82f5947f7892f9a10ca272ac0136ac777f49e3d1 # v0.8.7
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-build-blob.yaml@3b7c98ed6a80fe82452d3e14f85b6647d387b2cd # v0.11.3
     secrets: inherit
     with:
       subject-path: |
