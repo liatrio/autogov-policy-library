@@ -46,7 +46,7 @@ jobs:
         run: opa check --rego-v1 --v1-compatible -s schemas ./policies
 
   attest-image-hp:
-    if: github.event.pull_request.draft == false
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
     needs: test
     permissions:
       id-token: write
@@ -62,7 +62,7 @@ jobs:
       cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@82f5947f7892f9a10ca272ac0136ac777f49e3d1 # v0.8.7
 
   attest-blob-lp: #blob
-    if: github.event.pull_request.draft == false
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
     needs: test
     permissions:
       id-token: write
