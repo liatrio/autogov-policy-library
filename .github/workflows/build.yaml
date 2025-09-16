@@ -54,12 +54,12 @@ jobs:
       packages: write
       contents: write
       actions: read
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@82f5947f7892f9a10ca272ac0136ac777f49e3d1 # v0.8.7
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@04d51512b214bfa93b029a1a137190cd553f84f9 # v0.11.7
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@82f5947f7892f9a10ca272ac0136ac777f49e3d1 # v0.8.7
+      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@04d51512b214bfa93b029a1a137190cd553f84f9 # v0.11.7
 
   attest-blob-lp: #blob
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
@@ -70,11 +70,11 @@ jobs:
       packages: read
       contents: write
       actions: read
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-build-blob.yaml@82f5947f7892f9a10ca272ac0136ac777f49e3d1 # v0.8.7
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-build-blob.yaml@04d51512b214bfa93b029a1a137190cd553f84f9 # v0.11.7
     secrets: inherit
     with:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-attest-blob.yaml@82f5947f7892f9a10ca272ac0136ac777f49e3d1 # v0.8.7
+      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-attest-blob.yaml@04d51512b214bfa93b029a1a137190cd553f84f9 # v0.11.7
       publish-attestations: false
