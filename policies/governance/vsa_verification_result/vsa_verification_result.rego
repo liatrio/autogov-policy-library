@@ -16,9 +16,6 @@ package governance.vsa_verification_result
 import data.shared.utils
 import rego.v1
 
-# Default allow is false
-default allow := false
-
 # Extract VSA payload from Sigstore bundle using shared utility
 vsa_payload := utils.has_envelope(input)
 
