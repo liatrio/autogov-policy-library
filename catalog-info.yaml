@@ -15,4 +15,4 @@ metadata:
 spec:
   owner: "group:default/tag-autogov"
   lifecycle: in-progress
-  type: service
+  type: library
