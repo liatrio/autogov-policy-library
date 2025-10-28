@@ -10,6 +10,7 @@ plugins:
   - - "@semantic-release-extras/verified-git-commit"
     - assets:
         - "policies/governance/governance.rego"
+        - "policies/governance/vsa_verification_result/vsa_verification_result.rego"
         - "policies/security/metadata/metadata.rego"
         - "policies/security/dependency_vulnerability/medium/medium.rego"
         - "policies/security/dependency_vulnerability/low/low.rego"

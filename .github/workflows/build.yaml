@@ -46,7 +46,7 @@ jobs:
         run: opa check --rego-v1 --v1-compatible -s schemas ./policies
 
   attest-image-hp:
-    if: github.event.pull_request.draft == false
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
     needs: test
     permissions:
       id-token: write
@@ -54,15 +54,15 @@ jobs:
       packages: write
       contents: write
       actions: read
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@3b7c98ed6a80fe82452d3e14f85b6647d387b2cd # v0.11.3
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@918be7cef34acf2ecb101d50776f0b476150b246 # v0.11.8
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@3b7c98ed6a80fe82452d3e14f85b6647d387b2cd # v0.11.3
+      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@918be7cef34acf2ecb101d50776f0b476150b246 # v0.11.8
 
   attest-blob-lp: #blob
-    if: github.event.pull_request.draft == false
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
     needs: test
     permissions:
       id-token: write
@@ -70,11 +70,11 @@ jobs:
       packages: read
       contents: write
       actions: read
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-build-blob.yaml@3b7c98ed6a80fe82452d3e14f85b6647d387b2cd # v0.11.3
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-build-blob.yaml@918be7cef34acf2ecb101d50776f0b476150b246 # v0.11.8
     secrets: inherit
     with:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-attest-blob.yaml@3b7c98ed6a80fe82452d3e14f85b6647d387b2cd # v0.11.3
+      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-attest-blob.yaml@918be7cef34acf2ecb101d50776f0b476150b246 # v0.11.8
       publish-attestations: false
