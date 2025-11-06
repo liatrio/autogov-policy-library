@@ -31,12 +31,21 @@ inputs_exist(payload) if {
 	count(payload.predicate.workflowData.inputs) > 0
 }
 
-predicate_type_valid(payload) if {
+# Helper to check if payload is a metadata attestation (new or legacy format)
+is_metadata_attestation(payload) if {
+	utils.is_autogov_metadata(payload)
+}
+
+is_metadata_attestation(payload) if {
 	utils.is_cosign_attestation(payload)
 }
 
+predicate_type_valid(payload) if {
+	is_metadata_attestation(payload)
+}
+
 is_metadata_present(payload) if {
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	payload.predicate
 	payload.predicate.artifact
 	payload.predicate.repositoryData
@@ -50,7 +59,7 @@ is_image_subject(payload) if {
 # Common violations for both images and blobs
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.artifact
 	msg := "artifact metadata is missing"
@@ -58,7 +67,7 @@ violations contains msg if {
 
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.ownerData.ownerId
 	msg := "owner is missing in metadata"
@@ -66,7 +75,7 @@ violations contains msg if {
 
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.runnerData.environment
 	msg := "runner environment is missing"
@@ -75,7 +84,7 @@ violations contains msg if {
 # Artifact-specific validations
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.artifact.type
 	msg := "artifact type is missing"
@@ -84,7 +93,7 @@ violations contains msg if {
 # Type-specific artifact validations
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_image_subject(payload)
 	payload.predicate.artifact.type != "container-image"
 	msg := "artifact type must be container-image for image subjects"
@@ -92,7 +101,7 @@ violations contains msg if {
 
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	not is_image_subject(payload)
 	payload.predicate.artifact.type != "blob"
 	msg := "artifact type must be blob for non-image subjects"
@@ -117,7 +126,7 @@ violations contains msg if {
 # Required fields validation
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not inputs_exist(payload)
 	msg := "workflow inputs are missing in metadata"
@@ -126,7 +135,7 @@ violations contains msg if {
 # Required metadata sections validation
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	required_sections := {
 		"artifact",
@@ -148,7 +157,7 @@ violations contains msg if {
 # Additional validation for path/digest exclusivity
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	payload.predicate.artifact.type == "blob"
 	payload.predicate.artifact.digest
 	msg := "artifact.digest should not be present for blob type"
@@ -156,7 +165,7 @@ violations contains msg if {
 
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	payload.predicate.artifact.type == "container-image"
 	payload.predicate.artifact.path
 	msg := "artifact.path should not be present for container-image type"
@@ -165,7 +174,7 @@ violations contains msg if {
 # Compliance validations
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.compliance.policyRef
 	msg := "compliance.policyRef is missing in metadata"
@@ -173,7 +182,7 @@ violations contains msg if {
 
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.compliance.controlIds
 	msg := "compliance.controlIds is missing in metadata"
@@ -182,7 +191,7 @@ violations contains msg if {
 # Security permissions validations
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	required_permissions := {
 		"id-token",
@@ -199,7 +208,7 @@ violations contains msg if {
 violations contains msg if {
 	attestations := [payload |
 		some payload in utils.decoded_payload_list
-		utils.is_cosign_attestation(payload)
+		is_metadata_attestation(payload)
 		is_metadata_present(payload)
 	]
 	count(attestations) == 0
@@ -209,7 +218,7 @@ violations contains msg if {
 # Add this rule to validate runner environment
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	payload.predicate.runnerData.environment != "github-hosted"
 	msg := "invalid runner environment"
@@ -218,7 +227,7 @@ violations contains msg if {
 # Add this rule to validate owner ID
 violations contains msg if {
 	some payload in utils.decoded_payload_list
-	utils.is_cosign_attestation(payload)
+	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.ownerData.ownerId in access.approved_owner_ids
 	msg := "invalid owner ID"
