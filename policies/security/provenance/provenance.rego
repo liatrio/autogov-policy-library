@@ -3,7 +3,7 @@
 # title: Provenance Policy
 # description: Verifies SLSA provenance attestation requirements
 # authors:
-# - Autogov Team https://github.com/orgs/liatrio/teams/tag-autogov
+# - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 # schemas:
 # - input: schema["provenance-schema"]
 # custom:

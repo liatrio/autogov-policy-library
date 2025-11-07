@@ -13,6 +13,14 @@ has_envelope(obj) := json.unmarshal(base64.decode(obj.dsseEnvelope.payload)) if 
 } else := obj
 
 # Helper functions to identify predicate types
+# is_autogov_metadata checks for the custom autogov metadata predicate type
+is_autogov_metadata(payload) if {
+	payload.predicateType == "https://autogov.dev/attestation/metadata/v1"
+}
+
+# is_cosign_attestation checks for legacy Cosign custom attestation type
+# Note: Kept for backward compatibility during transition period
+# New attestations should use is_autogov_metadata() instead
 is_cosign_attestation(payload) if {
 	payload.predicateType == "https://cosign.sigstore.dev/attestation/v1"
 }
