@@ -7,7 +7,7 @@
 #   This policy only performs basic format/string validation.
 #   See: https://github.com/open-policy-agent/opa/issues/6268
 # authors:
-# - Autogov Team https://github.com/orgs/liatrio/teams/tag-autogov
+# - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 # schemas:
 # - input: schema["bundle-schema"]
 # custom:

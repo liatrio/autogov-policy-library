@@ -3,7 +3,7 @@
 # title: SBOM Policy
 # description: Verifies presence of CycloneDX SBOM attestation
 # authors:
-# - Autogov Team https://github.com/orgs/liatrio/teams/tag-autogov
+# - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 # schemas:
 # - input: schema["sbom-schema"]
 # custom:
