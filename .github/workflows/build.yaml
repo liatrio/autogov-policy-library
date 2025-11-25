@@ -77,4 +77,3 @@ jobs:
         bundle.tar.gz
         schemas.tar.gz
       cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-attest-blob.yaml@918be7cef34acf2ecb101d50776f0b476150b246 # v0.11.8
-      publish-attestations: false
