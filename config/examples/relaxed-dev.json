@@ -1,0 +1,8 @@
+{
+  "vulnerability_thresholds": {
+    "critical": 2,
+    "high": 10,
+    "medium": 50,
+    "low": -1
+  }
+}
