@@ -59,7 +59,7 @@ jobs:
     with:
       subject-name: ${{ github.repository }}
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@3503c01e156f7e040f6595f970ae0222838a419f # v0.13.1
+      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-attest-image.yaml@6ec9a792694dbd3d312bcad8136db0586d45b822 # v0.14.0
 
   attest-blob-lp: #blob
     if: github.event.pull_request.draft == false
@@ -76,4 +76,4 @@ jobs:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-attest-blob.yaml@3503c01e156f7e040f6595f970ae0222838a419f # v0.13.1
+      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-attest-blob.yaml@6ec9a792694dbd3d312bcad8136db0586d45b822 # v0.14.0
