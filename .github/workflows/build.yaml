@@ -54,7 +54,7 @@ jobs:
       packages: write
       contents: write
       actions: read
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@6ec9a792694dbd3d312bcad8136db0586d45b822 # v0.14.0
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-hp-build-image.yaml@4e0226c523e8a76e57f5106c5a6ba1778d08c12d # v0.14.2
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
@@ -70,7 +70,7 @@ jobs:
       packages: read
       contents: write
       actions: read
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-build-blob.yaml@6ec9a792694dbd3d312bcad8136db0586d45b822 # v0.14.0
+    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-lp-build-blob.yaml@4e0226c523e8a76e57f5106c5a6ba1778d08c12d # v0.14.2
     secrets: inherit
     with:
       subject-path: |
