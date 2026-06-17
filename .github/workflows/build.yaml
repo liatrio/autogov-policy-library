@@ -71,6 +71,11 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
+    # TODO: bump this ref (and the cert-identity ref below) to the merged + tagged
+    # commit SHA of the rw-build-blob-offline.yaml mutations-config enabler
+    # (liatrio/liatrio-gh-autogov-workflows PR ci/forward-mutations-config). The
+    # currently-pinned v0.21.0 ref does NOT yet forward mutations-config, so the
+    # mutations-config input below is inert until this ref is updated.
     uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
     secrets: inherit
     with:
@@ -78,3 +83,5 @@ jobs:
         bundle.tar.gz
         schemas.tar.gz
       cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
+      autogov-version: v0.23.0
+      mutations-config: .autogov-release.yaml
