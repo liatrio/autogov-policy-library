@@ -169,3 +169,53 @@ test_repo_id_inert_when_unconfigured if {
 	result := provenance.allow with input as test_input
 	result == true
 }
+
+# Test the default owner allowlist still enforces liatrio when no override is
+# supplied (behavior preservation: a non-liatrio owner is rejected).
+test_default_owner_enforces_liatrio if {
+	test_input := [{
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {
+			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
+			"internalParameters": {"github": {"repository_owner_id": "9999999"}},
+		}},
+	}]
+	result := provenance.allow with input as test_input
+	result == false
+
+	violations := provenance.violations with input as test_input
+	"owner is not correct in build provenance" in violations
+}
+
+# Test a consumer can override the owner allowlist to approve another org.
+test_owner_override_allows_other_org if {
+	test_input := [{
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {
+			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
+			"internalParameters": {"github": {"repository_owner_id": "12345"}},
+		}},
+	}]
+	result := provenance.allow with input as test_input
+		with access.approved_owner_ids as {"12345"}
+	result == true
+}
+
+# Test the overridden owner allowlist is still an allowlist: owners outside the
+# consumer's set (including the old liatrio default) are rejected.
+test_owner_override_still_rejects_unapproved if {
+	test_input := [{
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {
+			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
+			"internalParameters": {"github": {"repository_owner_id": "5726618"}},
+		}},
+	}]
+	result := provenance.allow with input as test_input
+		with access.approved_owner_ids as {"12345"}
+	result == false
+
+	violations := provenance.violations with input as test_input
+		with access.approved_owner_ids as {"12345"}
+	"owner is not correct in build provenance" in violations
+}
