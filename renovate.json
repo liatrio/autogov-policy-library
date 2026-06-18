@@ -22,10 +22,10 @@
         "/\\.github/workflows/.*\\.yaml$/"
       ],
       "matchStrings": [
-        "(?:https://github\\.com/|)liatrio/liatrio-gh-autogov-workflows/\\.github/workflows/.*?\\.yaml@(?<currentDigest>[a-f0-9]+) # v(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+        "(?:https://github\\.com/|)liatrio/autogov-workflows/\\.github/workflows/.*?\\.yaml@(?<currentDigest>[a-f0-9]+) # v(?<currentValue>\\d+\\.\\d+\\.\\d+)"
       ],
-      "depNameTemplate": "liatrio/liatrio-gh-autogov-workflows",
-      "packageNameTemplate": "liatrio/liatrio-gh-autogov-workflows",
+      "depNameTemplate": "liatrio/autogov-workflows",
+      "packageNameTemplate": "liatrio/autogov-workflows",
       "datasourceTemplate": "github-tags"
     }
   ],
