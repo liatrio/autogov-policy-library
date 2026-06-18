@@ -66,6 +66,24 @@ violations contains msg if {
 	msg := "owner is missing in build provenance"
 }
 
+# Repository-id allowlist (inert unless a consumer configures
+# access.approved_repo_ids). Mirrors the owner-id checks above.
+violations contains msg if {
+	count(access.approved_repo_ids) > 0
+	some payload in utils.decoded_payload_list
+	utils.is_slsa_provenance(payload)
+	not payload.predicate.buildDefinition.internalParameters.github.repository_id in access.approved_repo_ids
+	msg := "repository is not correct in build provenance"
+}
+
+violations contains msg if {
+	count(access.approved_repo_ids) > 0
+	some payload in utils.decoded_payload_list
+	utils.is_slsa_provenance(payload)
+	not payload.predicate.buildDefinition.internalParameters.github.repository_id
+	msg := "repository is missing in build provenance"
+}
+
 # Validation rules
 build_type_valid(payload) if {
 	utils.is_slsa_provenance(payload)

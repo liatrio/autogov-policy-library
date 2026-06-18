@@ -100,3 +100,72 @@ test_incorrect_build_type if {
 	violations := provenance.violations with input as test_input
 	"build type is not correct" in violations
 }
+
+# Test repository-id allowlist passes when configured and provenance matches
+test_valid_repo if {
+	test_input := [{
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {
+			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
+			"internalParameters": {"github": {
+				"repository_owner_id": "5726618",
+				"repository_id": "944181875",
+			}},
+		}},
+	}]
+	result := provenance.allow with input as test_input
+		with access.approved_repo_ids as {"944181875"}
+	result == true
+}
+
+# Test repository-id allowlist denies when configured and repo not approved
+test_invalid_repo if {
+	test_input := [{
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {
+			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
+			"internalParameters": {"github": {
+				"repository_owner_id": "5726618",
+				"repository_id": "9999999",
+			}},
+		}},
+	}]
+	result := provenance.allow with input as test_input
+		with access.approved_repo_ids as {"944181875"}
+	result == false
+
+	violations := provenance.violations with input as test_input
+		with access.approved_repo_ids as {"944181875"}
+	"repository is not correct in build provenance" in violations
+}
+
+# Test repository-id presence check fires only when the allowlist is configured
+test_missing_repo_id if {
+	test_input := [{
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {
+			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
+			"internalParameters": {"github": {"repository_owner_id": "5726618"}},
+		}},
+	}]
+	result := provenance.allow with input as test_input
+		with access.approved_repo_ids as {"944181875"}
+	result == false
+
+	violations := provenance.violations with input as test_input
+		with access.approved_repo_ids as {"944181875"}
+	"repository is missing in build provenance" in violations
+}
+
+# Test repository-id allowlist is inert when unconfigured (default empty set)
+test_repo_id_inert_when_unconfigured if {
+	test_input := [{
+		"predicateType": "https://slsa.dev/provenance/v1",
+		"predicate": {"buildDefinition": {
+			"buildType": "https://actions.github.io/buildtypes/workflow/v1",
+			"internalParameters": {"github": {"repository_owner_id": "5726618"}},
+		}},
+	}]
+	result := provenance.allow with input as test_input
+	result == true
+}
