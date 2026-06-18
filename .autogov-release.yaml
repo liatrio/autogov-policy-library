@@ -1,0 +1,68 @@
+# autogov release mutation config
+#
+# Applied by `autogov release cut --mutations-config .autogov-release.yaml` during
+# the release commit. Each rule rewrites the in-file `#  version:` comment
+# (note: hash + TWO spaces) so the policy source stays in sync with the
+# released version.
+#
+# NOTE: autogov's mutation engine resolves each `path` as a literal,
+# repo-relative file path (it does NOT expand globs such as
+# `policies/**/*.rego`). Every .rego file carrying a `#  version:` comment is
+# therefore enumerated explicitly below. When a new policy file with a version
+# comment is added, add a matching rule here.
+mutations:
+  - path: "policies/governance/governance.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/governance/vsa_verification_result/vsa_verification_result.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/certificate/certificate.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/metadata/metadata.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/provenance/provenance.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/sbom/sbom.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/dependency_vulnerability/critical/critical.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/dependency_vulnerability/high/high.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/dependency_vulnerability/medium/medium.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/dependency_vulnerability/low/low.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/vulnerability_thresholds/vulnerability_thresholds.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true

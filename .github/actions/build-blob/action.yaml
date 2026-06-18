@@ -15,14 +15,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Get Next Semantic Release Tag # premptively tags pushed/registry image w/ release tag
-      id: semantic-release
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      uses: go-semantic-release/action@2e9dc4247a6004f8377781bef4cb9dad273a741f # v1.24.1
-      with:
-        dry: true
-        allow-initial-development-versions: true
-        github-token: ${{ github.token }}
     - name: Check out repository code
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
     - name: Setup OPA
