@@ -55,12 +55,12 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-build-image.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-attest-image.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
 
   build-blob-offline: #blob
     if: github.event.pull_request.draft == false
@@ -72,7 +72,7 @@ jobs:
       actions: read
       artifact-metadata: write
     # FOLLOW-UP: the .rego version-comment mutation is wired in a separate PR,
-    # after the enabler (liatrio/liatrio-gh-autogov-workflows#339,
+    # after the enabler (liatrio/autogov-workflows#339,
     # ci/forward-mutations-config) is merged + tagged. That follow-up bumps this
     # ref (and the cert-identity ref below) to the new tagged SHA and adds
     # `mutations-config: .autogov-release.yaml` here. The current v0.21.0 ref does
@@ -80,11 +80,11 @@ jobs:
     # workflow call that passes an undeclared input — so it is intentionally
     # omitted until the ref is bumped. The .autogov-release.yaml file lands now so
     # the rules are reviewed alongside this change.
-    uses: liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
     secrets: inherit
     with:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/liatrio-gh-autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
       autogov-version: v0.23.0
