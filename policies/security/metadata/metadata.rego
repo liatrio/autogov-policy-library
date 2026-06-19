@@ -111,8 +111,8 @@ violations contains msg if {
 violations contains msg if {
 	some payload in utils.decoded_payload_list
 	is_image_subject(payload)
-	not startswith(payload.subject[0].name, "ghcr.io/liatrio/")
-	msg := "image subject name must be under ghcr.io/liatrio/"
+	not startswith(payload.subject[0].name, access.subject_prefix)
+	msg := sprintf("image subject name must be under %s", [access.subject_prefix])
 }
 
 # Blob-specific violations

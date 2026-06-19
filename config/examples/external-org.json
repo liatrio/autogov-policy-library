@@ -1,0 +1,12 @@
+{
+  "approved_owner_ids": ["123456789"],
+  "approved_repo_ids": [],
+  "signer_org": "your-org",
+  "subject_prefix": "ghcr.io/your-org/",
+  "vuln_thresholds": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  }
+}
