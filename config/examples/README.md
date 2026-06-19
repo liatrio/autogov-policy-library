@@ -24,7 +24,7 @@ opa build -b policies/ config/examples/strict-prod.json -o bundle.tar.gz
 ### strict-prod.json (Production)
 ```json
 {
-  "vulnerability_thresholds": {
+  "vuln_thresholds": {
     "critical": 0,    // No critical vulnerabilities allowed
     "high": 0,        // No high vulnerabilities allowed
     "medium": 5,      // Up to 5 medium vulnerabilities
@@ -38,7 +38,7 @@ opa build -b policies/ config/examples/strict-prod.json -o bundle.tar.gz
 ### relaxed-dev.json (Development)
 ```json
 {
-  "vulnerability_thresholds": {
+  "vuln_thresholds": {
     "critical": 2,    // Up to 2 critical vulnerabilities
     "high": 10,       // Up to 10 high vulnerabilities
     "medium": 50,     // Up to 50 medium vulnerabilities
@@ -52,7 +52,7 @@ opa build -b policies/ config/examples/strict-prod.json -o bundle.tar.gz
 ### unlimited.json (Testing Only)
 ```json
 {
-  "vulnerability_thresholds": {
+  "vuln_thresholds": {
     "critical": -1,   // Unlimited critical vulnerabilities
     "high": -1,       // Unlimited high vulnerabilities
     "medium": -1,     // Unlimited medium vulnerabilities
