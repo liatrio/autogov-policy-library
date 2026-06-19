@@ -43,29 +43,53 @@ This enables a **4-layer AutoGov architecture**:
 
 ## Using Policy Bundle in GitHub Workflows
 
-To access & download the policy bundle you can add the following to your **Liatrio** repo's workflow job steps:
+The policy bundle (`bundle.tar.gz`) is published as a release asset. You can
+download it from a GitHub Actions workflow with `gh release download` and a
+token that has read access to the policy-library repo.
 
-(add permission listed to appropriate job permission set)
+The job needs `contents: read` to read releases. If you authenticate with
+[octo-sts](https://github.com/octo-sts/action) instead of the default
+`GITHUB_TOKEN` (for example to read a bundle from a different repo), add
+`id-token: write` so the action can mint a token.
 
 ```yaml
-permissions:
-      id-token: write
-- name: Generate Read Bundle Token
+jobs:
+  download-bundle:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # only required when minting a token via octo-sts (see note below)
+    steps:
+      # The octo-sts step below is Liatrio-org-specific — the `scope` and
+      # `identity` values reference Liatrio's trust policies. Adapt these for
+      # your own org, or drop this step and use the default `GITHUB_TOKEN` /
+      # your own PAT instead.
+      - name: Generate Read Bundle Token
         id: generate_token
-        uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f # v1.0.0, you technically can use tags, but the sha is safer, as it is immutable.
+        uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f # v1.0.0
         with:
-          scope: liatrio
-          identity: autogov-infra # liatrio/.github/chainguard/autogov-infra.sts.yaml
-- name: Download Policy Bundle
+          scope: liatrio # adapt for your org
+          identity: autogov-infra # liatrio/.github/chainguard/autogov-infra.sts.yaml — adapt for your org
+
+      - name: Download Policy Bundle
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
-          set +x
-          export GH_TOKEN=${{ steps.generate_token.outputs.token }}
           gh release download \
-            --repo ${{ github.repository_owner }}/autogov-policy-library \
+            --repo liatrio/autogov-policy-library \
             --pattern "bundle.tar.gz"
 ```
 
-> this is only possible if your repo is in the Liatrio org
+> **Note:** Pin actions to a commit SHA rather than a tag — a SHA is immutable.
+> If you are not using octo-sts, set `GH_TOKEN: ${{ github.token }}` and remove
+> the `id-token: write` permission and the token-minting step.
+
+> **Org-specific constraints:** Some policies in this library hardcode
+> Liatrio-specific values — the approved owner ID
+> (`shared/access/access.rego`), the `/liatrio/` Fulcio identity check
+> (`shared/utils/utils.rego`), and the `ghcr.io/liatrio/` subject prefix
+> (`security/metadata/metadata.rego`). Adapt these for your own org before
+> using the affected policies.
 
 ## Getting Started
 
@@ -110,7 +134,7 @@ Now that you are authenticated, you can download the attestation.
 ex:
 
 ```zsh
-gh attestation download oci://ghcr.io/liatrio/liatrio-gh-autogov-workflows@sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae -o liatrio
+gh attestation download oci://ghcr.io/liatrio/autogov-workflows@sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae -o liatrio
 ```
 
 You now have an jsonl of the json attestation objects.
@@ -128,7 +152,7 @@ cat sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae.json
 You can also run it all at once:
 
 ```zsh
-gh attestation \ verify oci://ghcr.io/liatrio/liatrio-gh-autogov-workflows@sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae \ -o liatrio \ --format json \ -jq '.[0].attestation.bundle.dsseEnvelope.payload' \ | base64 -d | jq
+gh attestation \ verify oci://ghcr.io/liatrio/autogov-workflows@sha256:efa6fcc6c8059a5fcc2c2dcdcdb83a57a7bfe480bceefbeb99d86f480a8e8aae \ -o liatrio \ --format json \ -jq '.[0].attestation.bundle.dsseEnvelope.payload' \ | base64 -d | jq
 ```
 
 > Note: This will only give you the first attestation object of the bundle downloaded. You can increase the index at .[0] to get other attestation objects.
@@ -279,7 +303,7 @@ We now have a list of objects as the parsed payload.
     "_type": "https://in-toto.io/Statement/v1",
     "subject": [
       {
-        "name": "ghcr.io/liatrio/liatrio-gh-autogov-workflows",
+        "name": "ghcr.io/liatrio/autogov-workflows",
         "digest": {
           "sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"
         }
@@ -292,7 +316,7 @@ We now have a list of objects as the parsed payload.
     "_type": "https://in-toto.io/Statement/v1",
     "subject": [
       {
-        "name": "ghcr.io/liatrio/liatrio-gh-autogov-workflows",
+        "name": "ghcr.io/liatrio/autogov-workflows",
         "digest": {
           "sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"
         }

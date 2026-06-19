@@ -1,5 +1,5 @@
 {
-  "vulnerability_thresholds": {
+  "vuln_thresholds": {
     "critical": 0,
     "high": 0,
     "medium": 5,
