@@ -1,14 +1,2 @@
 # macOS
 .DS_Store
-
-# local agent / planning tooling (not part of the project)
-.agent/
-.agentvibes/
-.bmad/
-.claude/
-.windsurf/
-_bmad/
-_bmad-output/
-
-# local planning docs (internal; not for publication)
-docs/
