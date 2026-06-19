@@ -1,0 +1,8 @@
+{
+  "code_scan_thresholds": {
+    "bySecuritySeverity": {"critical": 0, "high": -1, "medium": -1, "low": -1, "none": -1},
+    "byLevel": {"error": -1, "warning": -1, "note": -1, "none": -1},
+    "require_code_scan": false,
+    "fail_on_incomplete_scan": false
+  }
+}
