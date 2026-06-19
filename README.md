@@ -61,7 +61,7 @@ permissions:
           set +x
           export GH_TOKEN=${{ steps.generate_token.outputs.token }}
           gh release download \
-            --repo ${{ github.repository_owner }}/liatrio-rego-policy-library \
+            --repo ${{ github.repository_owner }}/autogov-policy-library \
             --pattern "bundle.tar.gz"
 ```
 
