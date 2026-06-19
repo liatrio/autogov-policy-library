@@ -7,7 +7,6 @@ on:
     paths-ignore:
       - .github/workflows/wf-slack-alert.yaml
       - README.md
-      - catalog-info.yaml
       - renovate.json
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
