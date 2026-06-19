@@ -296,3 +296,23 @@ test_blob_invalid_name_characters if {
 	violations := metadata.violations with input as test_input
 	"blob subject name contains invalid characters" in violations
 }
+
+# End-to-end: a non-default-org image subject is a violation under the default
+# (liatrio) prefix...
+test_subject_prefix_violation_default if {
+	payload := base64.encode(json.marshal({"subject": [{"name": "ghcr.io/other-org/app"}]}))
+	test_input := [{"dsseEnvelope": {"payload": payload}}]
+	violations := metadata.violations with input as test_input
+	"image subject name must be under ghcr.io/liatrio/" in violations
+}
+
+# ...and the data override (--policy-data-path) clears it for that org.
+test_subject_prefix_override_clears if {
+	payload := base64.encode(json.marshal({"subject": [{"name": "ghcr.io/other-org/app"}]}))
+	test_input := [{"dsseEnvelope": {"payload": payload}}]
+
+	# regal ignore:unresolved-reference
+	violations := metadata.violations with input as test_input with data.subject_prefix as "ghcr.io/other-org/"
+	not "image subject name must be under ghcr.io/other-org/" in violations
+	not "image subject name must be under ghcr.io/liatrio/" in violations
+}
