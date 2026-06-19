@@ -37,6 +37,10 @@ is_dep_vulnerability_scan(payload) if {
 	payload.predicateType == "https://in-toto.io/attestation/vulns/v0.2"
 }
 
+is_test_result(payload) if {
+	payload.predicateType == "https://in-toto.io/attestation/test-result/v0.1"
+}
+
 # Helper function to validate Fulcio certificates
 is_valid_fulcio_cert(raw) := valid if {
 	is_string(raw)
