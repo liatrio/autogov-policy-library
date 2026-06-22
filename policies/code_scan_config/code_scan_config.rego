@@ -22,12 +22,14 @@ import rego.v1
 #   N  = allow up to N findings
 #   -1 = unlimited (disable that bucket's check)
 #
-# Every override is TYPE-CHECKED: a value of the wrong type (e.g. a quoted
-# number "0", or a string for a boolean flag) or an out-of-range threshold (an
-# integer below -1) is reported in config_errors, and the gate DENIES when
-# config_errors is non-empty — so a config typo fails closed rather than silently
-# reverting to a looser default or disabling a gate. An ABSENT key falls back to
-# the documented default. Threshold values: 0 = zero tolerance, N = allow up to N,
+# Every override is VALIDATED: a value of the wrong type (e.g. a quoted number
+# "0", or a string for a boolean flag), an out-of-range threshold (an integer
+# below -1), or an unknown/misspelled key name (e.g. `require_code_scn`, or a
+# typo'd bucket like `critcal`) is reported in config_errors, and the gate DENIES
+# when config_errors is non-empty — so a config typo fails closed rather than
+# silently reverting to a looser default or disabling a gate. An ABSENT
+# (correctly-spelled) key falls back to the documented default. Threshold values:
+# 0 = zero tolerance, N = allow up to N,
 # -1 = disabled; only integers >= -1 are valid.
 #
 # Defaults gate zero-tolerance on critical/high security-severity AND on the
@@ -161,6 +163,9 @@ _bool_keys := {
 	"gate_new_only",
 }
 
+# _allowed_keys is every recognized top-level override key; any other is a typo.
+_allowed_keys := {"bySecuritySeverity", "byLevel", "ignore_paths"} | _bool_keys
+
 # _valid_threshold is true for an integer >= -1 (0 = zero tolerance, N = allow up
 # to N, -1 = disabled). A value below -1 would silently disable a bucket.
 _valid_threshold(v) if {
@@ -229,4 +234,29 @@ config_errors contains msg if {
 	some i, p in _cfg.ignore_paths
 	not is_string(p)
 	msg := sprintf("ignore_paths[%d] must be a string", [i])
+}
+
+# unknown/misspelled keys -> fail closed (a typo'd key would otherwise be ignored,
+# silently keeping the looser default instead of the operator's intended value).
+config_errors contains msg if {
+	is_object(_cfg)
+	some k in object.keys(_cfg)
+	not k in _allowed_keys
+	msg := sprintf("unknown config key: %s", [k])
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	is_object(_cfg.bySecuritySeverity)
+	some k in object.keys(_cfg.bySecuritySeverity)
+	not k in _sev_buckets
+	msg := sprintf("unknown bySecuritySeverity bucket: %s", [k])
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	is_object(_cfg.byLevel)
+	some k in object.keys(_cfg.byLevel)
+	not k in _level_buckets
+	msg := sprintf("unknown byLevel bucket: %s", [k])
 }

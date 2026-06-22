@@ -313,3 +313,23 @@ test_bysev_not_object_fails_closed if {
 	# regal ignore:unresolved-reference
 	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
 }
+
+# M2: an unknown/misspelled top-level key fails closed (would otherwise be
+# silently ignored, keeping the looser default instead of the operator's intent).
+test_unknown_config_key_fails_closed if {
+	inp := cs_summary(sev(0, 0, 0, 0, 0), lvl(0, 0, 0, 0), 0)
+	cfg := {"require_code_scn": true}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+}
+
+# M2: an unknown/misspelled bucket key fails closed (a typo'd `medum`/`critcal`
+# would otherwise leave that bucket at its default, silently un-gating).
+test_unknown_bucket_key_fails_closed if {
+	inp := cs_summary(sev(0, 0, 0, 0, 0), lvl(0, 0, 0, 0), 0)
+	cfg := {"bySecuritySeverity": {"critcal": 0}}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+}
