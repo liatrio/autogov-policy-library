@@ -240,6 +240,47 @@ test_malformed_predicate_fails_closed if {
 	not source_review.allow with input as bad
 }
 
+# coupling guard: corrupting ANY field a gate rule reads must trip the malformed
+# denial. If a new gate rule reads a new predicate field, add it to
+# common.structurally_valid AND to the patch list here. A valid base must allow;
+# every corrupted variant must deny.
+_base_pred := {
+	"sourceRepository": "https://github.com/liatrio/autogov",
+	"sourceRevision": "abc123",
+	"summary": _summary(1, 0),
+	"approversIncluded": true,
+	"approvers": [_ok],
+	"configuration": [],
+	"reviewToolingComplete": true,
+}
+
+test_malformed_field_coupling if {
+	source_review.allow with input as [_env(_base_pred)]
+
+	patches := [
+		[{"op": "remove", "path": "/summary/approvals"}],
+		[{"op": "replace", "path": "/summary/distinctApprovers", "value": "x"}],
+		[{"op": "remove", "path": "/summary/distinctApprovers"}],
+		[{"op": "replace", "path": "/summary/changesRequested", "value": "x"}],
+		[{"op": "remove", "path": "/summary/changesRequested"}],
+		[{"op": "replace", "path": "/summary/requiredApprovals", "value": "x"}],
+		[{"op": "replace", "path": "/summary/requirementMet", "value": 1}],
+		[{"op": "replace", "path": "/summary/selfApprovalExcluded", "value": 1}],
+		[{"op": "remove", "path": "/summary/codeownerReviewMet"}],
+		[{"op": "replace", "path": "/summary/codeownerReviewMet", "value": "x"}],
+		[{"op": "replace", "path": "/approversIncluded", "value": "x"}],
+		[{"op": "remove", "path": "/approversIncluded"}],
+		[{"op": "replace", "path": "/reviewToolingComplete", "value": "x"}],
+		[{"op": "remove", "path": "/reviewToolingComplete"}],
+		[{"op": "replace", "path": "/approvers/0/stale", "value": "x"}],
+		[{"op": "replace", "path": "/approvers/0/isBot", "value": "x"}],
+	]
+	every patch in patches {
+		bad := json.patch(_base_pred, patch)
+		not source_review.allow with input as [_env(bad)]
+	}
+}
+
 # an approver missing its stale/isBot booleans is malformed -> fail closed.
 test_malformed_approver_fails_closed if {
 	bad := [_env({
@@ -254,13 +295,39 @@ test_malformed_approver_fails_closed if {
 	not source_review.allow with input as bad
 }
 
-# type-coerced config (quoted number) is rejected -> safe default applies.
+# type-coerced config (quoted number) is a config error -> fail closed, rather
+# than silently reverting to a looser default.
 test_string_threshold_fails_closed if {
-	# min_approvals "5" is not a number -> default 1; one approval still passes,
-	# proving the quoted value did not silently disable or raise the gate.
 	inp := sr_approvers([_ok], 0, true)
 	cfg := {"min_approvals": "5"}
 
 	# regal ignore:unresolved-reference
-	source_review.allow with input as inp with data.source_review_thresholds as cfg
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+}
+
+# a wrong-typed boolean flag is a config error -> fail closed.
+test_bool_flag_typo_fails_closed if {
+	inp := sr_approvers([_ok], 0, true)
+	cfg := {"require_codeowner_review": "true"}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+}
+
+# a negative min_approvals would silently disable the threshold -> rejected.
+test_negative_min_approvals_fails_closed if {
+	inp := sr_approvers([], 0, true)
+	cfg := {"min_approvals": -1}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+}
+
+# a fractional min_approvals is rejected.
+test_fractional_min_approvals_fails_closed if {
+	inp := sr_approvers([_ok], 0, true)
+	cfg := {"min_approvals": 1.5}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
 }

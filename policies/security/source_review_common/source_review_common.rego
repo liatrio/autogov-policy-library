@@ -77,6 +77,12 @@ _bot_excluded(a) if {
 # computed at the strictest filtering, so it is a safe floor; a per-reviewer
 # filter requested without approvers[] raises the recompute incompleteness
 # violation elsewhere rather than silently trusting the wrong number).
+#
+# In v0.1 the recompute equals the strict summary, so the min() is purely an
+# INFLATION CROSS-CHECK — it catches a (buggy/forged) producer that reports a
+# higher distinctApprovers than its own approvers[] supports — not a tightening.
+# Do NOT "simplify" it to summary.distinctApprovers: that re-opens that cross-check
+# and the v0.2 path where a tightening filter recomputes below the summary.
 effective_distinct(payload) := min([recompute_distinct(payload), payload.predicate.summary.distinctApprovers]) if {
 	can_recompute(payload)
 } else := payload.predicate.summary.distinctApprovers

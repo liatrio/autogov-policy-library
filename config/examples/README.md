@@ -149,13 +149,30 @@ is rejected and the safe default applies, so a config typo fails closed.
 | `block_on_changes_requested` | `true` | block while any reviewer's latest state is CHANGES_REQUESTED |
 | `fail_on_incomplete_review` | `true` | fail when review evidence is incomplete (no merged PR / unfetchable reviews) |
 
+Notes:
+
+- **Bot detection** is by GitHub user type only (`User.Type == "Bot"`). A
+  human-PAT-driven service account typed `User` is NOT excluded by
+  `allow_bot_approvals=false`; the per-approver `association` is captured for a
+  future `min_association` knob. Don't over-trust `allow_bot_approvals` for
+  machine identities.
+- **Rollout sequencing.** The policy is inert only while no source-review
+  attestation is present. Once the producer starts emitting one, the default
+  thresholds are fairly strict (a zero-approval merge, a summary-only attestation,
+  or incomplete review evidence all fail). Wire the producer and the policy in a
+  coordinated rollout so release/tag pipelines aren't surprised — start from
+  `source-review-lenient.json` and tighten.
+
 ### source-review-strict.json (Production)
 Two-person review: `min_approvals` of 2 and requires a source-review attestation
 to be present.
 
 ### source-review-lenient.json (Development)
-One approval, presence not required, and incomplete review tooling tolerated
-(allows release/tag builds where the merged PR is not on the default branch).
+One approval and presence not required. **Warning:** with
+`fail_on_incomplete_review=false` this preset tolerates ALL incomplete review
+evidence — not only the benign release/tag default-branch quirk, but also a
+genuine unreviewed direct push (no merged PR), which it will ADMIT. A standing
+CHANGES_REQUESTED still blocks even under this preset. Use for development only.
 
 ```bash
 autogov verify attestation --image-digest <ref> --repo <owner/repo> \

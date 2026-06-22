@@ -27,6 +27,20 @@ sr_payloads := [payload |
 	utils.is_source_review(payload)
 ]
 
+# NOTE: every predicate field a violation rule below reads MUST also be
+# type-checked by common.structurally_valid. The gate is not re-validated against
+# the JSON schema at eval time, so an unchecked field would read UNDEFINED and
+# silently skip its gate (fail-open). When adding a rule that reads a new field,
+# extend structurally_valid and the malformed-field coupling test.
+
+# Violation: the policy configuration itself is malformed (a provided override has
+# the wrong type or is out of range). Fails CLOSED so a config typo cannot
+# silently revert a gate to a looser default.
+violations contains msg if {
+	some err in source_review_config.config_errors
+	msg := sprintf("source-review configuration is invalid: %s", [err])
+}
+
 # Violation: presence required but no source-review attestation present.
 violations contains msg if {
 	source_review_config.require_source_review
@@ -41,7 +55,7 @@ violations contains msg if {
 violations contains msg if {
 	some payload in sr_payloads
 	not common.structurally_valid(payload)
-	msg := "source-review predicate is malformed (missing or mistyped summary fields)"
+	msg := "source-review predicate is malformed (missing or mistyped summary, approvers, or top-level fields)"
 }
 
 # Violation: the review evidence could not be fully gathered (no merged PR — a

@@ -17,10 +17,11 @@ import rego.v1
 # "source_review_thresholds" (DISTINCT from this package name to avoid OPA v1
 # conflicts between external data and the Rego package path).
 #
-# Every override is TYPE-CHECKED: a value of the wrong type (e.g. a quoted
-# number "2", or a string for a boolean flag) is rejected and the safe default
-# is used instead, so a config typo fails closed rather than silently disabling
-# a gate.
+# Every override is TYPE-CHECKED. A wrong-typed value (e.g. a quoted number "2",
+# or a string for a boolean flag) or an out-of-range min_approvals (negative or
+# fractional) is reported in config_errors, and the gate DENIES when config_errors
+# is non-empty — so a config typo fails closed rather than silently reverting to a
+# looser default. An ABSENT key falls back to the documented default below.
 #
 # The per-reviewer flags (disallow_self_approval / require_non_stale /
 # allow_bot_approvals / require_codeowner_review) can only TIGHTEN gating. The
@@ -38,7 +39,7 @@ _cfg := data.source_review_thresholds
 default min_approvals := 1
 
 min_approvals := _cfg.min_approvals if {
-	is_number(_cfg.min_approvals)
+	_valid_count(_cfg.min_approvals)
 }
 
 # --- flags ---
@@ -99,4 +100,47 @@ default fail_on_incomplete_review := true
 
 fail_on_incomplete_review := _cfg.fail_on_incomplete_review if {
 	is_boolean(_cfg.fail_on_incomplete_review)
+}
+
+# --- config validation (provided-but-invalid overrides fail closed) ---
+
+# _bool_keys lists every flag that must be a boolean when provided.
+_bool_keys := {
+	"require_source_review",
+	"disallow_self_approval",
+	"require_non_stale",
+	"allow_bot_approvals",
+	"require_codeowner_review",
+	"block_on_changes_requested",
+	"fail_on_incomplete_review",
+}
+
+# _valid_count is true for a non-negative integer.
+_valid_count(v) if {
+	is_number(v)
+	v >= 0
+	v == floor(v)
+}
+
+# config_errors reports every PROVIDED source_review_thresholds override that has
+# the wrong type or is out of range. The gate denies when this is non-empty, so a
+# config typo fails CLOSED instead of silently reverting to a looser default. An
+# absent key is fine (it falls back to its documented default).
+config_errors contains "source_review_thresholds must be an object" if {
+	_cfg
+	not is_object(_cfg)
+}
+
+config_errors contains "min_approvals must be a non-negative integer" if {
+	is_object(_cfg)
+	"min_approvals" in object.keys(_cfg)
+	not _valid_count(_cfg.min_approvals)
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	some k in _bool_keys
+	k in object.keys(_cfg)
+	not is_boolean(_cfg[k])
+	msg := sprintf("%s must be a boolean", [k])
 }
