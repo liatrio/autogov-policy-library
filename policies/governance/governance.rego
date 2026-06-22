@@ -16,6 +16,7 @@
 package governance
 
 import data.security.certificate
+import data.security.code_scan
 import data.security.dependency_vulnerability.critical
 import data.security.dependency_vulnerability.high
 import data.security.dependency_vulnerability.low
@@ -23,6 +24,7 @@ import data.security.dependency_vulnerability.medium
 import data.security.metadata
 import data.security.provenance
 import data.security.sbom
+import data.security.test_result
 
 import rego.v1
 
@@ -31,6 +33,8 @@ allow if {
 	provenance.allow
 	metadata.allow
 	certificate.allow
+	test_result.allow
+	code_scan.allow
 	some x in input
 	x.ignore_dependency_vulnerabilities
 }
@@ -40,6 +44,8 @@ allow if {
 	provenance.allow
 	metadata.allow
 	certificate.allow
+	test_result.allow
+	code_scan.allow
 	not any_ignore_deps
 	low.allow
 	medium.allow
@@ -57,6 +63,8 @@ violations := {
 	"provenance": provenance.violations,
 	"certificate": certificate.violations,
 	"metadata": metadata.violations,
+	"test_result": test_result.violations,
+	"code_scan": code_scan.violations,
 	"dependency_vulnerability_low": dependency_vulnerability_low_violations,
 	"dependency_vulnerability_medium": dependency_vulnerability_medium_violations,
 	"dependency_vulnerability_high": dependency_vulnerability_high_violations,

@@ -76,6 +76,52 @@ opa build -b policies/ config/examples/strict-prod.json -o bundle.tar.gz
 
 If no configuration is provided, all policies default to **zero tolerance** (`0`) for backward compatibility.
 
+## Code Scan Configuration
+
+The code-scan policy gates SARIF (CodeQL/semgrep) attestations. It is configured
+under the top-level `code_scan_thresholds` key (distinct from the policy package
+name to avoid OPA conflicts). Findings are bucketed on two independent axes —
+`bySecuritySeverity` (from the rule's security-severity) and `byLevel` (the SARIF
+level) — each using the same `0` / `N` / `-1` threshold semantics as above.
+
+By default the policy gates zero-tolerance on `critical`/`high` security-severity
+**and** on the SARIF `error` level. The error-level gate is on so an error-severity
+finding that lacks a numeric security-severity (common with semgrep/gosec and
+CodeQL quality queries — it lands in the `none` security bucket) is still caught.
+Lower-signal axes (medium/low/none security, and warning/note/none levels) are
+disabled by default. Every override is type-checked: a wrong-typed value (e.g. a
+quoted number `"0"`) is rejected and the safe default applies, so a config typo
+fails closed.
+
+| Key | Default | Purpose |
+|-----|---------|---------|
+| `bySecuritySeverity.{critical,high,medium,low,none}` | `0,0,-1,-1,-1` | per-security-severity thresholds |
+| `byLevel.{error,warning,note,none}` | `0,-1,-1,-1` | per-SARIF-level thresholds (error gated by default) |
+| `require_code_scan` | `false` | require a code-scan attestation to be present |
+| `fail_on_incomplete_scan` | `true` | fail when the scanner reported an incomplete run |
+| `count_suppressed` | `false` | count suppressed findings toward thresholds (needs `--include-findings`) |
+| `fail_on_unreviewed_suppression` | `false` | fail if any suppressed finding is present |
+| `gate_new_only` | `false` | only gate findings with baselineState new/updated (needs `--include-findings`) |
+| `ignore_paths` | `[]` | glob patterns of finding locations to ignore (needs `--include-findings`) |
+
+Finding-level filters (`count_suppressed`, `gate_new_only`, `ignore_paths`)
+require embedded findings (`--include-findings`); if requested while findings are
+excluded, the gate fails closed regardless of `fail_on_incomplete_scan`.
+
+### code-scan-strict.json (Production)
+Zero tolerance across all security severities and the SARIF `error` level, and
+requires a code-scan attestation to be present.
+
+### code-scan-lenient.json (Development)
+Gates only `critical` security-severity; everything else disabled, presence not
+required, and incomplete scans tolerated.
+
+```bash
+autogov verify attestation --image-digest <ref> --repo <owner/repo> \
+  --policy-bundle-path oci://ghcr.io/liatrio/autogov-policy-library:latest \
+  --policy-data-path config/examples/code-scan-strict.json
+```
+
 ## Organization Configuration (external adopters)
 
 By default the library is scoped to the liatrio org. The following top-level data

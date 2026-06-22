@@ -66,3 +66,18 @@ mutations:
     field: '#  version: .*'
     replace: '#  version: ${version}'
     global: true
+  - path: "policies/code_scan_config/code_scan_config.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/code_scan/code_scan.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/test_result/test_result.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
