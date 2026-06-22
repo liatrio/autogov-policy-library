@@ -24,6 +24,7 @@ import data.security.dependency_vulnerability.medium
 import data.security.metadata
 import data.security.provenance
 import data.security.sbom
+import data.security.source_review
 import data.security.test_result
 
 import rego.v1
@@ -35,6 +36,7 @@ allow if {
 	certificate.allow
 	test_result.allow
 	code_scan.allow
+	source_review.allow
 	some x in input
 	x.ignore_dependency_vulnerabilities
 }
@@ -46,6 +48,7 @@ allow if {
 	certificate.allow
 	test_result.allow
 	code_scan.allow
+	source_review.allow
 	not any_ignore_deps
 	low.allow
 	medium.allow
@@ -65,6 +68,7 @@ violations := {
 	"metadata": metadata.violations,
 	"test_result": test_result.violations,
 	"code_scan": code_scan.violations,
+	"source_review": source_review.violations,
 	"dependency_vulnerability_low": dependency_vulnerability_low_violations,
 	"dependency_vulnerability_medium": dependency_vulnerability_medium_violations,
 	"dependency_vulnerability_high": dependency_vulnerability_high_violations,

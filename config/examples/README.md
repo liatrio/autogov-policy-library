@@ -125,6 +125,66 @@ autogov verify attestation --image-digest <ref> --repo <owner/repo> \
   --policy-data-path config/examples/code-scan-strict.json
 ```
 
+## Source Review Configuration
+
+The source-review policy gates autogov source-review (PR-approval) attestations.
+It is configured under the top-level `source_review_thresholds` key (distinct from
+the policy package name to avoid OPA conflicts).
+
+The gate is necessary-but-not-sufficient: meeting `min_approvals` alone never
+passes while an outstanding changes-request stands or the review evidence is
+incomplete. The producer always computes `distinctApprovers` at the strictest
+filtering (author, stale, dismissed, changes-requested, and bot reviewers
+excluded), so the per-reviewer flags can only tighten that count, never loosen
+it; they also require the per-approver list (`--include-approvers`, on by
+default), failing closed if a filter is requested while approvers are excluded.
+Every override is validated: a wrong-typed value (e.g. a quoted number `"2"`), an
+out-of-range `min_approvals` (negative/fractional), or an unknown/misspelled key
+name makes the gate DENY rather than silently keeping a looser default — so a
+config typo fails closed. A correctly-spelled, absent key uses its default.
+
+| Key | Default | Purpose |
+|-----|---------|---------|
+| `min_approvals` | `1` | minimum distinct qualifying approvals required |
+| `require_source_review` | `false` | require a source-review attestation to be present |
+| `disallow_self_approval` | `true` | exclude the PR author's own approval |
+| `require_non_stale` | `true` | exclude approvals not on the PR head |
+| `allow_bot_approvals` | `false` | count bot approvals toward the threshold |
+| `require_codeowner_review` | `false` | require CODEOWNER review (fails closed in v0.1 — not authoritatively determinable) |
+| `block_on_changes_requested` | `true` | block while any reviewer's latest state is CHANGES_REQUESTED |
+| `fail_on_incomplete_review` | `true` | fail when review evidence is incomplete (no merged PR / unfetchable reviews) |
+
+Notes:
+
+- **Bot detection** is by GitHub user type only (`User.Type == "Bot"`). A
+  human-PAT-driven service account typed `User` is NOT excluded by
+  `allow_bot_approvals=false`; the per-approver `association` is captured for a
+  future `min_association` knob. Don't over-trust `allow_bot_approvals` for
+  machine identities.
+- **Rollout sequencing.** The policy is inert only while no source-review
+  attestation is present. Once the producer starts emitting one, the default
+  thresholds are fairly strict (a zero-approval merge, a summary-only attestation,
+  or incomplete review evidence all fail). Wire the producer and the policy in a
+  coordinated rollout so release/tag pipelines aren't surprised — start from
+  `source-review-lenient.json` and tighten.
+
+### source-review-strict.json (Production)
+Two-person review: `min_approvals` of 2 and requires a source-review attestation
+to be present.
+
+### source-review-lenient.json (Development)
+One approval and presence not required. **Warning:** with
+`fail_on_incomplete_review=false` this preset tolerates ALL incomplete review
+evidence — not only the benign release/tag default-branch quirk, but also a
+genuine unreviewed direct push (no merged PR), which it will ADMIT. A standing
+CHANGES_REQUESTED still blocks even under this preset. Use for development only.
+
+```bash
+autogov verify attestation --image-digest <ref> --repo <owner/repo> \
+  --policy-bundle-path oci://ghcr.io/liatrio/autogov-policy-library:latest \
+  --policy-data-path config/examples/source-review-strict.json
+```
+
 ## Organization Configuration (external adopters)
 
 By default the library is scoped to the liatrio org. The following top-level data

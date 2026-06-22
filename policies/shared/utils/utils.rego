@@ -45,6 +45,10 @@ is_code_scan(payload) if {
 	payload.predicateType == "https://autogov.dev/attestation/code-scan/v0.1"
 }
 
+is_source_review(payload) if {
+	payload.predicateType == "https://autogov.dev/attestation/source-review/v0.1"
+}
+
 # Helper function to validate Fulcio certificates
 is_valid_fulcio_cert(raw) := valid if {
 	is_string(raw)
