@@ -1,0 +1,11 @@
+{
+  "source_review_thresholds": {
+    "min_approvals": 1,
+    "require_source_review": false,
+    "disallow_self_approval": true,
+    "require_non_stale": true,
+    "allow_bot_approvals": false,
+    "block_on_changes_requested": true,
+    "fail_on_incomplete_review": false
+  }
+}

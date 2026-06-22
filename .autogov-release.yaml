@@ -81,3 +81,13 @@ mutations:
     field: '#  version: .*'
     replace: '#  version: ${version}'
     global: true
+  - path: "policies/source_review_config/source_review_config.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/source_review/source_review.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
