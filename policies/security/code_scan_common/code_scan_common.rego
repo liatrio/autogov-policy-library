@@ -4,10 +4,6 @@
 # description: Shared helpers for code-scan gating — recompute over results[] or degrade to the summary.
 # authors:
 # - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
-# custom:
-#  version: 0.1.0
-#  path: policies/security/code_scan_common
-#  filename: code_scan_common.rego
 package security.code_scan_common
 
 import data.code_scan_config
