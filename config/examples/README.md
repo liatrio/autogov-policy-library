@@ -89,9 +89,11 @@ By default the policy gates zero-tolerance on `critical`/`high` security-severit
 finding that lacks a numeric security-severity (common with semgrep/gosec and
 CodeQL quality queries — it lands in the `none` security bucket) is still caught.
 Lower-signal axes (medium/low/none security, and warning/note/none levels) are
-disabled by default. Every override is type-checked: a wrong-typed value (e.g. a
-quoted number `"0"`) is rejected and the safe default applies, so a config typo
-fails closed.
+disabled by default. Every override is validated: a wrong-typed value (e.g. a
+quoted number `"0"`, a string for a boolean flag) or an out-of-range threshold (an
+integer below `-1`) makes the gate DENY rather than silently reverting to a looser
+default or disabling a bucket — so a config typo fails closed. Thresholds must be
+integers `>= -1` (`0` zero-tolerance, `N` allow up to N, `-1` disabled).
 
 | Key | Default | Purpose |
 |-----|---------|---------|
