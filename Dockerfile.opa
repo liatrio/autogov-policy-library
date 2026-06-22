@@ -1,5 +1,5 @@
 # Dockerfile.opa
-FROM alpine:3.23.0
+FROM alpine:3.24.1
 
 RUN apk add --no-cache curl jq
 
