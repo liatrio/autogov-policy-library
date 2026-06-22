@@ -21,9 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Setup Regal
-        uses: open-policy-agent/setup-regal@33a142b1189004e0f14bf42b15972c67eecce776 # v1.0.0
+        uses: open-policy-agent/setup-regal@761188c3b435761fa254beca508a44875619648f # v2.0.0
         with:
           version: ${{ env.REGAL_VERSION }}
       - name: Run Regal lint
@@ -34,9 +34,9 @@ jobs:
     needs: lint
     steps:
       - name: Check out repository code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Setup OPA
-        uses: open-policy-agent/setup-opa@950f159a49aa91f9323f36f1de81c7f6b5de9576 # v2.3.0
+        uses: open-policy-agent/setup-opa@b2b258e089860efaadaaf71bf6e3aecb4a3eeff1 # v2.4.0
         with:
           version: ${{ env.OPA_VERSION }}
       - name: Run OPA Tests
@@ -54,12 +54,12 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@dc57f72515396f86fe248e66951822dccb8ad785 # v0.21.3
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@dc57f72515396f86fe248e66951822dccb8ad785 # v0.21.3
 
   build-blob-offline: #blob
     if: github.event.pull_request.draft == false
@@ -79,11 +79,11 @@ jobs:
     # workflow call that passes an undeclared input — so it is intentionally
     # omitted until the ref is bumped. The .autogov-release.yaml file lands now so
     # the rules are reviewed alongside this change.
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@dc57f72515396f86fe248e66951822dccb8ad785 # v0.21.3
     secrets: inherit
     with:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@35800755dc2fa13162d6cfb9c7844eb934843918 # v0.21.0
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@dc57f72515396f86fe248e66951822dccb8ad785 # v0.21.3
       autogov-version: v0.23.0
