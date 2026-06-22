@@ -159,7 +159,7 @@ gh attestation \ verify oci://ghcr.io/liatrio/autogov-workflows@sha256:efa6fcc6c
 
 ### Creating Policy
 
-Use this [example attestation](./test/build_provenance_and_sbom_attestations.json) to help pick an object to validate. For more detailed information on authoring Rego policy, please refer to the following resources:
+Use this [example attestation](./test/attestations.json) to help pick an object to validate. For more detailed information on authoring Rego policy, please refer to the following resources:
 
 - [The Rego Playground - For quickly testing Rego](https://play.openpolicyagent.org)
 - [OPA Policy Authoring Course](https://academy.styra.com/courses/opa-rego)
@@ -182,7 +182,7 @@ Use this [example attestation](./test/build_provenance_and_sbom_attestations.jso
 
 ex:
 
-[allow in provenance.rego](policies/security/provenance.rego#L24)
+[allow in provenance.rego](policies/security/provenance/provenance.rego#L24)
 
   ```rego
   default allow := false
@@ -198,7 +198,7 @@ Use Count condition to check for the presence of a predicate in the payload
 
 ex:
 
-[is_slsa_provenance_present in provenance.rego](policies/security/provenance.rego#L90)
+[is_slsa_provenance_present in provenance.rego](policies/security/provenance/provenance.rego#L90)
 
   ```rego
   # Check for SLSA Provenance presence
@@ -215,7 +215,7 @@ Use `some` to iterate through attestations and match on predicate to evaluate pr
 
 ex:
 
-[violation rule in provenance.rego](policies/security/provenance.rego#L41)
+[violation rule in provenance.rego](policies/security/provenance/provenance.rego#L41)
 
   ```rego
   # Where predicateType is slsa provenance, the buildType should be present in the predicate
@@ -263,7 +263,7 @@ A policy file will generally look like the following:
 
 When you define a function in one file/package and would like to reference it in another (like for unit testing), you **must** include the file hosting the function definition in the opa test command:
 
-`opa test -v policies/security/sbom.rego policies/security/sbom_test.rego`
+`opa test -v policies/security/sbom/sbom.rego policies/security/sbom/sbom_test.rego`
 
 `sbom.rego` defines the function `is_cyclonedx_bom_present`, and `sbom_test.rego` calls the function.
 
