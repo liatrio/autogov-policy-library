@@ -17,11 +17,12 @@ import rego.v1
 # "source_review_thresholds" (DISTINCT from this package name to avoid OPA v1
 # conflicts between external data and the Rego package path).
 #
-# Every override is TYPE-CHECKED. A wrong-typed value (e.g. a quoted number "2",
-# or a string for a boolean flag) or an out-of-range min_approvals (negative or
-# fractional) is reported in config_errors, and the gate DENIES when config_errors
-# is non-empty — so a config typo fails closed rather than silently reverting to a
-# looser default. An ABSENT key falls back to the documented default below.
+# Every override is VALIDATED. A wrong-typed value (e.g. a quoted number "2", or a
+# string for a boolean flag), an out-of-range min_approvals (negative or
+# fractional), OR an unknown/misspelled key name (e.g. `min_aprovals`) is reported
+# in config_errors, and the gate DENIES when config_errors is non-empty — so a
+# config typo fails closed rather than silently reverting to a looser default. An
+# ABSENT (correctly-spelled) key falls back to the documented default below.
 #
 # The per-reviewer flags (disallow_self_approval / require_non_stale /
 # allow_bot_approvals / require_codeowner_review) can only TIGHTEN gating. The
@@ -115,6 +116,9 @@ _bool_keys := {
 	"fail_on_incomplete_review",
 }
 
+# _allowed_keys is every recognized override key; any other key is a typo.
+_allowed_keys := {"min_approvals"} | _bool_keys
+
 # _valid_count is true for a non-negative integer.
 _valid_count(v) if {
 	is_number(v)
@@ -143,4 +147,13 @@ config_errors contains msg if {
 	k in object.keys(_cfg)
 	not is_boolean(_cfg[k])
 	msg := sprintf("%s must be a boolean", [k])
+}
+
+# unknown/misspelled key -> fail closed (a typo'd key would otherwise be ignored,
+# silently keeping the looser default instead of the operator's intended value).
+config_errors contains msg if {
+	is_object(_cfg)
+	some k in object.keys(_cfg)
+	not k in _allowed_keys
+	msg := sprintf("unknown config key: %s", [k])
 }

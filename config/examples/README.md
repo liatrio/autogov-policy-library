@@ -135,8 +135,10 @@ filtering (author, stale, dismissed, changes-requested, and bot reviewers
 excluded), so the per-reviewer flags can only tighten that count, never loosen
 it; they also require the per-approver list (`--include-approvers`, on by
 default), failing closed if a filter is requested while approvers are excluded.
-Every override is type-checked: a wrong-typed value (e.g. a quoted number `"2"`)
-is rejected and the safe default applies, so a config typo fails closed.
+Every override is validated: a wrong-typed value (e.g. a quoted number `"2"`), an
+out-of-range `min_approvals` (negative/fractional), or an unknown/misspelled key
+name makes the gate DENY rather than silently keeping a looser default — so a
+config typo fails closed. A correctly-spelled, absent key uses its default.
 
 | Key | Default | Purpose |
 |-----|---------|---------|

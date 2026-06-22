@@ -95,10 +95,13 @@ effective_distinct(payload) := min([recompute_distinct(payload), payload.predica
 # malformed predicate fails CLOSED.
 structurally_valid(payload) if {
 	s := payload.predicate.summary
-	is_number(s.approvals)
-	is_number(s.distinctApprovers)
-	is_number(s.changesRequested)
-	is_number(s.requiredApprovals)
+
+	# counts must be non-negative — a forged negative (e.g. changesRequested: -1)
+	# would otherwise pass is_number and slip the count-based gates (n > 0 false).
+	_non_negative_int(s.approvals)
+	_non_negative_int(s.distinctApprovers)
+	_non_negative_int(s.changesRequested)
+	_non_negative_int(s.requiredApprovals)
 	is_boolean(s.requirementMet)
 	is_boolean(s.selfApprovalExcluded)
 	_codeowner_typed(s)
@@ -108,6 +111,13 @@ structurally_valid(payload) if {
 		is_boolean(a.stale)
 		is_boolean(a.isBot)
 	}
+}
+
+# _non_negative_int is true for an integer >= 0 (the valid range for every count).
+_non_negative_int(v) if {
+	is_number(v)
+	v >= 0
+	v == floor(v)
 }
 
 # codeownerReviewMet is tri-state: boolean or JSON null (not determinable).

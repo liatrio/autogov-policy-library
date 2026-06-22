@@ -331,3 +331,37 @@ test_fractional_min_approvals_fails_closed if {
 	# regal ignore:unresolved-reference
 	not source_review.allow with input as inp with data.source_review_thresholds as cfg
 }
+
+# M2: an unknown/misspelled key fails closed. The operator intended min_approvals:2
+# but typo'd it; without the unknown-key guard the gate silently keeps the default 1
+# and the single approval passes. With the guard it denies.
+test_unknown_config_key_fails_closed if {
+	inp := sr_approvers([_ok], 0, true)
+	cfg := {"min_aprovals": 2}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+}
+
+# L3: a forged negative count is rejected by structurally_valid (would otherwise
+# slip the changes-requested block: changesRequested -1 > 0 is false).
+test_forged_negative_count_fails_closed if {
+	bad := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"summary": {
+			"approvals": 1,
+			"distinctApprovers": 1,
+			"changesRequested": -1,
+			"requiredApprovals": 0,
+			"requirementMet": true,
+			"selfApprovalExcluded": false,
+			"codeownerReviewMet": null,
+		},
+		"approversIncluded": true,
+		"approvers": [_ok],
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+	not source_review.allow with input as bad
+}
