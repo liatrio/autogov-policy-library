@@ -256,3 +256,80 @@ test_count_suppressed_incomplete_even_when_foic_false if {
 	# regal ignore:unresolved-reference
 	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
 }
+
+# --- config validation (provided-but-invalid overrides fail closed) ---
+
+# a negative-but-not-(-1) threshold would silently disable the bucket -> rejected.
+test_negative_threshold_fails_closed if {
+	inp := cs_summary(sev(0, 0, 0, 0, 0), lvl(0, 0, 0, 0), 0)
+	cfg := {"bySecuritySeverity": {"critical": -5}}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+}
+
+# -1 (the documented "disabled" sentinel) is valid -> not a config error.
+test_minus_one_threshold_is_valid if {
+	inp := cs_summary(sev(3, 0, 0, 0, 0), lvl(0, 0, 0, 0), 0)
+	cfg := {"bySecuritySeverity": {"critical": -1}}
+
+	# regal ignore:unresolved-reference
+	code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+}
+
+# a fractional threshold is rejected.
+test_fractional_threshold_fails_closed if {
+	inp := cs_summary(sev(0, 0, 0, 0, 0), lvl(0, 0, 0, 0), 0)
+	cfg := {"byLevel": {"error": 1.5}}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+}
+
+# a wrong-typed boolean flag is a config error -> fail closed (the require_code_scan
+# typo would otherwise silently revert to the looser default false).
+test_bool_flag_typo_fails_closed if {
+	inp := cs_summary(sev(0, 0, 0, 0, 0), lvl(0, 0, 0, 0), 0)
+	cfg := {"require_code_scan": "true"}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+}
+
+# ignore_paths must be an array of strings.
+test_ignore_paths_wrong_type_fails_closed if {
+	inp := cs_summary(sev(0, 0, 0, 0, 0), lvl(0, 0, 0, 0), 0)
+	cfg := {"ignore_paths": "test/**"}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+}
+
+# a wrong-typed bucket object is a config error.
+test_bysev_not_object_fails_closed if {
+	inp := cs_summary(sev(0, 0, 0, 0, 0), lvl(0, 0, 0, 0), 0)
+	cfg := {"bySecuritySeverity": "nope"}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+}
+
+# M2: an unknown/misspelled top-level key fails closed (would otherwise be
+# silently ignored, keeping the looser default instead of the operator's intent).
+test_unknown_config_key_fails_closed if {
+	inp := cs_summary(sev(0, 0, 0, 0, 0), lvl(0, 0, 0, 0), 0)
+	cfg := {"require_code_scn": true}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+}
+
+# M2: an unknown/misspelled bucket key fails closed (a typo'd `medum`/`critcal`
+# would otherwise leave that bucket at its default, silently un-gating).
+test_unknown_bucket_key_fails_closed if {
+	inp := cs_summary(sev(0, 0, 0, 0, 0), lvl(0, 0, 0, 0), 0)
+	cfg := {"bySecuritySeverity": {"critcal": 0}}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+}

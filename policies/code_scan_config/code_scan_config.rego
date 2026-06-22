@@ -22,10 +22,15 @@ import rego.v1
 #   N  = allow up to N findings
 #   -1 = unlimited (disable that bucket's check)
 #
-# Every override is TYPE-CHECKED: a value of the wrong type (e.g. a quoted
-# number "0", or a string for a boolean flag) is rejected and the safe default
-# is used instead, so a config typo fails closed rather than silently disabling
-# a gate.
+# Every override is VALIDATED: a value of the wrong type (e.g. a quoted number
+# "0", or a string for a boolean flag), an out-of-range threshold (an integer
+# below -1), or an unknown/misspelled key name (e.g. `require_code_scn`, or a
+# typo'd bucket like `critcal`) is reported in config_errors, and the gate DENIES
+# when config_errors is non-empty — so a config typo fails closed rather than
+# silently reverting to a looser default or disabling a gate. An ABSENT
+# (correctly-spelled) key falls back to the documented default. Threshold values:
+# 0 = zero tolerance, N = allow up to N,
+# -1 = disabled; only integers >= -1 are valid.
 #
 # Defaults gate zero-tolerance on critical/high security-severity AND on the
 # SARIF "error" level. The error-level gate is on by default so that an
@@ -41,31 +46,31 @@ _cfg := data.code_scan_thresholds
 default sev_critical := 0
 
 sev_critical := _cfg.bySecuritySeverity.critical if {
-	is_number(_cfg.bySecuritySeverity.critical)
+	_valid_threshold(_cfg.bySecuritySeverity.critical)
 }
 
 default sev_high := 0
 
 sev_high := _cfg.bySecuritySeverity.high if {
-	is_number(_cfg.bySecuritySeverity.high)
+	_valid_threshold(_cfg.bySecuritySeverity.high)
 }
 
 default sev_medium := -1
 
 sev_medium := _cfg.bySecuritySeverity.medium if {
-	is_number(_cfg.bySecuritySeverity.medium)
+	_valid_threshold(_cfg.bySecuritySeverity.medium)
 }
 
 default sev_low := -1
 
 sev_low := _cfg.bySecuritySeverity.low if {
-	is_number(_cfg.bySecuritySeverity.low)
+	_valid_threshold(_cfg.bySecuritySeverity.low)
 }
 
 default sev_none := -1
 
 sev_none := _cfg.bySecuritySeverity.none if {
-	is_number(_cfg.bySecuritySeverity.none)
+	_valid_threshold(_cfg.bySecuritySeverity.none)
 }
 
 # --- SARIF level thresholds (error gated by default; rest disabled) ---
@@ -73,25 +78,25 @@ sev_none := _cfg.bySecuritySeverity.none if {
 default level_error := 0
 
 level_error := _cfg.byLevel.error if {
-	is_number(_cfg.byLevel.error)
+	_valid_threshold(_cfg.byLevel.error)
 }
 
 default level_warning := -1
 
 level_warning := _cfg.byLevel.warning if {
-	is_number(_cfg.byLevel.warning)
+	_valid_threshold(_cfg.byLevel.warning)
 }
 
 default level_note := -1
 
 level_note := _cfg.byLevel.note if {
-	is_number(_cfg.byLevel.note)
+	_valid_threshold(_cfg.byLevel.note)
 }
 
 default level_none := -1
 
 level_none := _cfg.byLevel.none if {
-	is_number(_cfg.byLevel.none)
+	_valid_threshold(_cfg.byLevel.none)
 }
 
 # --- flags ---
@@ -141,4 +146,117 @@ default ignore_paths := []
 
 ignore_paths := _cfg.ignore_paths if {
 	is_array(_cfg.ignore_paths)
+}
+
+# --- config validation (provided-but-invalid overrides fail closed) ---
+
+# _sev_buckets / _level_buckets / _bool_keys enumerate the overridable keys.
+_sev_buckets := {"critical", "high", "medium", "low", "none"}
+
+_level_buckets := {"error", "warning", "note", "none"}
+
+_bool_keys := {
+	"require_code_scan",
+	"fail_on_incomplete_scan",
+	"count_suppressed",
+	"fail_on_unreviewed_suppression",
+	"gate_new_only",
+}
+
+# _allowed_keys is every recognized top-level override key; any other is a typo.
+_allowed_keys := {"bySecuritySeverity", "byLevel", "ignore_paths"} | _bool_keys
+
+# _valid_threshold is true for an integer >= -1 (0 = zero tolerance, N = allow up
+# to N, -1 = disabled). A value below -1 would silently disable a bucket.
+_valid_threshold(v) if {
+	is_number(v)
+	v >= -1
+	v == floor(v)
+}
+
+# config_errors reports every PROVIDED code_scan_thresholds override that has the
+# wrong type or is out of range. The gate denies when this is non-empty, so a
+# config typo fails CLOSED instead of silently reverting to a looser default (or
+# disabling a bucket via a stray negative). An absent key falls back to its
+# documented default.
+config_errors contains "code_scan_thresholds must be an object" if {
+	_cfg
+	not is_object(_cfg)
+}
+
+config_errors contains "bySecuritySeverity must be an object" if {
+	is_object(_cfg)
+	"bySecuritySeverity" in object.keys(_cfg)
+	not is_object(_cfg.bySecuritySeverity)
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	is_object(_cfg.bySecuritySeverity)
+	some k in _sev_buckets
+	k in object.keys(_cfg.bySecuritySeverity)
+	not _valid_threshold(_cfg.bySecuritySeverity[k])
+	msg := sprintf("bySecuritySeverity.%s must be an integer >= -1", [k])
+}
+
+config_errors contains "byLevel must be an object" if {
+	is_object(_cfg)
+	"byLevel" in object.keys(_cfg)
+	not is_object(_cfg.byLevel)
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	is_object(_cfg.byLevel)
+	some k in _level_buckets
+	k in object.keys(_cfg.byLevel)
+	not _valid_threshold(_cfg.byLevel[k])
+	msg := sprintf("byLevel.%s must be an integer >= -1", [k])
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	some k in _bool_keys
+	k in object.keys(_cfg)
+	not is_boolean(_cfg[k])
+	msg := sprintf("%s must be a boolean", [k])
+}
+
+config_errors contains "ignore_paths must be an array" if {
+	is_object(_cfg)
+	"ignore_paths" in object.keys(_cfg)
+	not is_array(_cfg.ignore_paths)
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	is_array(_cfg.ignore_paths)
+	some i, p in _cfg.ignore_paths
+	not is_string(p)
+	msg := sprintf("ignore_paths[%d] must be a string", [i])
+}
+
+# unknown/misspelled keys -> fail closed (a typo'd key would otherwise be ignored,
+# silently keeping the looser default instead of the operator's intended value).
+config_errors contains msg if {
+	is_object(_cfg)
+	some k in object.keys(_cfg)
+	not k in _allowed_keys
+	msg := sprintf("unknown config key: %s", [k])
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	is_object(_cfg.bySecuritySeverity)
+	some k in object.keys(_cfg.bySecuritySeverity)
+	not k in _sev_buckets
+	msg := sprintf("unknown bySecuritySeverity bucket: %s", [k])
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	is_object(_cfg.byLevel)
+	some k in object.keys(_cfg.byLevel)
+	not k in _level_buckets
+	msg := sprintf("unknown byLevel bucket: %s", [k])
 }

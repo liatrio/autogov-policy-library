@@ -43,6 +43,14 @@ level_thresholds := {
 	"none": code_scan_config.level_none,
 }
 
+# Violation: the policy configuration itself is malformed (a provided override has
+# the wrong type or an out-of-range threshold). Fails CLOSED so a config typo
+# cannot silently revert a gate to a looser default or disable a bucket.
+violations contains msg if {
+	some err in code_scan_config.config_errors
+	msg := sprintf("code-scan configuration is invalid: %s", [err])
+}
+
 # Violation: presence required but no code-scan attestation present.
 violations contains msg if {
 	code_scan_config.require_code_scan
