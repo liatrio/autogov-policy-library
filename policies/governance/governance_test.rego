@@ -58,6 +58,39 @@ test_allow_all_true_ignore_deps if {
 		with data.security.dependency_vulnerability.medium.violations as dep_violations
 		with data.security.dependency_vulnerability.high.violations as dep_violations
 		with data.security.dependency_vulnerability.critical.violations as dep_violations
+		with data.security.bypass.dep_vuln_authorized as true
+		with data.security.bypass.allow as true
+}
+
+# An ignore_dependency_vulnerabilities flag WITHOUT attested authorization must NOT
+# allow when the dep-vuln gates fail — the spoofable-bypass fix.
+test_no_allow_unauthorized_ignore_deps if {
+	violations := set()
+	dep_violations := {"some vulnerability"}
+	test_input := [{
+		"mediaType": "application/vnd.dev.sigstore.bundle.v0.3+json",
+		"verificationMaterial": {"certificate": {"rawBytes": "valid-github-cert"}},
+		"ignore_dependency_vulnerabilities": true,
+	}]
+
+	not governance.allow with input as test_input
+		with data.security.sbom.allow as true
+		with data.security.provenance.allow as true
+		with data.security.metadata.allow as true
+		with data.security.certificate.allow as true
+		with data.security.dependency_vulnerability.low.allow as false
+		with data.security.dependency_vulnerability.medium.allow as false
+		with data.security.dependency_vulnerability.high.allow as false
+		with data.security.dependency_vulnerability.critical.allow as false
+		with data.security.sbom.violations as violations
+		with data.security.provenance.violations as violations
+		with data.security.metadata.violations as violations
+		with data.security.certificate.violations as violations
+		with data.security.dependency_vulnerability.low.violations as dep_violations
+		with data.security.dependency_vulnerability.medium.violations as dep_violations
+		with data.security.dependency_vulnerability.high.violations as dep_violations
+		with data.security.dependency_vulnerability.critical.violations as dep_violations
+		with data.security.bypass.dep_vuln_authorized as false
 }
 
 # Test SBOM false case
@@ -193,6 +226,7 @@ test_violations_report if {
 		"test_result": set(),
 		"code_scan": set(),
 		"source_review": set(),
+		"bypass": set(),
 		"dependency_vulnerability_low": dependency_vulnerability_violations_low,
 		"dependency_vulnerability_medium": dependency_vulnerability_violations_medium,
 		"dependency_vulnerability_high": dependency_vulnerability_violations_high,
@@ -208,8 +242,10 @@ test_violations_report if {
 		with data.security.dependency_vulnerability.critical.violations as dependency_vulnerability_violations_critical
 }
 
-# Test violations reporting with ignored dependency vulnerabilities
-test_violations_report_ignore_deps if {
+# Violations reporting with an UNAUTHORIZED ignore_dependency_vulnerabilities flag:
+# the bare flag no longer suppresses the dep-vuln buckets (the v0.2 fix), so they
+# surface the underlying violations. bypass is empty (no malformed config).
+test_violations_report_ignore_deps_unauthorized if {
 	test_input := [{
 		"dsseEnvelope": {"payload": base64.encode(json.marshal({
 			"predicateType": "https://example.org/other",
@@ -230,11 +266,53 @@ test_violations_report_ignore_deps if {
 		"test_result": set(),
 		"code_scan": set(),
 		"source_review": set(),
+		"bypass": set(),
+		"dependency_vulnerability_low": dependency_vulnerability_violations_low,
+		"dependency_vulnerability_medium": dependency_vulnerability_violations_medium,
+		"dependency_vulnerability_high": dependency_vulnerability_violations_high,
+		"dependency_vulnerability_critical": dependency_vulnerability_violations_critical,
+	} with input as test_input
+		with data.security.sbom.violations as sbom_violations
+		with data.security.provenance.violations as provenance_violations
+		with data.security.metadata.violations as metadata_violations
+		with data.security.certificate.violations as certificate_violations
+		with data.security.dependency_vulnerability.low.violations as dependency_vulnerability_violations_low
+		with data.security.dependency_vulnerability.medium.violations as dependency_vulnerability_violations_medium
+		with data.security.dependency_vulnerability.high.violations as dependency_vulnerability_violations_high
+		with data.security.dependency_vulnerability.critical.violations as dependency_vulnerability_violations_critical
+}
+
+# Violations reporting with an AUTHORIZED bypass: the dep-vuln buckets are
+# suppressed (the feature) — but ONLY because the bypass is attested-authorized
+# (mocked dep_vuln_authorized), not because of the bare flag.
+test_violations_report_ignore_deps_authorized if {
+	test_input := [{
+		"dsseEnvelope": {"payload": base64.encode(json.marshal({
+			"predicateType": "https://example.org/other",
+			"subject": [{
+				"name": "ghcr.io/liatrio/demo-gh-autogov-workflows",
+				"digest": {"sha256": "d379d8ef02ef446dc22e57e845ac7f3e5053b9398475541a8530d707511e6264"},
+			}],
+			"predicate": {},
+		}))},
+		"ignore_dependency_vulnerabilities": true,
+	}]
+
+	governance.violations == {
+		"sbom": sbom_violations,
+		"provenance": provenance_violations,
+		"metadata": metadata_violations,
+		"certificate": certificate_violations,
+		"test_result": set(),
+		"code_scan": set(),
+		"source_review": set(),
+		"bypass": set(),
 		"dependency_vulnerability_low": set(),
 		"dependency_vulnerability_medium": set(),
 		"dependency_vulnerability_high": set(),
 		"dependency_vulnerability_critical": set(),
 	} with input as test_input
+		with data.security.bypass.dep_vuln_authorized as true
 		with data.security.sbom.violations as sbom_violations
 		with data.security.provenance.violations as provenance_violations
 		with data.security.metadata.violations as metadata_violations
@@ -251,6 +329,44 @@ test_empty_input if {
 	not governance.allow with input as test_input
 }
 
+# A bypass REQUESTED with a malformed bypass config surfaces a blocking violation
+# AND is not allowed even when every other gate is clean — proving bypass.allow
+# blocks both allow rules and the config error fails closed visibly.
+test_bypass_malformed_config_when_requested_blocks if {
+	test_input := [{"ignore_dependency_vulnerabilities": true}]
+	bad_cfg := {"bypass_min_aprovals": 2}
+
+	# regal ignore:unresolved-reference
+	result := governance.violations with input as test_input with data.bypass_thresholds as bad_cfg
+	count(result.bypass) > 0
+
+	# regal ignore:unresolved-reference
+	not governance.allow with input as test_input with data.bypass_thresholds as bad_cfg
+		with data.security.sbom.allow as true
+		with data.security.provenance.allow as true
+		with data.security.metadata.allow as true
+		with data.security.certificate.allow as true
+		with data.security.test_result.allow as true
+		with data.security.code_scan.allow as true
+		with data.security.source_review.allow as true
+		with data.security.dependency_vulnerability.low.allow as true
+		with data.security.dependency_vulnerability.medium.allow as true
+		with data.security.dependency_vulnerability.high.allow as true
+		with data.security.dependency_vulnerability.critical.allow as true
+}
+
+# The SAME malformed config but with NO bypass requested adds no bypass surface
+# (the gate is opt-in) — the dep-vuln gate enforces normally regardless of config
+# validity, so a bypass_thresholds typo is never a repo-wide outage.
+test_bypass_malformed_config_not_requested_no_surface if {
+	test_input := [{"ignore_dependency_vulnerabilities": false}]
+	bad_cfg := {"bypass_min_aprovals": 2}
+
+	# regal ignore:unresolved-reference
+	result := governance.violations with input as test_input with data.bypass_thresholds as bad_cfg
+	result.bypass == set()
+}
+
 # Test no violations case
 test_no_violations if {
 	violations := set()
@@ -264,6 +380,7 @@ test_no_violations if {
 		"test_result": violations,
 		"code_scan": violations,
 		"source_review": violations,
+		"bypass": violations,
 		"dependency_vulnerability_low": violations,
 		"dependency_vulnerability_medium": violations,
 		"dependency_vulnerability_high": violations,
