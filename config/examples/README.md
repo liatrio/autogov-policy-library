@@ -185,6 +185,46 @@ autogov verify attestation --image-digest <ref> --repo <owner/repo> \
   --policy-data-path config/examples/source-review-strict.json
 ```
 
+## Dependency-Vulnerability Bypass Configuration
+
+The `ignore_dependency_vulnerabilities` flag on the verify input is a *request* to
+skip the dependency-vulnerability gate. On its own it does nothing: the bypass is
+honored only when an attested source-review proves the exception was approved by
+enough authorized reviewers. It is configured under the top-level `bypass_thresholds`
+key (distinct from the policy package name to avoid OPA conflicts).
+
+Ships **inert**: with the default `allow_dep_vuln_bypass=false` the request flag
+never authorizes a bypass, so the dependency-vulnerability gates always enforce —
+closing the previously spoofable, unauthenticated bypass. Enabling it requires
+`allow_dep_vuln_bypass=true` AND a present source-review attestation carrying at
+least `bypass_min_approvals` distinct, non-stale, non-bot approvers whose
+`association` is in `authorized_associations` OR whose `login` is in
+`authorized_approvers`. Every override is validated: a wrong-typed value, an
+out-of-range `bypass_min_approvals`, an array containing a non-string, or an
+unknown/misspelled key makes the bypass fail closed (gates enforce), and — only when
+a bypass is actually requested — surfaces as a blocking violation so the operator
+learns the config (not their approvals) is the problem.
+
+| Key | Default | Purpose |
+|-----|---------|---------|
+| `allow_dep_vuln_bypass` | `false` | master switch — the capability is inert until true |
+| `bypass_min_approvals` | `2` | distinct authorized approvals required to honor a bypass |
+| `authorized_associations` | `["OWNER","MEMBER"]` | author associations authorized to approve a bypass |
+| `authorized_approvers` | `[]` | optional explicit login allowlist (OR-ed with associations) |
+
+Notes:
+
+- **Opt-in.** A `bypass_thresholds` typo only surfaces (and blocks) when a bypass is
+  actually requested; artifacts that never set `ignore_dependency_vulnerabilities`
+  are unaffected, so a config typo is never a repo-wide outage.
+- The flag is the trigger; the attested approval is the authorization. Both are
+  required to skip the gate.
+
+### bypass-enabled.json
+Enables the bypass with two-person authorization (`bypass_min_approvals` of 2,
+OWNER/MEMBER associations). Pass via `--policy-data-path` alongside an
+`ignore_dependency_vulnerabilities` verify input.
+
 ## Organization Configuration (external adopters)
 
 By default the library is scoped to the liatrio org. The following top-level data

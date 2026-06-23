@@ -15,6 +15,7 @@
 #  filename: governance.rego
 package governance
 
+import data.security.bypass
 import data.security.certificate
 import data.security.code_scan
 import data.security.dependency_vulnerability.critical
@@ -37,8 +38,8 @@ allow if {
 	test_result.allow
 	code_scan.allow
 	source_review.allow
-	some x in input
-	x.ignore_dependency_vulnerabilities
+	authorized_dep_bypass
+	bypass.allow
 }
 
 allow if {
@@ -49,16 +50,21 @@ allow if {
 	test_result.allow
 	code_scan.allow
 	source_review.allow
-	not any_ignore_deps
+	not authorized_dep_bypass
+	bypass.allow
 	low.allow
 	medium.allow
 	high.allow
 	critical.allow
 }
 
-any_ignore_deps if {
-	some x in input
-	x.ignore_dependency_vulnerabilities
+# authorized_dep_bypass is true only when the raw request flag is present AND an
+# attested source-review authorizes it (bypass.dep_vuln_authorized). The flag alone
+# (the old, spoofable behavior) no longer suppresses the dependency-vulnerability
+# gate — an unauthorized request is a no-op (fail closed).
+authorized_dep_bypass if {
+	bypass.requested
+	bypass.dep_vuln_authorized
 }
 
 violations := {
@@ -69,6 +75,7 @@ violations := {
 	"test_result": test_result.violations,
 	"code_scan": code_scan.violations,
 	"source_review": source_review.violations,
+	"bypass": bypass.violations,
 	"dependency_vulnerability_low": dependency_vulnerability_low_violations,
 	"dependency_vulnerability_medium": dependency_vulnerability_medium_violations,
 	"dependency_vulnerability_high": dependency_vulnerability_high_violations,
@@ -76,21 +83,21 @@ violations := {
 }
 
 dependency_vulnerability_low_violations contains v if {
-	not any_ignore_deps
+	not authorized_dep_bypass
 	some v in low.violations
 }
 
 dependency_vulnerability_medium_violations contains v if {
-	not any_ignore_deps
+	not authorized_dep_bypass
 	some v in medium.violations
 }
 
 dependency_vulnerability_high_violations contains v if {
-	not any_ignore_deps
+	not authorized_dep_bypass
 	some v in high.violations
 }
 
 dependency_vulnerability_critical_violations contains v if {
-	not any_ignore_deps
+	not authorized_dep_bypass
 	some v in critical.violations
 }

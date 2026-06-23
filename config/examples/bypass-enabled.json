@@ -1,0 +1,7 @@
+{
+  "bypass_thresholds": {
+    "allow_dep_vuln_bypass": true,
+    "bypass_min_approvals": 2,
+    "authorized_associations": ["OWNER", "MEMBER"]
+  }
+}
