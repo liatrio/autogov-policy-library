@@ -70,6 +70,7 @@ authorized_approvals(payload) := min([
 		some a in object.get(payload.predicate, "approvers", [])
 		not a.stale
 		not a.isBot
+		is_string(a.login)
 		_authorized(a)
 	}),
 	payload.predicate.summary.distinctApprovers,

@@ -272,6 +272,18 @@ test_honest_summary_padded_approvers_not_authorized if {
 	not bypass.dep_vuln_authorized with input as sr_raw(pred) with data.bypass_thresholds as _enabled
 }
 
+# an approver authorized BY ASSOCIATION but carrying a non-string login (e.g. a
+# forged numeric login) is NOT counted toward the distinct bar. structurally_valid
+# does not type-check login, so the input reaches authorized_approvals; the
+# is_string(a.login) guard on the count comprehension drops it (fail closed).
+# Without the guard, two distinct numeric keys (1, 2) would clear a min-2 bypass.
+test_non_string_login_by_association_not_counted if {
+	numeric := [approver(1, "OWNER", false, false), approver(2, "MEMBER", false, false)]
+
+	# regal ignore:unresolved-reference
+	not bypass.dep_vuln_authorized with input as sr(numeric, true, true) with data.bypass_thresholds as _enabled
+}
+
 # --- min_approvals must be positive ---
 
 # bypass_min_approvals: 0 is rejected (a zero-approval bypass is nonsensical) -> not
