@@ -90,9 +90,12 @@ violations contains msg if {
 # the incompleteness violation governs (so a release/tag build is not falsely
 # hard-failed on a zero count). Pass/fail derives ONLY from the numeric count,
 # never from a self-asserted requirementMet/selfApprovalExcluded boolean.
+# Suppressed for a revision merged before enforced_since (grandfathered) so
+# enabling the gate does not retroactively fail pre-adoption commits.
 violations contains msg if {
 	some payload in sr_payloads
 	common.review_complete(payload)
+	not _grandfathered(payload)
 	n := common.effective_distinct(payload)
 	n < source_review_config.min_approvals
 	msg := sprintf("source-review: %d distinct approval(s), need at least %d", [n, source_review_config.min_approvals])
@@ -122,4 +125,19 @@ violations contains msg if {
 	some payload in sr_payloads
 	payload.predicate.summary.codeownerReviewMet != true
 	msg := "source-review: codeowner review is required but not met or not determinable"
+}
+
+# _grandfathered is true when enforced_since is set AND this revision's merged PR
+# closed strictly before it, so its approval-count violation is suppressed.
+# Fails CLOSED (no grandfathering) when enforced_since is "", when pullRequest /
+# mergedAt is absent, or when mergedAt is not a parseable RFC3339 string — a
+# missing or forged timestamp can never open the window. enforced_since is already
+# validated as RFC3339 (config_errors blocks otherwise). The changes-requested
+# block is intentionally NOT guarded by this, so it stands regardless.
+_grandfathered(payload) if {
+	source_review_config.enforced_since != ""
+	merged := object.get(payload.predicate, ["pullRequest", "mergedAt"], "")
+	is_string(merged)
+	merged != ""
+	time.parse_rfc3339_ns(merged) < time.parse_rfc3339_ns(source_review_config.enforced_since)
 }

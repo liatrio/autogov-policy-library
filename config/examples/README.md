@@ -153,8 +153,15 @@ config typo fails closed. A correctly-spelled, absent key uses its default.
 | `require_codeowner_review` | `false` | require CODEOWNER review (fails closed in v0.1 — not authoritatively determinable) |
 | `block_on_changes_requested` | `true` | block while any reviewer's latest state is CHANGES_REQUESTED |
 | `fail_on_incomplete_review` | `false` | fail when review evidence is incomplete (no merged PR / unfetchable reviews) |
+| `enforced_since` | `""` | RFC3339 cutoff; a revision merged before it has its approval-count violation suppressed (grandfathered), so enabling the gate is not retroactive. `""` = inert; a standing changes-request still blocks regardless |
 
 Notes:
+
+- **Grandfathering.** `enforced_since` only suppresses the approval-count
+  violation for a revision whose `pullRequest.mergedAt` is provably before the
+  cutoff; a missing or unparseable `mergedAt` is never grandfathered (fail
+  closed), and a changes-request, incompleteness, malformed-predicate, or config
+  violation is never suppressed.
 
 - **Bot detection** is by GitHub user type only (`User.Type == "Bot"`). A
   human-PAT-driven service account typed `User` is NOT excluded by
