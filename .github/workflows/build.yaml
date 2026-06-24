@@ -13,8 +13,8 @@ on:
     branches: [main]
 
 env:
-  OPA_VERSION: 1.2.0
-  REGAL_VERSION: 0.37.0
+  OPA_VERSION: 1.17.1
+  REGAL_VERSION: 0.39.0
 
 jobs:
   lint:
