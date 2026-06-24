@@ -105,6 +105,16 @@ fail_on_incomplete_review := _cfg.fail_on_incomplete_review if {
 	is_boolean(_cfg.fail_on_incomplete_review)
 }
 
+# Author associations that a qualifying approver must carry. Default empty so the
+# gate is inert: with no entries the allowlist check never fires. When non-empty
+# (e.g. ["OWNER", "MEMBER"]) at least one qualifying approver's association must be
+# in the set, else the gate denies.
+default required_approver_associations := set()
+
+required_approver_associations := {a | some a in _cfg.required_approver_associations} if {
+	_valid_str_array(_cfg.required_approver_associations)
+}
+
 # --- config validation (provided-but-invalid overrides fail closed) ---
 
 # _bool_keys lists every flag that must be a boolean when provided.
@@ -118,14 +128,25 @@ _bool_keys := {
 	"fail_on_incomplete_review",
 }
 
+# _array_keys must be arrays-of-strings when provided.
+_array_keys := {"required_approver_associations"}
+
 # _allowed_keys is every recognized override key; any other key is a typo.
-_allowed_keys := {"min_approvals"} | _bool_keys
+_allowed_keys := ({"min_approvals"} | _bool_keys) | _array_keys
 
 # _valid_count is true for a non-negative integer.
 _valid_count(v) if {
 	is_number(v)
 	v >= 0
 	v == floor(v)
+}
+
+# _valid_str_array is true for an array whose every element is a string.
+_valid_str_array(v) if {
+	is_array(v)
+	every e in v {
+		is_string(e)
+	}
 }
 
 # config_errors reports every PROVIDED source_review_thresholds override that has
@@ -149,6 +170,14 @@ config_errors contains msg if {
 	k in object.keys(_cfg)
 	not is_boolean(_cfg[k])
 	msg := sprintf("%s must be a boolean", [k])
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	some k in _array_keys
+	k in object.keys(_cfg)
+	not _valid_str_array(_cfg[k])
+	msg := sprintf("%s must be an array of strings", [k])
 }
 
 # unknown/misspelled key -> fail closed (a typo'd key would otherwise be ignored,
