@@ -152,7 +152,7 @@ config typo fails closed. A correctly-spelled, absent key uses its default.
 | `allow_bot_approvals` | `false` | count bot approvals toward the threshold |
 | `require_codeowner_review` | `false` | require CODEOWNER review (fails closed in v0.1 — not authoritatively determinable) |
 | `block_on_changes_requested` | `true` | block while any reviewer's latest state is CHANGES_REQUESTED |
-| `fail_on_incomplete_review` | `true` | fail when review evidence is incomplete (no merged PR / unfetchable reviews) |
+| `fail_on_incomplete_review` | `false` | fail when review evidence is incomplete (no merged PR / unfetchable reviews) |
 
 Notes:
 

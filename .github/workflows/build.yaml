@@ -55,12 +55,12 @@ jobs:
       actions: read
       pull-requests: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@c30bc776b4c842aefa825dee0a479dfe6df4dddf # v0.22.2
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@0b11d6945f138fd1b4c6372f9c94381ace120b88 # v0.23.0
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@c30bc776b4c842aefa825dee0a479dfe6df4dddf # v0.22.2
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@0b11d6945f138fd1b4c6372f9c94381ace120b88 # v0.23.0
 
   build-blob-offline: #blob
     if: github.event.pull_request.draft == false
@@ -80,11 +80,11 @@ jobs:
     # workflow call that passes an undeclared input — so it is intentionally
     # omitted until the ref is bumped. The .autogov-release.yaml file lands now so
     # the rules are reviewed alongside this change.
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@c30bc776b4c842aefa825dee0a479dfe6df4dddf # v0.22.2
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@0b11d6945f138fd1b4c6372f9c94381ace120b88 # v0.23.0
     secrets: inherit
     with:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@c30bc776b4c842aefa825dee0a479dfe6df4dddf # v0.22.2
-      autogov-version: v0.23.0
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@0b11d6945f138fd1b4c6372f9c94381ace120b88 # v0.23.0
+      autogov-version: v0.29.8

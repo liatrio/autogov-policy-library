@@ -60,7 +60,7 @@ violations contains msg if {
 
 # Violation: the review evidence could not be fully gathered (no merged PR — a
 # direct push or the ListPullRequestsWithCommit default-branch quirk — or reviews
-# were unfetchable). Governed by fail_on_incomplete_review (default true).
+# were unfetchable). Governed by fail_on_incomplete_review (default false).
 violations contains msg if {
 	source_review_config.fail_on_incomplete_review == true
 	some payload in sr_payloads
