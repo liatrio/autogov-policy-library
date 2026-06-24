@@ -152,8 +152,16 @@ test_changes_requested_blocks_even_when_incomplete_tolerated if {
 
 # --- incompleteness ---
 
-test_incomplete_fails_default if {
-	not source_review.allow with input as sr_approvers([_ok], 0, false)
+test_incomplete_tolerated_by_default if {
+	source_review.allow with input as sr_approvers([_ok], 0, false)
+}
+
+test_incomplete_fails_when_enabled if {
+	inp := sr_approvers([_ok], 0, false)
+	cfg := {"fail_on_incomplete_review": true}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
 }
 
 test_incomplete_tolerated_when_disabled if {

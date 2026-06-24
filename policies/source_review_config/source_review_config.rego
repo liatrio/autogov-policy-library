@@ -95,9 +95,11 @@ block_on_changes_requested := _cfg.block_on_changes_requested if {
 }
 
 # Fail when the review evidence could not be fully gathered
-# (reviewToolingComplete=false). Default true. (The separate per-approver and
-# codeowner incompleteness guards are NOT governed by this flag; they always fire.)
-default fail_on_incomplete_review := true
+# (reviewToolingComplete=false). Default false to match require_source_review's
+# inert default, so the gate ships fully inert; enforcing consumers set both true.
+# (Per-approver and codeowner incompleteness guards are NOT governed by this flag;
+# they always fire.)
+default fail_on_incomplete_review := false
 
 fail_on_incomplete_review := _cfg.fail_on_incomplete_review if {
 	is_boolean(_cfg.fail_on_incomplete_review)
