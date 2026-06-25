@@ -373,3 +373,87 @@ test_forged_negative_count_fails_closed if {
 	})]
 	not source_review.allow with input as bad
 }
+
+# --- required_approver_associations allowlist ---
+
+# an approver with a configurable association (else like approver/3).
+_assoc_approver(login, association) := {
+	"login": login,
+	"association": association,
+	"stale": false,
+	"isBot": false,
+}
+
+# inert by default: an empty allowlist never fires, even for an unusual association.
+test_assoc_allowlist_inert_by_default if {
+	source_review.allow with input as sr_approvers([_assoc_approver("alice", "CONTRIBUTOR")], 0, true)
+}
+
+# a qualifying approver whose association is in the allowlist passes.
+test_assoc_allowlist_passes if {
+	inp := sr_approvers([_assoc_approver("alice", "OWNER")], 0, true)
+	cfg := {"required_approver_associations": ["OWNER", "MEMBER"]}
+
+	# regal ignore:unresolved-reference
+	source_review.allow with input as inp with data.source_review_thresholds as cfg
+}
+
+# no qualifying approver's association is in the allowlist -> deny.
+test_assoc_allowlist_fails_when_none_match if {
+	inp := sr_approvers([_assoc_approver("alice", "CONTRIBUTOR")], 0, true)
+	cfg := {"required_approver_associations": ["OWNER", "MEMBER"]}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	msg := "source-review: no approver association in the required allowlist"
+
+	# regal ignore:unresolved-reference
+	msg in source_review.violations with input as inp with data.source_review_thresholds as cfg
+}
+
+# a stale/bot approver does not satisfy the allowlist (qualifying approvers only).
+test_assoc_allowlist_ignores_stale_and_bot if {
+	approvers := [
+		{"login": "carol", "association": "OWNER", "stale": true, "isBot": false},
+		{"login": "ci[bot]", "association": "OWNER", "stale": false, "isBot": true},
+	]
+	cfg := {"required_approver_associations": ["OWNER"]}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as sr_approvers(approvers, 0, true) with data.source_review_thresholds as cfg
+}
+
+# fail closed when approvers[] is not authoritative: associations cannot be verified,
+# so a non-empty allowlist cannot be satisfied (even with per-reviewer filters off).
+test_assoc_allowlist_summary_only_fails_closed if {
+	inp := sr_summary(1, 0, true)
+	cfg := {
+		"required_approver_associations": ["OWNER"],
+		"disallow_self_approval": false,
+		"require_non_stale": false,
+		"allow_bot_approvals": true,
+		"require_codeowner_review": false,
+	}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+}
+
+# a forged non-string association does not satisfy the allowlist (is_string guard).
+test_assoc_allowlist_non_string_association_fails_closed if {
+	approvers := [{"login": "alice", "association": 42, "stale": false, "isBot": false}]
+	cfg := {"required_approver_associations": ["OWNER"]}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as sr_approvers(approvers, 0, true) with data.source_review_thresholds as cfg
+}
+
+# a non-string entry in the allowlist is a config error -> fail closed.
+test_assoc_allowlist_non_string_config_fails_closed if {
+	inp := sr_approvers([_assoc_approver("alice", "OWNER")], 0, true)
+	cfg := {"required_approver_associations": ["OWNER", 5]}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+}

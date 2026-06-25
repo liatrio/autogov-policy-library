@@ -153,14 +153,15 @@ config typo fails closed. A correctly-spelled, absent key uses its default.
 | `require_codeowner_review` | `false` | require CODEOWNER review (fails closed in v0.1 — not authoritatively determinable) |
 | `block_on_changes_requested` | `true` | block while any reviewer's latest state is CHANGES_REQUESTED |
 | `fail_on_incomplete_review` | `false` | fail when review evidence is incomplete (no merged PR / unfetchable reviews) |
+| `required_approver_associations` | `[]` | GitHub author-association values a qualifying (non-stale, non-bot) approver must carry; a non-empty set denies unless some such approver's association is in it (empty = inert) |
 
 Notes:
 
 - **Bot detection** is by GitHub user type only (`User.Type == "Bot"`). A
   human-PAT-driven service account typed `User` is NOT excluded by
-  `allow_bot_approvals=false`; the per-approver `association` is captured for a
-  future `min_association` knob. Don't over-trust `allow_bot_approvals` for
-  machine identities.
+  `allow_bot_approvals=false`; the per-approver `association` is enforced by the
+  `required_approver_associations` allowlist. Don't over-trust `allow_bot_approvals`
+  for machine identities.
 - **Rollout sequencing.** The policy is inert only while no source-review
   attestation is present. Once the producer starts emitting one, the default
   thresholds are fairly strict (a zero-approval merge, a summary-only attestation,
