@@ -415,9 +415,56 @@ test_enforced_since_enforces_post_cutoff if {
 }
 
 # a standing changes-request is a HARD block: it still denies even for a revision
-# merged before the cutoff (grandfathering never lifts a change request).
+# merged before the cutoff (grandfathering never lifts a change request). ZERO
+# qualifying approvals + a standing changes-request + merged before the cutoff: the
+# count violation IS grandfathered (absent) but the changes-request still blocks, so
+# this proves the block fires WHILE grandfathering actively suppresses the count.
 test_enforced_since_changes_requested_still_blocks if {
-	inp := sr_merged([_ok], 1, "2026-05-01T00:00:00Z")
+	inp := sr_merged([], 1, "2026-05-01T00:00:00Z")
+	cfg := {"enforced_since": "2026-06-01T00:00:00Z"}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# grandfathered: the approval-count violation is suppressed.
+	count_msg := "source-review: 0 distinct approval(s), need at least 1"
+
+	# regal ignore:unresolved-reference
+	not count_msg in source_review.violations with input as inp with data.source_review_thresholds as cfg
+
+	# but the standing changes-request still blocks.
+	cr_msg := "source-review: 1 outstanding changes-requested review(s)"
+
+	# regal ignore:unresolved-reference
+	cr_msg in source_review.violations with input as inp with data.source_review_thresholds as cfg
+}
+
+# strict-before boundary: mergedAt EXACTLY equal to enforced_since is NOT
+# grandfathered (the cutoff is a strict <, so the instant the gate takes effect is
+# enforced). zero approvals -> the count violation fires.
+test_enforced_since_boundary_equal_not_grandfathered if {
+	inp := sr_merged([], 0, "2026-06-01T00:00:00Z")
+	cfg := {"enforced_since": "2026-06-01T00:00:00Z"}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+}
+
+# defense-in-depth: a mergedAt of JSON null is not a string, so it cannot prove a
+# pre-cutoff merge -> NOT grandfathered (is_string guard), zero approvals denies.
+test_enforced_since_null_merged_at_fails_closed if {
+	inp := sr_merged([], 0, null)
+	cfg := {"enforced_since": "2026-06-01T00:00:00Z"}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+}
+
+# defense-in-depth: a numeric mergedAt (e.g. a forged epoch) is not a string, so it
+# cannot prove a pre-cutoff merge -> NOT grandfathered (is_string guard), zero
+# approvals denies.
+test_enforced_since_numeric_merged_at_fails_closed if {
+	inp := sr_merged([], 0, 1748736000)
 	cfg := {"enforced_since": "2026-06-01T00:00:00Z"}
 
 	# regal ignore:unresolved-reference
