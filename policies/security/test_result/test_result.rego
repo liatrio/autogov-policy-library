@@ -5,7 +5,7 @@
 # authors:
 # - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 # custom:
-#  version: 0.1.0
+#  version: 0.19.0
 #  path: policies/security/test_result
 #  filename: test_result.rego
 package security.test_result
