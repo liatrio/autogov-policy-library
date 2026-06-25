@@ -5,7 +5,7 @@
 # authors:
 # - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 # custom:
-#  version: 0.1.0
+#  version: 0.19.0
 #  path: policies/security/source_review
 #  filename: source_review.rego
 package security.source_review
@@ -140,4 +140,30 @@ _grandfathered(payload) if {
 	is_string(merged)
 	merged != ""
 	time.parse_rfc3339_ns(merged) < time.parse_rfc3339_ns(source_review_config.enforced_since)
+}
+
+# Violation: a required-approver-association allowlist is enforced but no qualifying
+# approver carries an association in it. Inert by default (empty set => never fires).
+# Fails CLOSED when approvers[] is not authoritative (approversIncluded=false): the
+# associations cannot be verified, so the allowlist cannot be satisfied. Copies the
+# bypass policy's authorized-by-association handling: a qualifying approver is
+# non-stale, non-bot, with a string association in the set.
+violations contains msg if {
+	count(source_review_config.required_approver_associations) > 0
+	some payload in sr_payloads
+	not _assoc_satisfied(payload)
+	msg := "source-review: no approver association in the required allowlist"
+}
+
+# _assoc_satisfied is true when approvers[] is authoritative AND some qualifying
+# (non-stale, non-bot) approver's string association is in the allowlist. The
+# is_string guard fails closed: structurally_valid does not type-check association,
+# so a forged non-string association is simply not matched.
+_assoc_satisfied(payload) if {
+	common.can_recompute(payload)
+	some a in object.get(payload.predicate, "approvers", [])
+	not a.stale
+	not a.isBot
+	is_string(a.association)
+	a.association in source_review_config.required_approver_associations
 }

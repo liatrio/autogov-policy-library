@@ -13,8 +13,8 @@ on:
     branches: [main]
 
 env:
-  OPA_VERSION: 1.2.0
-  REGAL_VERSION: 0.37.0
+  OPA_VERSION: 1.17.1
+  REGAL_VERSION: 0.39.0
 
 jobs:
   lint:
@@ -43,6 +43,21 @@ jobs:
         run: opa test -v -s ./schemas ./policies/
       - name: Check OPA Policies
         run: opa check --rego-v1 --v1-compatible -s schemas ./policies
+      - name: Check release mutation config
+        run: |
+          fail=0
+          paths="$(grep -E '^[[:space:]]+- path:' .autogov-release.yaml | sed -E 's/.*path:[[:space:]]*"?([^"]+)"?[[:space:]]*$/\1/' | sort)"
+          # every rule path must resolve to a real file carrying a version comment
+          while IFS= read -r p; do
+            [ -f "$p" ] || { echo "missing file: $p"; fail=1; continue; }
+            grep -qE '^#  version: ' "$p" || { echo "no version comment: $p"; fail=1; }
+          done <<< "$paths"
+          # every versioned policy file must be covered by a rule
+          while IFS= read -r f; do
+            grep -qE '^#  version: ' "$f" || continue
+            grep -qxF "$f" <<< "$paths" || { echo "uncovered file: $f"; fail=1; }
+          done < <(find policies -name '*.rego' ! -name '*_test.rego' | sort)
+          [ "$fail" -eq 0 ]
 
   build-image:
     if: github.event.pull_request.draft == false
@@ -71,15 +86,6 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
-    # FOLLOW-UP: the .rego version-comment mutation is wired in a separate PR,
-    # after the enabler (liatrio/autogov-workflows#339,
-    # ci/forward-mutations-config) is merged + tagged. That follow-up bumps this
-    # ref (and the cert-identity ref below) to the new tagged SHA and adds
-    # `mutations-config: .autogov-release.yaml` here. The current v0.21.0 ref does
-    # NOT declare a mutations-config input, and GitHub Actions fails a reusable
-    # workflow call that passes an undeclared input — so it is intentionally
-    # omitted until the ref is bumped. The .autogov-release.yaml file lands now so
-    # the rules are reviewed alongside this change.
     uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@0b11d6945f138fd1b4c6372f9c94381ace120b88 # v0.23.0
     secrets: inherit
     with:
@@ -88,3 +94,4 @@ jobs:
         schemas.tar.gz
       cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@0b11d6945f138fd1b4c6372f9c94381ace120b88 # v0.23.0
       autogov-version: v0.29.8
+      mutations-config: .autogov-release.yaml

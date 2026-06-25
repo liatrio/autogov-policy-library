@@ -5,7 +5,7 @@
 # authors:
 # - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 # custom:
-#  version: 0.1.0
+#  version: 0.19.0
 #  path: policies/source_review_config
 #  filename: source_review_config.rego
 package source_review_config
@@ -119,6 +119,16 @@ enforced_since := _cfg.enforced_since if {
 	_valid_rfc3339(_cfg.enforced_since)
 }
 
+# Author associations that a qualifying approver must carry. Default empty so the
+# gate is inert: with no entries the allowlist check never fires. When non-empty
+# (e.g. ["OWNER", "MEMBER"]) at least one qualifying approver's association must be
+# in the set, else the gate denies.
+default required_approver_associations := set()
+
+required_approver_associations := {a | some a in _cfg.required_approver_associations} if {
+	_valid_str_array(_cfg.required_approver_associations)
+}
+
 # --- config validation (provided-but-invalid overrides fail closed) ---
 
 # _bool_keys lists every flag that must be a boolean when provided.
@@ -135,8 +145,11 @@ _bool_keys := {
 # _string_keys must be strings when provided.
 _string_keys := {"enforced_since"}
 
+# _array_keys must be arrays-of-strings when provided.
+_array_keys := {"required_approver_associations"}
+
 # _allowed_keys is every recognized override key; any other key is a typo.
-_allowed_keys := ({"min_approvals"} | _bool_keys) | _string_keys
+_allowed_keys := (({"min_approvals"} | _bool_keys) | _string_keys) | _array_keys
 
 # _valid_count is true for a non-negative integer.
 _valid_count(v) if {
@@ -153,6 +166,14 @@ _valid_rfc3339("")
 _valid_rfc3339(v) if {
 	is_string(v)
 	time.parse_rfc3339_ns(v)
+}
+
+# _valid_str_array is true for an array whose every element is a string.
+_valid_str_array(v) if {
+	is_array(v)
+	every e in v {
+		is_string(e)
+	}
 }
 
 # config_errors reports every PROVIDED source_review_thresholds override that has
@@ -182,6 +203,14 @@ config_errors contains "enforced_since must be an RFC3339 date string" if {
 	is_object(_cfg)
 	"enforced_since" in object.keys(_cfg)
 	not _valid_rfc3339(_cfg.enforced_since)
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	some k in _array_keys
+	k in object.keys(_cfg)
+	not _valid_str_array(_cfg[k])
+	msg := sprintf("%s must be an array of strings", [k])
 }
 
 # unknown/misspelled key -> fail closed (a typo'd key would otherwise be ignored,
