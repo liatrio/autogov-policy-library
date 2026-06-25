@@ -70,12 +70,12 @@ jobs:
       actions: read
       pull-requests: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@0b11d6945f138fd1b4c6372f9c94381ace120b88 # v0.23.0
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@d22e76e51373fb7adda39a47752bbda5c80c2ec4 # v0.26.0
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@0b11d6945f138fd1b4c6372f9c94381ace120b88 # v0.23.0
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@d22e76e51373fb7adda39a47752bbda5c80c2ec4 # v0.26.0
 
   build-blob-offline: #blob
     if: github.event.pull_request.draft == false
@@ -86,12 +86,12 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@0b11d6945f138fd1b4c6372f9c94381ace120b88 # v0.23.0
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@d22e76e51373fb7adda39a47752bbda5c80c2ec4 # v0.26.0
     secrets: inherit
     with:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@0b11d6945f138fd1b4c6372f9c94381ace120b88 # v0.23.0
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@d22e76e51373fb7adda39a47752bbda5c80c2ec4 # v0.26.0
       autogov-version: v0.29.8
       mutations-config: .autogov-release.yaml
