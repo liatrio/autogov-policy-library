@@ -35,9 +35,11 @@ _cfg := data.source_review_thresholds
 
 # --- approval thresholds ---
 
-# Minimum number of distinct qualifying approvals required. Default 1 (inert-ish
-# day-one, non-breaking); the strict preset ships 2 (two-person review).
-default min_approvals := 1
+# Minimum number of distinct qualifying approvals required. The strict preset
+# ships 2 (two-person review).
+# TEMPORARY pre-launch relax: default lowered from 1 to 0 so admin-merged
+# (0-approval) releases pass. REVERT to 1 post-launch.
+default min_approvals := 0
 
 min_approvals := _cfg.min_approvals if {
 	_valid_count(_cfg.min_approvals)

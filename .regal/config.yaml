@@ -1,0 +1,6 @@
+rules:
+  style:
+    file-length:
+      # the source-review test suite is intentionally comprehensive; allow headroom
+      # above the 500-line default rather than fragmenting the cohesive test file.
+      max-file-length: 700

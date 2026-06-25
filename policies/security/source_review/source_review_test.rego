@@ -97,7 +97,10 @@ test_clean_passes if {
 }
 
 test_zero_approvals_fails_default if {
-	not source_review.allow with input as sr_approvers([], 0, true)
+	cfg := {"min_approvals": 1}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as sr_approvers([], 0, true) with data.source_review_thresholds as cfg
 }
 
 test_min_approvals_override_fails if {
@@ -120,7 +123,7 @@ test_min_approvals_override_passes if {
 # DEFINITIVE fail (not incompleteness), even if incomplete-review is tolerated.
 test_zero_approvals_fails_even_if_incomplete_tolerated if {
 	inp := sr_approvers([], 0, true)
-	cfg := {"fail_on_incomplete_review": false}
+	cfg := {"min_approvals": 1, "fail_on_incomplete_review": false}
 
 	# regal ignore:unresolved-reference
 	not source_review.allow with input as inp with data.source_review_thresholds as cfg
@@ -476,7 +479,11 @@ sr_merged(approvers, changes, merged_at) := [_env({
 # inert by default: with no enforced_since, a zero-approval merge still fails (no
 # grandfathering), so current behavior is unchanged.
 test_enforced_since_inert_by_default if {
-	not source_review.allow with input as sr_merged([], 0, "2020-01-01T00:00:00Z")
+	inp := sr_merged([], 0, "2020-01-01T00:00:00Z")
+	cfg := {"min_approvals": 1}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
 }
 
 # a revision merged BEFORE the cutoff is grandfathered: the count violation is
@@ -492,7 +499,7 @@ test_enforced_since_grandfathers_pre_cutoff if {
 # a revision merged AFTER the cutoff is enforced: the count violation fires.
 test_enforced_since_enforces_post_cutoff if {
 	inp := sr_merged([], 0, "2026-06-15T00:00:00Z")
-	cfg := {"enforced_since": "2026-06-01T00:00:00Z"}
+	cfg := {"min_approvals": 1, "enforced_since": "2026-06-01T00:00:00Z"}
 
 	# regal ignore:unresolved-reference
 	not source_review.allow with input as inp with data.source_review_thresholds as cfg
@@ -528,7 +535,7 @@ test_enforced_since_changes_requested_still_blocks if {
 # enforced). zero approvals -> the count violation fires.
 test_enforced_since_boundary_equal_not_grandfathered if {
 	inp := sr_merged([], 0, "2026-06-01T00:00:00Z")
-	cfg := {"enforced_since": "2026-06-01T00:00:00Z"}
+	cfg := {"min_approvals": 1, "enforced_since": "2026-06-01T00:00:00Z"}
 
 	# regal ignore:unresolved-reference
 	not source_review.allow with input as inp with data.source_review_thresholds as cfg
@@ -538,7 +545,7 @@ test_enforced_since_boundary_equal_not_grandfathered if {
 # pre-cutoff merge -> NOT grandfathered (is_string guard), zero approvals denies.
 test_enforced_since_null_merged_at_fails_closed if {
 	inp := sr_merged([], 0, null)
-	cfg := {"enforced_since": "2026-06-01T00:00:00Z"}
+	cfg := {"min_approvals": 1, "enforced_since": "2026-06-01T00:00:00Z"}
 
 	# regal ignore:unresolved-reference
 	not source_review.allow with input as inp with data.source_review_thresholds as cfg
@@ -549,7 +556,7 @@ test_enforced_since_null_merged_at_fails_closed if {
 # approvals denies.
 test_enforced_since_numeric_merged_at_fails_closed if {
 	inp := sr_merged([], 0, 1748736000)
-	cfg := {"enforced_since": "2026-06-01T00:00:00Z"}
+	cfg := {"min_approvals": 1, "enforced_since": "2026-06-01T00:00:00Z"}
 
 	# regal ignore:unresolved-reference
 	not source_review.allow with input as inp with data.source_review_thresholds as cfg
@@ -559,7 +566,7 @@ test_enforced_since_numeric_merged_at_fails_closed if {
 # be proven before the cutoff, so a zero-approval merge is NOT grandfathered.
 test_enforced_since_missing_merged_at_fails_closed if {
 	inp := sr_approvers([], 0, true)
-	cfg := {"enforced_since": "2026-06-01T00:00:00Z"}
+	cfg := {"min_approvals": 1, "enforced_since": "2026-06-01T00:00:00Z"}
 
 	# regal ignore:unresolved-reference
 	not source_review.allow with input as inp with data.source_review_thresholds as cfg

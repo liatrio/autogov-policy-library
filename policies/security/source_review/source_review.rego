@@ -127,6 +127,19 @@ violations contains msg if {
 	msg := "source-review: codeowner review is required but not met or not determinable"
 }
 
+# Violation: a required-approver-association allowlist is enforced but no qualifying
+# approver carries an association in it. Inert by default (empty set => never fires).
+# Fails CLOSED when approvers[] is not authoritative (approversIncluded=false): the
+# associations cannot be verified, so the allowlist cannot be satisfied. Copies the
+# bypass policy's authorized-by-association handling: a qualifying approver is
+# non-stale, non-bot, with a string association in the set.
+violations contains msg if {
+	count(source_review_config.required_approver_associations) > 0
+	some payload in sr_payloads
+	not _assoc_satisfied(payload)
+	msg := "source-review: no approver association in the required allowlist"
+}
+
 # _grandfathered is true when enforced_since is set AND this revision's merged PR
 # closed strictly before it, so its approval-count violation is suppressed.
 # Fails CLOSED (no grandfathering) when enforced_since is "", when pullRequest /
@@ -140,19 +153,6 @@ _grandfathered(payload) if {
 	is_string(merged)
 	merged != ""
 	time.parse_rfc3339_ns(merged) < time.parse_rfc3339_ns(source_review_config.enforced_since)
-}
-
-# Violation: a required-approver-association allowlist is enforced but no qualifying
-# approver carries an association in it. Inert by default (empty set => never fires).
-# Fails CLOSED when approvers[] is not authoritative (approversIncluded=false): the
-# associations cannot be verified, so the allowlist cannot be satisfied. Copies the
-# bypass policy's authorized-by-association handling: a qualifying approver is
-# non-stale, non-bot, with a string association in the set.
-violations contains msg if {
-	count(source_review_config.required_approver_associations) > 0
-	some payload in sr_payloads
-	not _assoc_satisfied(payload)
-	msg := "source-review: no approver association in the required allowlist"
 }
 
 # _assoc_satisfied is true when approvers[] is authoritative AND some qualifying
