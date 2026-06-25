@@ -105,6 +105,20 @@ fail_on_incomplete_review := _cfg.fail_on_incomplete_review if {
 	is_boolean(_cfg.fail_on_incomplete_review)
 }
 
+# RFC3339 cutoff for grandfathering. Default "" (inert): no revision is
+# grandfathered, so enabling the gate behaves identically to before this key.
+# When set, a revision whose pullRequest.mergedAt is BEFORE this instant has its
+# approval-count violation suppressed, so enabling the gate does not retroactively
+# fail commits merged before adoption. A standing changes-request still blocks
+# regardless (a hard block, never grandfathered). A non-empty value that is not a
+# parseable RFC3339 date is a config_error (fail closed — a typo cannot silently
+# disable grandfathering or, worse, be read as an open window).
+default enforced_since := ""
+
+enforced_since := _cfg.enforced_since if {
+	_valid_rfc3339(_cfg.enforced_since)
+}
+
 # Author associations that a qualifying approver must carry. Default empty so the
 # gate is inert: with no entries the allowlist check never fires. When non-empty
 # (e.g. ["OWNER", "MEMBER"]) at least one qualifying approver's association must be
@@ -128,17 +142,30 @@ _bool_keys := {
 	"fail_on_incomplete_review",
 }
 
+# _string_keys must be strings when provided.
+_string_keys := {"enforced_since"}
+
 # _array_keys must be arrays-of-strings when provided.
 _array_keys := {"required_approver_associations"}
 
 # _allowed_keys is every recognized override key; any other key is a typo.
-_allowed_keys := ({"min_approvals"} | _bool_keys) | _array_keys
+_allowed_keys := (({"min_approvals"} | _bool_keys) | _string_keys) | _array_keys
 
 # _valid_count is true for a non-negative integer.
 _valid_count(v) if {
 	is_number(v)
 	v >= 0
 	v == floor(v)
+}
+
+# _valid_rfc3339 is true for the empty string (inert default) or a parseable
+# RFC3339 timestamp. A non-empty unparseable value is rejected so a typo cannot
+# silently disable grandfathering.
+_valid_rfc3339("")
+
+_valid_rfc3339(v) if {
+	is_string(v)
+	time.parse_rfc3339_ns(v)
 }
 
 # _valid_str_array is true for an array whose every element is a string.
@@ -170,6 +197,12 @@ config_errors contains msg if {
 	k in object.keys(_cfg)
 	not is_boolean(_cfg[k])
 	msg := sprintf("%s must be a boolean", [k])
+}
+
+config_errors contains "enforced_since must be an RFC3339 date string" if {
+	is_object(_cfg)
+	"enforced_since" in object.keys(_cfg)
+	not _valid_rfc3339(_cfg.enforced_since)
 }
 
 config_errors contains msg if {
