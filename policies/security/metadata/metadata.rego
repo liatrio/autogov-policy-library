@@ -8,7 +8,7 @@
 # - input: schema["metadata-schema"]
 # custom:
 #  control_number: 3
-#  version: 0.19.0
+#  version: 0.20.0
 #  path: policies/security
 #  filename: metadata.rego
 #  irm_control_ids: [LIATRIO-METADATA-003]
