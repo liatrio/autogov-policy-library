@@ -13,6 +13,34 @@ The library includes two main categories of policies:
 - **Security Policies** (`policies/security/`): Validate individual attestation types (SLSA provenance, SBOM, vulnerability scans, etc.)
 - **Governance Policies** (`policies/governance/`): Higher-level policies for deployment gating and workflow orchestration
 
+The `governance` package is the aggregate entrypoint: it allows only when every
+security policy below allows, and surfaces a per-policy `violations` map for
+troubleshooting.
+
+#### Shipped Policies
+
+Each policy denies by default and allows only when it finds no violations.
+Thresholds and flags marked overridable are set at runtime via
+`--policy-data-path` with a JSON object under the noted key.
+
+| Policy | Package | Gates | Key config (key → default) |
+| --- | --- | --- | --- |
+| Provenance | `security.provenance` | SLSA provenance present, `buildType` is the GitHub Actions workflow type, and the build owner (and optional repo) is allowlisted. | `approved_owner_ids` → liatrio org id; `approved_repo_ids` → empty (inert) |
+| SBOM | `security.sbom` | A CycloneDX SBOM attestation is present. | none |
+| Metadata | `security.metadata` | autogov/cosign metadata attestation present with all required sections, github-hosted runner, allowlisted owner, and a valid image/blob subject. | `approved_owner_ids` → liatrio org id; `subject_prefix` → `ghcr.io/liatrio/` |
+| Certificate | `security.certificate` | Each bundle carries a non-empty Fulcio signing certificate from GitHub's Fulcio. | none (string/format checks only; full X.509 validation is not done in OPA) |
+| Dependency vulnerability | `security.dependency_vulnerability.{critical,high,medium,low}` | A vulnerability-scan attestation is present and per-severity finding counts stay within threshold. | `vuln_thresholds.{critical,high,medium,low}` → `0` each (`-1` disables a bucket) |
+| Scanner provenance | `security.dependency_vulnerability.scanner_provenance` | Scanner and vulnerability-DB metadata are complete and the DB is recent (within 30 days). Optional (not in the aggregate `governance` allow). | none |
+| Test result | `security.test_result` | A present test-result attestation reports no more than the allowed failed tests. | `max_failed_tests` → `0`; `require_test_results` → `false` |
+| Code scan | `security.code_scan` | SARIF code-scan findings stay within per-severity and per-SARIF-level thresholds. | `code_scan_thresholds`: `bySecuritySeverity.{critical,high}` → `0`, others → `-1`; `byLevel.error` → `0`, others → `-1`; `require_code_scan` → `false`; `fail_on_incomplete_scan` → `true` |
+| Source review | `security.source_review` | An attested PR-approval (source-review) meets the review bar — distinct approvals, no outstanding changes-requested, optional codeowner review. | `source_review_thresholds`: `min_approvals` → `1`; `require_source_review` → `false`; `block_on_changes_requested` → `true`; `require_codeowner_review` → `false`; `fail_on_incomplete_review` → `false` |
+| Dependency-vuln bypass | `security.bypass` | Authorizes the spoofable `ignore_dependency_vulnerabilities` request only when an attested source-review proves enough authorized approvals. Inert by default. | `bypass_thresholds`: `allow_dep_vuln_bypass` → `false`; `bypass_min_approvals` → `2`; `authorized_associations` → `["OWNER","MEMBER"]`; `authorized_approvers` → empty |
+| VSA verification result | `governance.vsa_verification_result` | A Verification Summary Attestation reports `verificationResult: PASSED`; `FAILED`/`UNKNOWN`/missing/invalid deny. | none |
+
+Org-specific defaults (`approved_owner_ids`, `subject_prefix`, `signer_org`) live
+in `shared/access` and `shared/utils`; adapt them for your own org (see the
+org-specific constraints note below).
+
 #### VSA-Based Deployment Gating
 
 The `governance/vsa_verification_result` policy enables **Verification Summary Attestation (VSA) based deployment gating**. This policy:
