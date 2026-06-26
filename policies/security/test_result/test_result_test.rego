@@ -48,3 +48,50 @@ test_missing_required_violation if {
 	# regal ignore:unresolved-reference
 	"test-result attestation is missing" in test_result.violations with input as [] with data.require_test_results as true
 }
+
+# --- config-validation + structural (fail-closed) tests ---
+
+# a quoted "0" threshold with a failing-test attestation -> deny (it would
+# otherwise slip the count gate: OPA orders a number below a string, so 1 > "0"
+# is false). NO unknown-key test here: test_result reads two independent top-level
+# data keys, so there is no enclosing object to detect a typo against (AC2).
+test_quoted_max_failed_fails_closed if {
+	# regal ignore:unresolved-reference
+	not test_result.allow with input as tr_input(["pkg.TestA"]) with data.max_failed_tests as "0"
+}
+
+# out-of-range (-1) or fractional (1.5) max_failed_tests -> deny.
+test_out_of_range_max_failed_fails_closed if {
+	# regal ignore:unresolved-reference
+	not test_result.allow with input as tr_input(["pkg.TestA"]) with data.max_failed_tests as -1
+
+	# regal ignore:unresolved-reference
+	not test_result.allow with input as tr_input(["pkg.TestA"]) with data.max_failed_tests as 1.5
+}
+
+# a quoted require_test_results flag is a config error -> deny.
+test_quoted_require_flag_fails_closed if {
+	# regal ignore:unresolved-reference
+	not test_result.allow with input as tr_input([]) with data.require_test_results as "true"
+}
+
+# a present test-result predicate whose failedTests is not an array -> deny
+# (count() over a non-array would otherwise error or miscount).
+test_malformed_test_predicate_fails_closed if {
+	bad := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "https://in-toto.io/attestation/test-result/v0.1",
+		"predicate": {
+			"result": "FAILED",
+			"failedTests": "pkg.TestA",
+		},
+	}))}}]
+	not test_result.allow with input as bad
+
+	"test-result predicate is malformed (failedTests is not an array)" in test_result.violations with input as bad
+}
+
+# a numeric, in-range override still allows (regression: no config error fires).
+test_valid_overrides_still_allow if {
+	# regal ignore:unresolved-reference
+	test_result.allow with input as tr_input(["t1", "t2"]) with data.max_failed_tests as 3
+}
