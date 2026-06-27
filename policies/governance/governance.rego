@@ -25,6 +25,7 @@ import data.security.dependency_vulnerability.medium
 import data.security.metadata
 import data.security.provenance
 import data.security.sbom
+import data.security.source_level
 import data.security.source_review
 import data.security.test_result
 
@@ -38,6 +39,7 @@ allow if {
 	test_result.allow
 	code_scan.allow
 	source_review.allow
+	source_level.allow
 	authorized_dep_bypass
 	bypass.allow
 }
@@ -50,6 +52,7 @@ allow if {
 	test_result.allow
 	code_scan.allow
 	source_review.allow
+	source_level.allow
 	not authorized_dep_bypass
 	bypass.allow
 	low.allow
@@ -75,6 +78,7 @@ violations := {
 	"test_result": test_result.violations,
 	"code_scan": code_scan.violations,
 	"source_review": source_review.violations,
+	"source_level": source_level.violations,
 	"bypass": bypass.violations,
 	"dependency_vulnerability_low": dependency_vulnerability_low_violations,
 	"dependency_vulnerability_medium": dependency_vulnerability_medium_violations,

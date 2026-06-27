@@ -91,6 +91,16 @@ mutations:
     field: '#  version: .*'
     replace: '#  version: ${version}'
     global: true
+  - path: "policies/source_level_config/source_level_config.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
+  - path: "policies/security/source_level/source_level.rego"
+    type: regexReplace
+    field: '#  version: .*'
+    replace: '#  version: ${version}'
+    global: true
   - path: "policies/bypass_config/bypass_config.rego"
     type: regexReplace
     field: '#  version: .*'

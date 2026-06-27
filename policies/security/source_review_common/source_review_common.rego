@@ -6,6 +6,7 @@
 # - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 package security.source_review_common
 
+import data.source_level_config
 import data.source_review_config
 import rego.v1
 
@@ -124,3 +125,109 @@ _non_negative_int(v) if {
 _codeowner_typed(s) if is_boolean(s.codeownerReviewMet)
 
 _codeowner_typed(s) if is_null(s.codeownerReviewMet)
+
+# --- source-level (source-control posture) helpers ---
+#
+# These mirror the verifier's promotion logic (autogov pkg/source/review.go
+# ComputeSourceLevelFromControls) so the source_level gate can ENFORCE the same
+# L3 posture the verifier would PROMOTE to. They read predicate.technicalControls
+# (an object SIBLING of summary) and predicate.continuityStartRevision (a string
+# sibling of technicalControls — NOT inside it).
+
+# has_technical_controls is true when the predicate carries a technicalControls
+# object. The source_level gate REQUIRES it (fail closed) when enabled; the
+# source_review gate does not (so it stays inert for predicates lacking it).
+has_technical_controls(payload) if is_object(payload.predicate.technicalControls)
+
+# technical_controls_valid type-checks every technicalControls field the posture
+# gate relies on, WHEN PRESENT. The predicate is signed-but-otherwise-untrusted
+# and is NOT re-validated against the schema at eval time, so a missing/mistyped
+# field would make a lookup UNDEFINED and silently skip a leg (fail open). The gate
+# fires a violation when this is false, so a malformed technicalControls fails
+# CLOSED. continuityStartRevision is a sibling string and is checked here too.
+technical_controls_valid(payload) if {
+	tc := payload.predicate.technicalControls
+	is_boolean(tc.forcePushBlocked)
+	is_boolean(tc.requiredLinearHistory)
+	is_boolean(tc.deletionBlocked)
+	is_boolean(tc.requiredSignatures)
+	is_boolean(tc.bypassActorsComplete)
+	_string_array(tc.requiredStatusChecks)
+	_string_array(tc.bypassActors)
+	is_string(payload.predicate.continuityStartRevision)
+}
+
+# _string_array is true for an array whose every element is a string.
+_string_array(v) if {
+	is_array(v)
+	every e in v {
+		is_string(e)
+	}
+}
+
+# meets_l3_posture mirrors ComputeSourceLevelFromControls' controlsMet:
+#   forcePushBlocked AND count(requiredStatusChecks) > 0
+#   AND (requiredLinearHistory OR deletionBlocked)
+#   AND bypassActorsComplete == true AND every bypass actor is narrow.
+# FAIL CLOSED: bypassActorsComplete != true means the bypass posture is UNKNOWN
+# (an empty bypassActors with complete=false is UNKNOWN, not "none"), so the leg
+# fails. requiredSignatures is NOT part of L3 here (the verifier surfaces it only
+# as an annotation); the require_signed_commits flag layers it on separately.
+meets_l3_posture(payload) if {
+	tc := payload.predicate.technicalControls
+	tc.forcePushBlocked == true
+	count(tc.requiredStatusChecks) > 0
+	_retained_history(tc)
+	tc.bypassActorsComplete == true
+	narrow_bypass(tc.bypassActors)
+}
+
+_retained_history(tc) if tc.requiredLinearHistory == true
+
+_retained_history(tc) if tc.deletionBlocked == true
+
+# narrow_bypass mirrors bypassActorsAllNarrow: an empty list (no bypass at all) is
+# narrow; otherwise EVERY recorded actor's "<Type>:<ID>" (the formatted entry is
+# "<Type>:<ID>:<Mode>", so the trailing ":<Mode>" is dropped) must be in the
+# configured allowed_bypass_actors allowlist. With the default empty allowlist the
+# only narrow posture is "no bypass actors", matching the verifier called with a
+# nil allowedBypass. An unrecognized actor fails the leg (no L3).
+narrow_bypass(actors) if count(actors) == 0
+
+narrow_bypass(actors) if {
+	count(actors) > 0
+	every a in actors {
+		_actor_allowed(a)
+	}
+}
+
+# _actor_allowed strips the trailing ":<Mode>" segment (matching the verifier's
+# LastIndex(":") split) and checks the remaining "<Type>:<ID>" against the
+# allowlist. is_string guards fail closed: a non-string actor cannot match.
+_actor_allowed(a) if {
+	is_string(a)
+	_type_id(a) in source_level_config.allowed_bypass_actors
+}
+
+# _type_id drops the trailing ":<Mode>" suffix when present, else returns the whole
+# string (mirrors strings.LastIndex(actor, ":") in the verifier).
+_type_id(a) := substring(a, 0, i) if {
+	i := _last_colon(a)
+	i >= 0
+} else := a
+
+# _last_colon returns the index of the last ":" in s, or -1 when absent.
+_last_colon(s) := i if {
+	idxs := [n | some n in numbers.range(0, count(s) - 1); substring(s, n, 1) == ":"]
+	count(idxs) > 0
+	i := idxs[count(idxs) - 1]
+} else := -1
+
+# continuity_recorded is true when continuityStartRevision is a non-empty string.
+# An empty (or whitespace-only) value is UNDETERMINED and never satisfies the
+# continuity leg (fail closed), mirroring the verifier's TrimSpace(...) != "".
+continuity_recorded(payload) if {
+	rev := payload.predicate.continuityStartRevision
+	is_string(rev)
+	trim_space(rev) != ""
+}

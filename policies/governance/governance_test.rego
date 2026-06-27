@@ -226,6 +226,7 @@ test_violations_report if {
 		"test_result": set(),
 		"code_scan": set(),
 		"source_review": set(),
+		"source_level": set(),
 		"bypass": set(),
 		"dependency_vulnerability_low": dependency_vulnerability_violations_low,
 		"dependency_vulnerability_medium": dependency_vulnerability_violations_medium,
@@ -266,6 +267,7 @@ test_violations_report_ignore_deps_unauthorized if {
 		"test_result": set(),
 		"code_scan": set(),
 		"source_review": set(),
+		"source_level": set(),
 		"bypass": set(),
 		"dependency_vulnerability_low": dependency_vulnerability_violations_low,
 		"dependency_vulnerability_medium": dependency_vulnerability_violations_medium,
@@ -306,6 +308,7 @@ test_violations_report_ignore_deps_authorized if {
 		"test_result": set(),
 		"code_scan": set(),
 		"source_review": set(),
+		"source_level": set(),
 		"bypass": set(),
 		"dependency_vulnerability_low": set(),
 		"dependency_vulnerability_medium": set(),
@@ -349,6 +352,7 @@ test_bypass_malformed_config_when_requested_blocks if {
 		with data.security.test_result.allow as true
 		with data.security.code_scan.allow as true
 		with data.security.source_review.allow as true
+		with data.security.source_level.allow as true
 		with data.security.dependency_vulnerability.low.allow as true
 		with data.security.dependency_vulnerability.medium.allow as true
 		with data.security.dependency_vulnerability.high.allow as true
@@ -367,6 +371,61 @@ test_bypass_malformed_config_not_requested_no_surface if {
 	result.bypass == set()
 }
 
+# the source-level posture gate is wired into the aggregate but ships INERT: a
+# source-review attestation with a WEAK posture (force-push not blocked) and no
+# source_level_thresholds override raises no source_level surface and does not
+# block, so the aggregate behaves exactly as before the gate was added.
+test_source_level_inert_in_aggregate if {
+	weak := {"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "https://autogov.dev/attestation/source-review/v0.1",
+		"predicate": {
+			"technicalControls": {"forcePushBlocked": false},
+			"continuityStartRevision": "",
+		},
+	}))}}
+	test_input := [weak]
+
+	# regal ignore:unresolved-reference
+	result := governance.violations with input as test_input
+	result.source_level == set()
+}
+
+# once a consumer ENABLES the posture gate, a weak posture blocks the aggregate
+# (source_level.allow is false), proving the gate is effective when opted in.
+test_source_level_blocks_aggregate_when_enabled if {
+	weak := {"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"predicateType": "https://autogov.dev/attestation/source-review/v0.1",
+		"predicate": {
+			"technicalControls": {
+				"forcePushBlocked": false,
+				"requiredLinearHistory": true,
+				"deletionBlocked": false,
+				"requiredSignatures": false,
+				"requiredStatusChecks": ["build"],
+				"bypassActors": [],
+				"bypassActorsComplete": true,
+			},
+			"continuityStartRevision": "startrev",
+		},
+	}))}}
+	test_input := [weak]
+	cfg := {"require_min_source_posture": true}
+
+	# regal ignore:unresolved-reference
+	not governance.allow with input as test_input with data.source_level_thresholds as cfg
+		with data.security.sbom.allow as true
+		with data.security.provenance.allow as true
+		with data.security.metadata.allow as true
+		with data.security.certificate.allow as true
+		with data.security.test_result.allow as true
+		with data.security.code_scan.allow as true
+		with data.security.source_review.allow as true
+		with data.security.dependency_vulnerability.low.allow as true
+		with data.security.dependency_vulnerability.medium.allow as true
+		with data.security.dependency_vulnerability.high.allow as true
+		with data.security.dependency_vulnerability.critical.allow as true
+}
+
 # Test no violations case
 test_no_violations if {
 	violations := set()
@@ -380,6 +439,7 @@ test_no_violations if {
 		"test_result": violations,
 		"code_scan": violations,
 		"source_review": violations,
+		"source_level": violations,
 		"bypass": violations,
 		"dependency_vulnerability_low": violations,
 		"dependency_vulnerability_medium": violations,
