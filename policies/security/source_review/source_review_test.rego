@@ -6,7 +6,7 @@ import rego.v1
 # --- builders ---
 
 _env(predicate) := {"dsseEnvelope": {"payload": base64.encode(json.marshal({
-	"predicateType": "https://autogov.dev/attestation/source-review/v0.1",
+	"predicateType": "https://autogov.dev/attestation/source-review/v0.2",
 	"predicate": predicate,
 }))}}
 

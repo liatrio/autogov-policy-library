@@ -5,14 +5,17 @@ import rego.v1
 
 # --- builders ---
 
+# _env wraps a predicate as a v0.2 source-review attestation (the only recognized
+# source-review predicate type).
 _env(predicate) := {"dsseEnvelope": {"payload": base64.encode(json.marshal({
-	"predicateType": "https://autogov.dev/attestation/source-review/v0.1",
+	"predicateType": "https://autogov.dev/attestation/source-review/v0.2",
 	"predicate": predicate,
 }))}}
 
 # a technicalControls object that MEETS the L3 posture: force-push blocked, one
 # required status check, retained history (linear), an authoritative empty bypass
-# list, signatures on. continuityStartRevision is a sibling of technicalControls.
+# list, signatures on, and a PROVEN continuity window (continuityComplete=true).
+# continuityStartRevision is a sibling of technicalControls.
 _tc_l3 := {
 	"forcePushBlocked": true,
 	"requiredLinearHistory": true,
@@ -21,6 +24,7 @@ _tc_l3 := {
 	"requiredStatusChecks": ["build"],
 	"bypassActors": [],
 	"bypassActorsComplete": true,
+	"continuityComplete": true,
 }
 
 # a full L3 source-review predicate (controls + recorded continuity).
@@ -208,7 +212,7 @@ test_empty_continuity_fails_closed if {
 	# regal ignore:unresolved-reference
 	not source_level.allow with input as inp with data.source_level_thresholds as _on
 
-	msg := "source-level: continuity is required but continuityStartRevision is empty or undetermined"
+	msg := "source-level: continuity not proven: continuityStartRevision empty/undetermined or continuityComplete is false"
 
 	# regal ignore:unresolved-reference
 	msg in source_level.violations with input as inp with data.source_level_thresholds as _on
@@ -227,6 +231,38 @@ test_continuity_can_be_disabled if {
 
 	# regal ignore:unresolved-reference
 	source_level.allow with input as [_env(_pred(_tc_l3, ""))] with data.source_level_thresholds as cfg
+}
+
+# FAIL-CLOSED (v0.2): continuityComplete=false with a NON-EMPTY start revision must
+# NOT satisfy continuity. A populated start is meaningless without the proven-window
+# assertion (mirrors the verifier's tc.ContinuityComplete && start != "").
+test_continuity_incomplete_fails_closed if {
+	tc := json.patch(_tc_l3, [{"op": "replace", "path": "/continuityComplete", "value": false}])
+
+	# regal ignore:unresolved-reference
+	not source_level.allow with input as [_env(_pred(tc, "startrev"))] with data.source_level_thresholds as _on
+
+	msg := "source-level: continuity not proven: continuityStartRevision empty/undetermined or continuityComplete is false"
+
+	# regal ignore:unresolved-reference
+	msg in source_level.violations with input as [_env(_pred(tc, "startrev"))] with data.source_level_thresholds as _on
+}
+
+# FAIL-CLOSED: a predicate that OMITS continuityComplete is malformed (a v0.2
+# producer always emits it), so technical_controls_valid fails -> the gate fails
+# closed even with a start revision. This keeps the L3 claim DORMANT for any bundle
+# that does not assert a proven window.
+test_absent_continuity_complete_fails_closed if {
+	tc := json.patch(_tc_l3, [{"op": "remove", "path": "/continuityComplete"}])
+
+	# regal ignore:unresolved-reference
+	not source_level.allow with input as [_env(_pred(tc, "startrev"))] with data.source_level_thresholds as _on
+}
+
+# v0.2 full proof (continuityComplete=true + start) passes the continuity leg.
+test_v02_full_continuity_proof_passes if {
+	# regal ignore:unresolved-reference
+	source_level.allow with input as _l3_input with data.source_level_thresholds as _on
 }
 
 # --- enabled: signed-commits opt-in leg ---
@@ -283,6 +319,11 @@ test_malformed_technical_controls_coupling if {
 		[{"op": "replace", "path": "/technicalControls/bypassActors", "value": "x"}],
 		[{"op": "replace", "path": "/technicalControls/bypassActors", "value": [2]}],
 		[{"op": "remove", "path": "/technicalControls/bypassActors"}],
+		# continuityComplete (v0.2): a MISTYPED value OR a removed field is malformed
+		# -> fail closed (a v0.2 producer always emits it).
+		[{"op": "replace", "path": "/technicalControls/continuityComplete", "value": "x"}],
+		[{"op": "replace", "path": "/technicalControls/continuityComplete", "value": 1}],
+		[{"op": "remove", "path": "/technicalControls/continuityComplete"}],
 		[{"op": "replace", "path": "/continuityStartRevision", "value": 5}],
 		[{"op": "remove", "path": "/continuityStartRevision"}],
 	]

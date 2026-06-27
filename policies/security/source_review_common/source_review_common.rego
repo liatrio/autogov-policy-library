@@ -79,11 +79,11 @@ _bot_excluded(a) if {
 # filter requested without approvers[] raises the recompute incompleteness
 # violation elsewhere rather than silently trusting the wrong number).
 #
-# In v0.1 the recompute equals the strict summary, so the min() is purely an
-# INFLATION CROSS-CHECK — it catches a (buggy/forged) producer that reports a
-# higher distinctApprovers than its own approvers[] supports — not a tightening.
-# Do NOT "simplify" it to summary.distinctApprovers: that re-opens that cross-check
-# and the v0.2 path where a tightening filter recomputes below the summary.
+# Without a tightening filter the recompute equals the strict summary, so the min()
+# is purely an INFLATION CROSS-CHECK — it catches a (buggy/forged) producer that
+# reports a higher distinctApprovers than its own approvers[] supports — not a
+# tightening. Do NOT "simplify" it to summary.distinctApprovers: that re-opens that
+# cross-check and the path where a tightening filter recomputes below the summary.
 effective_distinct(payload) := min([recompute_distinct(payload), payload.predicate.summary.distinctApprovers]) if {
 	can_recompute(payload)
 } else := payload.predicate.summary.distinctApprovers
@@ -145,6 +145,11 @@ has_technical_controls(payload) if is_object(payload.predicate.technicalControls
 # field would make a lookup UNDEFINED and silently skip a leg (fail open). The gate
 # fires a violation when this is false, so a malformed technicalControls fails
 # CLOSED. continuityStartRevision is a sibling string and is checked here too.
+#
+# continuityComplete (v0.2) MUST be present and boolean: a v0.2 producer always
+# emits it, so an absent or mistyped value (string/number/null) is malformed and
+# must fail here, keeping the field/typecheck coupling the source_level NOTE
+# mandates intact (fail closed).
 technical_controls_valid(payload) if {
 	tc := payload.predicate.technicalControls
 	is_boolean(tc.forcePushBlocked)
@@ -155,6 +160,7 @@ technical_controls_valid(payload) if {
 	_string_array(tc.requiredStatusChecks)
 	_string_array(tc.bypassActors)
 	is_string(payload.predicate.continuityStartRevision)
+	is_boolean(tc.continuityComplete)
 }
 
 # _string_array is true for an array whose every element is a string.
@@ -223,10 +229,18 @@ _last_colon(s) := i if {
 	i := idxs[count(idxs) - 1]
 } else := -1
 
-# continuity_recorded is true when continuityStartRevision is a non-empty string.
-# An empty (or whitespace-only) value is UNDETERMINED and never satisfies the
-# continuity leg (fail closed), mirroring the verifier's TrimSpace(...) != "".
+# continuity_recorded is true ONLY when the producer ASSERTS a proven no-gap
+# window: technicalControls.continuityComplete == true AND continuityStartRevision
+# is a non-empty string. This mirrors the verifier's fail-closed
+# `tc.ContinuityComplete && TrimSpace(start) != ""` (autogov pkg/source/review.go).
+#
+# A non-empty start alone is NOT enough: a bundle that could not prove the window
+# sets continuityComplete=false (and an empty start), and an absent
+# continuityComplete reads UNDEFINED -> this rule is undefined -> the continuity
+# violation fires. Either way continuity stays UNDETERMINED and the L3-continuity
+# leg fails closed -> the gate is DORMANT until a genuine proof lands.
 continuity_recorded(payload) if {
+	payload.predicate.technicalControls.continuityComplete == true
 	rev := payload.predicate.continuityStartRevision
 	is_string(rev)
 	trim_space(rev) != ""

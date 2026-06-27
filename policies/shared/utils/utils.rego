@@ -45,8 +45,12 @@ is_code_scan(payload) if {
 	payload.predicateType == "https://autogov.dev/attestation/code-scan/v0.1"
 }
 
+# is_source_review accepts ONLY the v0.2 (fail-closed continuity) source-review
+# predicate type. v0.2 carries continuityComplete + continuityEvidence; gating
+# treats a missing/false continuityComplete as undetermined -> fail closed. A v0.1
+# (pre-continuity) attestation is no longer recognized.
 is_source_review(payload) if {
-	payload.predicateType == "https://autogov.dev/attestation/source-review/v0.1"
+	payload.predicateType == "https://autogov.dev/attestation/source-review/v0.2"
 }
 
 # Helper function to validate Fulcio certificates
