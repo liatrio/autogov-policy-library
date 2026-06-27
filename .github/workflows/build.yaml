@@ -12,6 +12,12 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
 
+concurrency:
+  # serialize main pushes so back-to-back releases don't race the cut;
+  # never cancel a run mid-publish (rw-release isn't idempotent-resume)
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   OPA_VERSION: 1.17.1
   REGAL_VERSION: 0.39.0
@@ -93,5 +99,5 @@ jobs:
         bundle.tar.gz
         schemas.tar.gz
       cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@d22e76e51373fb7adda39a47752bbda5c80c2ec4 # v0.26.0
-      autogov-version: v0.29.8
+      autogov-version: v0.36.1
       mutations-config: .autogov-release.yaml

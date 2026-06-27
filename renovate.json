@@ -27,6 +27,17 @@
       "depNameTemplate": "liatrio/autogov-workflows",
       "packageNameTemplate": "liatrio/autogov-workflows",
       "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/\\.github/workflows/.*\\.yaml$/"
+      ],
+      "matchStrings": [
+        "autogov-version:\\s*(?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "liatrio/autogov",
+      "datasourceTemplate": "github-releases"
     }
   ],
   "schedule": [
