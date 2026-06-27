@@ -145,6 +145,12 @@ has_technical_controls(payload) if is_object(payload.predicate.technicalControls
 # field would make a lookup UNDEFINED and silently skip a leg (fail open). The gate
 # fires a violation when this is false, so a malformed technicalControls fails
 # CLOSED. continuityStartRevision is a sibling string and is checked here too.
+#
+# continuityComplete (v0.2) is checked ONLY WHEN PRESENT: a v0.1 bundle omits it
+# entirely (and continuity_recorded's `== true` then reads undefined -> the
+# continuity leg fails closed elsewhere), while a v0.2 bundle that carries a
+# MISTYPED continuityComplete (e.g. a string) is malformed and must fail here so the
+# field/typecheck coupling the source_level NOTE mandates holds.
 technical_controls_valid(payload) if {
 	tc := payload.predicate.technicalControls
 	is_boolean(tc.forcePushBlocked)
@@ -155,6 +161,21 @@ technical_controls_valid(payload) if {
 	_string_array(tc.requiredStatusChecks)
 	_string_array(tc.bypassActors)
 	is_string(payload.predicate.continuityStartRevision)
+	_continuity_complete_typed(tc)
+}
+
+# _continuity_complete_typed accepts a technicalControls that either OMITS
+# continuityComplete (v0.1) or carries it as a boolean (v0.2). A present-but-mistyped
+# value (string/number/null) fails -> malformed -> fail closed.
+_continuity_complete_typed(tc) if not _has_key(tc, "continuityComplete")
+
+_continuity_complete_typed(tc) if is_boolean(tc.continuityComplete)
+
+# _has_key reports whether object o has key k (object.get with a sentinel default).
+_has_key(o, k) if object.get(o, k, null) != null
+
+_has_key(o, k) if {
+	object.get(o, k, "__absent__") == null # key present with an explicit null value
 }
 
 # _string_array is true for an array whose every element is a string.
@@ -223,10 +244,19 @@ _last_colon(s) := i if {
 	i := idxs[count(idxs) - 1]
 } else := -1
 
-# continuity_recorded is true when continuityStartRevision is a non-empty string.
-# An empty (or whitespace-only) value is UNDETERMINED and never satisfies the
-# continuity leg (fail closed), mirroring the verifier's TrimSpace(...) != "".
+# continuity_recorded is true ONLY when the producer ASSERTS a proven no-gap
+# window: technicalControls.continuityComplete == true AND continuityStartRevision
+# is a non-empty string. This mirrors the verifier's fail-closed
+# `tc.ContinuityComplete && TrimSpace(start) != ""` (autogov pkg/source/review.go).
+#
+# A non-empty start alone is NOT enough: a v0.1 bundle has no continuityComplete
+# field (lookup UNDEFINED -> this rule is undefined -> the continuity violation
+# fires), and a v0.2 bundle that could not prove the window sets
+# continuityComplete=false (and an empty start). Either way continuity stays
+# UNDETERMINED and the L3-continuity leg fails closed -> the gate is DORMANT until
+# a genuine proof lands.
 continuity_recorded(payload) if {
+	payload.predicate.technicalControls.continuityComplete == true
 	rev := payload.predicate.continuityStartRevision
 	is_string(rev)
 	trim_space(rev) != ""
