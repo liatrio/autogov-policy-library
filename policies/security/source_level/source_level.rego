@@ -98,9 +98,11 @@ violations contains msg if {
 	])
 }
 
-# Violation: continuity is required (default) but not recorded. An empty
-# continuityStartRevision is UNDETERMINED and must not satisfy the L3-continuity
-# leg -> fail closed. Governed by require_continuity (default true).
+# Violation: continuity is required (default) but not proven. Continuity holds only
+# when continuityComplete==true AND continuityStartRevision is a non-empty string
+# (controls continuously enforced from a start revision); a false/absent
+# continuityComplete OR an empty start is UNDETERMINED and must not satisfy the
+# L3-continuity leg -> fail closed. Governed by require_continuity (default true).
 violations contains msg if {
 	source_level_config.require_min_source_posture
 	source_level_config.require_continuity
@@ -108,7 +110,7 @@ violations contains msg if {
 	common.has_technical_controls(payload)
 	common.technical_controls_valid(payload)
 	not common.continuity_recorded(payload)
-	msg := "source-level: continuity is required but continuityStartRevision is empty or undetermined"
+	msg := "source-level: continuity not proven: continuityStartRevision empty/undetermined or continuityComplete is false"
 }
 
 # Violation: signed commits are required (opt-in) but requiredSignatures is not

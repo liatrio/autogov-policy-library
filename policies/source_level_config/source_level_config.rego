@@ -44,9 +44,10 @@ require_min_source_posture := _cfg.require_min_source_posture if {
 	is_boolean(_cfg.require_min_source_posture)
 }
 
-# Require continuity to be recorded (continuityStartRevision != "") as part of the
-# L3 posture. Default true: L3 in the verifier requires recorded continuity, so a
-# consumer enabling the posture gate gets the verifier's full L3 bar. An empty
+# Require continuity to be proven (continuityComplete==true AND
+# continuityStartRevision != "") as part of the L3 posture. Default true: L3 in the
+# verifier requires proven continuity, so a consumer enabling the posture gate gets
+# the verifier's full L3 bar. A false/absent continuityComplete or an empty
 # continuityStartRevision is UNDETERMINED and never satisfies this leg (fail
 # closed). Set false to gate on the technical controls alone (continuity aside).
 default require_continuity := true

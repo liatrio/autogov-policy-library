@@ -6,7 +6,7 @@ import rego.v1
 # --- builders ---
 
 _env(predicate) := {"dsseEnvelope": {"payload": base64.encode(json.marshal({
-	"predicateType": "https://autogov.dev/attestation/source-review/v0.1",
+	"predicateType": "https://autogov.dev/attestation/source-review/v0.2",
 	"predicate": predicate,
 }))}}
 
@@ -256,7 +256,7 @@ test_duplicate_login_counted_once if {
 
 # an HONEST summary (distinctApprovers=1) with a padded approvers[] (alice listed
 # twice) must not authorize a min-2 bypass — the inflation cross-check floors the
-# recomputed count against the producer's strict summary, mirroring the v0.1
+# recomputed count against the producer's strict summary, mirroring the
 # source_review gate (which blocks the identical payload).
 test_honest_summary_padded_approvers_not_authorized if {
 	pred := {

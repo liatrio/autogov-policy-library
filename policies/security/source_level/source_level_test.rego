@@ -5,16 +5,10 @@ import rego.v1
 
 # --- builders ---
 
-# _env wraps a predicate as a v0.2 source-review attestation (the current producer
-# output). is_source_review accepts both v0.1 and v0.2; _env_v01 below exercises the
-# legacy type for backward acceptance.
+# _env wraps a predicate as a v0.2 source-review attestation (the only recognized
+# source-review predicate type).
 _env(predicate) := {"dsseEnvelope": {"payload": base64.encode(json.marshal({
 	"predicateType": "https://autogov.dev/attestation/source-review/v0.2",
-	"predicate": predicate,
-}))}}
-
-_env_v01(predicate) := {"dsseEnvelope": {"payload": base64.encode(json.marshal({
-	"predicateType": "https://autogov.dev/attestation/source-review/v0.1",
 	"predicate": predicate,
 }))}}
 
@@ -218,7 +212,7 @@ test_empty_continuity_fails_closed if {
 	# regal ignore:unresolved-reference
 	not source_level.allow with input as inp with data.source_level_thresholds as _on
 
-	msg := "source-level: continuity is required but continuityStartRevision is empty or undetermined"
+	msg := "source-level: continuity not proven: continuityStartRevision empty/undetermined or continuityComplete is false"
 
 	# regal ignore:unresolved-reference
 	msg in source_level.violations with input as inp with data.source_level_thresholds as _on
@@ -248,31 +242,21 @@ test_continuity_incomplete_fails_closed if {
 	# regal ignore:unresolved-reference
 	not source_level.allow with input as [_env(_pred(tc, "startrev"))] with data.source_level_thresholds as _on
 
-	msg := "source-level: continuity is required but continuityStartRevision is empty or undetermined"
+	msg := "source-level: continuity not proven: continuityStartRevision empty/undetermined or continuityComplete is false"
 
 	# regal ignore:unresolved-reference
 	msg in source_level.violations with input as [_env(_pred(tc, "startrev"))] with data.source_level_thresholds as _on
 }
 
-# FAIL-CLOSED (v0.1 bundle): a legacy predicate has NO continuityComplete field, so
-# continuity is UNDETERMINED -> the continuity leg fails even with a start revision.
-# This keeps the L3 claim DORMANT for every already-published v0.1 bundle.
-test_v01_bundle_continuity_fails_closed if {
+# FAIL-CLOSED: a predicate that OMITS continuityComplete is malformed (a v0.2
+# producer always emits it), so technical_controls_valid fails -> the gate fails
+# closed even with a start revision. This keeps the L3 claim DORMANT for any bundle
+# that does not assert a proven window.
+test_absent_continuity_complete_fails_closed if {
 	tc := json.patch(_tc_l3, [{"op": "remove", "path": "/continuityComplete"}])
 
 	# regal ignore:unresolved-reference
-	not source_level.allow with input as [_env_v01(_pred(tc, "startrev"))] with data.source_level_thresholds as _on
-}
-
-# a v0.1 bundle is still RECOGNIZED as source-review (is_source_review accepts both
-# types): with continuity disabled it passes on the technical controls alone, which
-# proves the v0.1 predicate type is gated (not silently ignored).
-test_v01_bundle_recognized_when_continuity_off if {
-	tc := json.patch(_tc_l3, [{"op": "remove", "path": "/continuityComplete"}])
-	cfg := {"require_min_source_posture": true, "require_continuity": false}
-
-	# regal ignore:unresolved-reference
-	source_level.allow with input as [_env_v01(_pred(tc, "startrev"))] with data.source_level_thresholds as cfg
+	not source_level.allow with input as [_env(_pred(tc, "startrev"))] with data.source_level_thresholds as _on
 }
 
 # v0.2 full proof (continuityComplete=true + start) passes the continuity leg.
@@ -335,11 +319,11 @@ test_malformed_technical_controls_coupling if {
 		[{"op": "replace", "path": "/technicalControls/bypassActors", "value": "x"}],
 		[{"op": "replace", "path": "/technicalControls/bypassActors", "value": [2]}],
 		[{"op": "remove", "path": "/technicalControls/bypassActors"}],
-		# continuityComplete (v0.2): a MISTYPED value is malformed -> fail closed.
-		# (REMOVING it is valid for v0.1 and is NOT in this list — it's covered by the
-		# v0.1 continuity-fails-closed test instead.)
+		# continuityComplete (v0.2): a MISTYPED value OR a removed field is malformed
+		# -> fail closed (a v0.2 producer always emits it).
 		[{"op": "replace", "path": "/technicalControls/continuityComplete", "value": "x"}],
 		[{"op": "replace", "path": "/technicalControls/continuityComplete", "value": 1}],
+		[{"op": "remove", "path": "/technicalControls/continuityComplete"}],
 		[{"op": "replace", "path": "/continuityStartRevision", "value": 5}],
 		[{"op": "remove", "path": "/continuityStartRevision"}],
 	]

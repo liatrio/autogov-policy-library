@@ -377,7 +377,7 @@ test_bypass_malformed_config_not_requested_no_surface if {
 # block, so the aggregate behaves exactly as before the gate was added.
 test_source_level_inert_in_aggregate if {
 	weak := {"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "https://autogov.dev/attestation/source-review/v0.1",
+		"predicateType": "https://autogov.dev/attestation/source-review/v0.2",
 		"predicate": {
 			"technicalControls": {"forcePushBlocked": false},
 			"continuityStartRevision": "",
@@ -394,7 +394,7 @@ test_source_level_inert_in_aggregate if {
 # (source_level.allow is false), proving the gate is effective when opted in.
 test_source_level_blocks_aggregate_when_enabled if {
 	weak := {"dsseEnvelope": {"payload": base64.encode(json.marshal({
-		"predicateType": "https://autogov.dev/attestation/source-review/v0.1",
+		"predicateType": "https://autogov.dev/attestation/source-review/v0.2",
 		"predicate": {
 			"technicalControls": {
 				"forcePushBlocked": false,
