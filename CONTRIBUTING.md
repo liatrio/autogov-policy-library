@@ -29,7 +29,7 @@ make eval-bad    # evaluate policies against failing sample data
 
 1. **Open an issue** describing the policy gap or bug.
 2. **Create a feature branch** with a descriptive name.
-3. **Add the policy and its tests** — every policy ships with `*_test.rego`
+3. **Add the policy and its tests** — policies should ship with `*_test.rego`
    coverage for both the allow and deny paths.
 4. **Run `make all`** — formatting, lint, compile, and tests must all pass.
 5. **Open a pull request** with a clear description and a linked issue.

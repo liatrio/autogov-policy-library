@@ -45,7 +45,7 @@ Thresholds and flags marked overridable are set at runtime via
 | VSA verification result | `governance.vsa_verification_result` | A Verification Summary Attestation reports `verificationResult: PASSED`; `FAILED`/`UNKNOWN`/missing/invalid deny. | none |
 
 Org-specific defaults (`approved_owner_ids`, `subject_prefix`, `signer_org`) live
-in `shared/access` and `shared/utils`; adapt them for your own org (see the
+in `policies/shared/access` and `policies/shared/utils`; adapt them for your own org (see the
 org-specific constraints note below).
 
 #### VSA-Based Deployment Gating
@@ -121,9 +121,9 @@ jobs:
 
 > **Org-specific constraints:** Some policies in this library hardcode
 > Liatrio-specific values — the approved owner ID
-> (`shared/access/access.rego`), the `/liatrio/` Fulcio identity check
-> (`shared/utils/utils.rego`), and the `ghcr.io/liatrio/` subject prefix
-> (`security/metadata/metadata.rego`). Adapt these for your own org before
+> (`policies/shared/access/access.rego`), the `/liatrio/` Fulcio identity check
+> (`policies/shared/utils/utils.rego`), and the `ghcr.io/liatrio/` subject prefix
+> (`policies/security/metadata/metadata.rego`). Adapt these for your own org before
 > using the affected policies.
 
 ## Getting Started
