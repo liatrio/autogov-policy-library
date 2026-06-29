@@ -6,6 +6,8 @@ This repository serves as a collection of OPA Rego policies that are specificall
 
 The GitHub AutoGov Policy Library provides a set of predefined policies that can be used to enforce governance and compliance rules for attestations within your GitHub repositories. These policies are written in OPA Rego language, which allows for flexible and customizable rule definitions.
 
+These policies do not run on their own. The [autogov](https://github.com/liatrio/autogov) CLI evaluates them during verification — it loads attestation bundles, runs the OPA/Rego rules in this library, and emits a pass/fail Verification Summary Attestation (VSA) that gates a release. The CLI pulls this library as a published policy bundle, typically via the reusable [autogov-workflows](https://github.com/liatrio/autogov-workflows).
+
 ### Policy Categories
 
 The library includes two main categories of policies:
