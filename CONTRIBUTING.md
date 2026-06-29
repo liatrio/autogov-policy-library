@@ -9,7 +9,7 @@ start at the [flagship repo](https://github.com/liatrio/autogov).
 
 - [Docker](https://www.docker.com/) — the validation targets run via
   `docker compose`, so no local OPA/Regal install is required.
-- [`gh`](https://cli.github.com/) and `jq` for the optional `parse` helper.
+- `jq` and `base64` for the optional `make parse` helper.
 
 ## Local development
 

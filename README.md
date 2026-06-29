@@ -236,7 +236,7 @@ Use Count condition to check for the presence of a predicate in the payload
 
 ex:
 
-[is_slsa_provenance_present in provenance.rego](policies/security/provenance/provenance.rego#L90)
+[is_slsa_provenance_present in provenance.rego](policies/security/provenance/provenance.rego#L94)
 
   ```rego
   # Check for SLSA Provenance presence
