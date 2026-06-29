@@ -44,8 +44,8 @@ Thresholds and flags marked overridable are set at runtime via
 | Dependency-vuln bypass | `security.bypass` | Authorizes the spoofable `ignore_dependency_vulnerabilities` request only when an attested source-review proves enough authorized approvals. Inert by default. | `bypass_thresholds`: `allow_dep_vuln_bypass` → `false`; `bypass_min_approvals` → `2`; `authorized_associations` → `["OWNER","MEMBER"]`; `authorized_approvers` → empty |
 | VSA verification result | `governance.vsa_verification_result` | A Verification Summary Attestation reports `verificationResult: PASSED`; `FAILED`/`UNKNOWN`/missing/invalid deny. | none |
 
-Org-specific defaults (`approved_owner_ids`, `subject_prefix`, `signer_org`) live
-in `policies/shared/access` and `policies/shared/utils`; adapt them for your own org (see the
+Org-specific defaults (`approved_owner_ids`, `subject_prefix`, `signer_org`) are all
+defined in `policies/shared/access/access.rego`; adapt them for your own org (see the
 org-specific constraints note below).
 
 #### VSA-Based Deployment Gating
@@ -119,12 +119,12 @@ jobs:
 > If you are not using octo-sts, set `GH_TOKEN: ${{ github.token }}` and remove
 > the `id-token: write` permission and the token-minting step.
 
-> **Org-specific constraints:** Some policies in this library hardcode
-> Liatrio-specific values — the approved owner ID
-> (`policies/shared/access/access.rego`), the `/liatrio/` Fulcio identity check
-> (`policies/shared/utils/utils.rego`), and the `ghcr.io/liatrio/` subject prefix
-> (`policies/security/metadata/metadata.rego`). Adapt these for your own org before
-> using the affected policies.
+> **Org-specific constraints:** Some policies hardcode Liatrio-specific values, all
+> defined in `policies/shared/access/access.rego`: the approved owner ID
+> (`approved_owner_ids`), the signer org for the `/liatrio/` Fulcio identity check
+> (`signer_org`, enforced in `policies/shared/utils`), and the `ghcr.io/liatrio/`
+> subject prefix (`subject_prefix`, enforced in `policies/security/metadata`). Adapt
+> these for your own org before using the affected policies.
 
 ## Getting Started
 
