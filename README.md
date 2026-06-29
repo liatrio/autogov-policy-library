@@ -1,5 +1,10 @@
 # GitHub AutoGov Policy Library
 
+[![build](https://github.com/liatrio/autogov-policy-library/actions/workflows/build.yaml/badge.svg)](https://github.com/liatrio/autogov-policy-library/actions/workflows/build.yaml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/liatrio/autogov-policy-library/badge)](https://scorecard.dev/viewer/?uri=github.com/liatrio/autogov-policy-library)
+[![Release](https://img.shields.io/github/v/release/liatrio/autogov-policy-library?sort=semver)](https://github.com/liatrio/autogov-policy-library/releases)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 This repository serves as a collection of OPA Rego policies that are specifically designed for attestations created with GitHub Artifact Attestations.
 
 ## Overview
