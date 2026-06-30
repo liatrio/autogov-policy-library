@@ -3,7 +3,7 @@ FROM alpine:3.24.1
 
 RUN apk add --no-cache curl jq
 
-RUN curl -L -o /tmp/opa https://openpolicyagent.org/downloads/v1.2.0/opa_linux_amd64_static && \
+RUN curl -L -o /tmp/opa https://openpolicyagent.org/downloads/v1.18.1/opa_linux_amd64_static && \
     chmod 755 /tmp/opa && \
     mv /tmp/opa /usr/local/bin/opa
 
