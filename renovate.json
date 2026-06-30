@@ -13,13 +13,22 @@
       "pinDigests": true,
       "groupName": "GitHub Actions",
       "groupSlug": "github-actions"
+    },
+    {
+      "extends": [
+        "docker:pinDigests"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "pinDigests": true
     }
   ],
   "customManagers": [
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/\\.github/workflows/.*\\.yaml$/"
+        "/\\.github/workflows/.*\\.ya?ml$/"
       ],
       "matchStrings": [
         "(?:https://github\\.com/|)liatrio/autogov-workflows/\\.github/workflows/.*?\\.yaml@(?<currentDigest>[a-f0-9]+) # v(?<currentValue>\\d+\\.\\d+\\.\\d+)"
@@ -31,13 +40,41 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/\\.github/workflows/.*\\.yaml$/"
+        "/\\.github/workflows/.*\\.ya?ml$/"
       ],
       "matchStrings": [
         "autogov-version:\\s*(?<currentValue>v\\d+\\.\\d+\\.\\d+)"
       ],
       "depNameTemplate": "liatrio/autogov",
       "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile\\.opa$/",
+        "/^\\.github/workflows/build\\.yaml$/"
+      ],
+      "matchStrings": [
+        "openpolicyagent\\.org/downloads/v(?<currentValue>\\d+\\.\\d+\\.\\d+)/opa_",
+        "OPA_VERSION:\\s*(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "open-policy-agent/opa",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile\\.opa$/",
+        "/^\\.github/workflows/build\\.yaml$/"
+      ],
+      "matchStrings": [
+        "StyraInc/regal/releases/download/v(?<currentValue>\\d+\\.\\d+\\.\\d+)/regal_",
+        "REGAL_VERSION:\\s*(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "StyraInc/regal",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
     }
   ],
   "schedule": [
