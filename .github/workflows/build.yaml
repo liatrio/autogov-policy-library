@@ -99,5 +99,5 @@ jobs:
         bundle.tar.gz
         schemas.tar.gz
       cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@80b84f14b407fa892c09a7e151c150d56f426aaa # v0.29.0
-      autogov-version: v0.38.1
+      autogov-version: v0.38.2
       mutations-config: .autogov-release.yaml
