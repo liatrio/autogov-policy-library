@@ -76,7 +76,7 @@ jobs:
       actions: read
       pull-requests: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@80b84f14b407fa892c09a7e151c150d56f426aaa # v0.29.0
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@b2aa95259a872fc00b0fb65890ce3dba2aedaecf # v0.31.2
     secrets: inherit
     with:
       subject-name: ${{ github.repository }}
@@ -92,7 +92,7 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@80b84f14b407fa892c09a7e151c150d56f426aaa # v0.29.0
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@b2aa95259a872fc00b0fb65890ce3dba2aedaecf # v0.31.2
     secrets: inherit
     with:
       subject-path: |
