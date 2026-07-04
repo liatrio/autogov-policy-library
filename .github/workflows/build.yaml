@@ -81,7 +81,7 @@ jobs:
     with:
       subject-name: ${{ github.repository }}
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@80b84f14b407fa892c09a7e151c150d56f426aaa # v0.29.0
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@b2aa95259a872fc00b0fb65890ce3dba2aedaecf # v0.31.2
 
   build-blob-offline: #blob
     if: github.event.pull_request.draft == false
@@ -98,6 +98,6 @@ jobs:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@80b84f14b407fa892c09a7e151c150d56f426aaa # v0.29.0
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@b2aa95259a872fc00b0fb65890ce3dba2aedaecf # v0.31.2
       autogov-version: v0.38.1
       mutations-config: .autogov-release.yaml
