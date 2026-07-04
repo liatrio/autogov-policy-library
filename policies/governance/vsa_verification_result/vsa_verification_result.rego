@@ -8,7 +8,7 @@
 #   - input: schema["vsa-schema"]
 # custom:
 #  control_number: 8
-#  version: 0.22.0
+#  version: 0.22.1
 #  path: policies/governance
 #  filename: vsa_verification_result.rego
 package governance.vsa_verification_result
