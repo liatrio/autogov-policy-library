@@ -5,7 +5,7 @@
 # authors:
 # - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 # custom:
-#  version: 0.22.0
+#  version: 0.22.1
 #  path: policies/source_level_config
 #  filename: source_level_config.rego
 package source_level_config
