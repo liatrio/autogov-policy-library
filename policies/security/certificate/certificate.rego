@@ -33,24 +33,24 @@ violations contains msg if {
 }
 
 violations contains msg if {
+	msg := "certificate is missing"
 	some bundle in input
 	not is_string(bundle.verificationMaterial.certificate.rawBytes)
-	msg := "certificate is missing"
 }
 
 violations contains msg if {
+	msg := "certificate is empty"
 	some bundle in input
 	cert := bundle.verificationMaterial.certificate.rawBytes
 	is_string(cert)
 	count(cert) == 0
-	msg := "certificate is empty"
 }
 
 violations contains msg if {
+	msg := "certificate is not from github fulcio"
 	some bundle in input
 	cert := bundle.verificationMaterial.certificate.rawBytes
 	is_string(cert)
 	count(cert) > 0
 	not utils.is_valid_fulcio_cert(cert)
-	msg := "certificate is not from github fulcio"
 }

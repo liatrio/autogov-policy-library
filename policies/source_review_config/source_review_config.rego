@@ -165,7 +165,7 @@ _valid_rfc3339("")
 
 _valid_rfc3339(v) if {
 	is_string(v)
-	time.parse_rfc3339_ns(v)
+	_ := time.parse_rfc3339_ns(v)
 }
 
 # _valid_str_array is true for an array whose every element is a string.
