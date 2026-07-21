@@ -10,7 +10,7 @@
 #   - Certificate validation
 # entrypoint: true
 # custom:
-#  version: 0.22.1
+#  version: 0.22.2
 #  path: policies/governance
 #  filename: governance.rego
 package governance
