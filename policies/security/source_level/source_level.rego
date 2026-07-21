@@ -5,7 +5,7 @@
 # authors:
 # - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 # custom:
-#  version: 1.0.0
+#  version: 1.0.1
 #  path: policies/security/source_level
 #  filename: source_level.rego
 package security.source_level
