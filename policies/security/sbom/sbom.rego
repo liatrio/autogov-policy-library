@@ -8,7 +8,7 @@
 # - input: schema["sbom-schema"]
 # custom:
 #  control_number: 2
-#  version: 1.0.1
+#  version: 1.0.2
 #  path: policies/security
 #  filename: sbom.rego
 #  irm_control_ids: [LIATRIO-SBOM-002]
