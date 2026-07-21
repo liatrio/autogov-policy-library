@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  OPA_VERSION: 1.18.1
+  OPA_VERSION: 1.18.2
   REGAL_VERSION: 0.42.0
 
 jobs:
