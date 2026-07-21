@@ -63,17 +63,17 @@ violations contains msg if {
 # schema at eval time, so this fails CLOSED — a non-conforming signed predicate
 # cannot slip a threshold via an undefined lookup.
 violations contains msg if {
+	msg := "code-scan predicate is malformed (missing or mistyped summary/invocation fields)"
 	some payload in cs_payloads
 	not common.structurally_valid(payload)
-	msg := "code-scan predicate is malformed (missing or mistyped summary/invocation fields)"
 }
 
 # Violation: the scanner reported an incomplete run.
 violations contains msg if {
+	msg := "code-scan reports an incomplete scan (invocation.executionSuccessful=false)"
 	code_scan_config.fail_on_incomplete_scan == true
 	some payload in cs_payloads
 	payload.predicate.invocation.executionSuccessful == false
-	msg := "code-scan reports an incomplete scan (invocation.executionSuccessful=false)"
 }
 
 # Violation: finding-level gating was requested (count_suppressed / gate_new_only
@@ -82,14 +82,14 @@ violations contains msg if {
 # from fail_on_incomplete_scan, which governs scanner-run completeness, not the
 # contradiction of requesting per-finding gating without per-finding data.
 violations contains msg if {
-	common.recompute_required == true
-	some payload in cs_payloads
-	not common.can_recompute(payload)
 	msg := concat("", [
 		"code-scan gating needs per-finding data ",
 		"(count_suppressed/gate_new_only/ignore_paths) but findings are excluded; ",
 		"regenerate with --include-findings",
 	])
+	common.recompute_required == true
+	some payload in cs_payloads
+	not common.can_recompute(payload)
 }
 
 # Violation: a security-severity bucket exceeds its threshold.

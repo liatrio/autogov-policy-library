@@ -58,85 +58,82 @@ is_image_subject(payload) if {
 
 # Common violations for both images and blobs
 violations contains msg if {
+	msg := "artifact metadata is missing"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.artifact
-	msg := "artifact metadata is missing"
 }
 
 violations contains msg if {
+	msg := "owner is missing in metadata"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.ownerData.ownerId
-	msg := "owner is missing in metadata"
 }
 
 violations contains msg if {
+	msg := "runner environment is missing"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.runnerData.environment
-	msg := "runner environment is missing"
 }
 
 # Artifact-specific validations
 violations contains msg if {
+	msg := "artifact type is missing"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.artifact.type
-	msg := "artifact type is missing"
 }
 
 # Type-specific artifact validations
 violations contains msg if {
+	msg := "artifact type must be container-image for image subjects"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	is_image_subject(payload)
 	payload.predicate.artifact.type != "container-image"
-	msg := "artifact type must be container-image for image subjects"
 }
 
 violations contains msg if {
+	msg := "artifact type must be blob for non-image subjects"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	not is_image_subject(payload)
 	payload.predicate.artifact.type != "blob"
-	msg := "artifact type must be blob for non-image subjects"
 }
 
 # Image-specific violations
 violations contains msg if {
+	msg := sprintf("image subject name must be under %s", [access.subject_prefix])
 	some payload in utils.decoded_payload_list
 	is_image_subject(payload)
 	not startswith(payload.subject[0].name, access.subject_prefix)
-	msg := sprintf("image subject name must be under %s", [access.subject_prefix])
 }
 
 # Blob-specific violations
 violations contains msg if {
+	msg := "blob subject name contains invalid characters"
 	some payload in utils.decoded_payload_list
 	not is_image_subject(payload)
 	not regex.match(`^[a-zA-Z0-9_.-]+$`, payload.subject[0].name)
-	msg := "blob subject name contains invalid characters"
 }
 
 # Required fields validation
 violations contains msg if {
+	msg := "workflow inputs are missing in metadata"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not inputs_exist(payload)
-	msg := "workflow inputs are missing in metadata"
 }
 
 # Required metadata sections validation
 violations contains msg if {
-	some payload in utils.decoded_payload_list
-	is_metadata_attestation(payload)
-	is_metadata_present(payload)
 	required_sections := {
 		"artifact",
 		"repositoryData",
@@ -149,6 +146,9 @@ violations contains msg if {
 		"compliance",
 		"security",
 	}
+	some payload in utils.decoded_payload_list
+	is_metadata_attestation(payload)
+	is_metadata_present(payload)
 	some section in required_sections
 	not payload.predicate[section]
 	msg := sprintf("%s section is missing in metadata", [section])
@@ -156,49 +156,49 @@ violations contains msg if {
 
 # Additional validation for path/digest exclusivity
 violations contains msg if {
+	msg := "artifact.digest should not be present for blob type"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	payload.predicate.artifact.type == "blob"
 	payload.predicate.artifact.digest
-	msg := "artifact.digest should not be present for blob type"
 }
 
 violations contains msg if {
+	msg := "artifact.path should not be present for container-image type"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	payload.predicate.artifact.type == "container-image"
 	payload.predicate.artifact.path
-	msg := "artifact.path should not be present for container-image type"
 }
 
 # Compliance validations
 violations contains msg if {
+	msg := "compliance.policyRef is missing in metadata"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.compliance.policyRef
-	msg := "compliance.policyRef is missing in metadata"
 }
 
 violations contains msg if {
+	msg := "compliance.controlIds is missing in metadata"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.compliance.controlIds
-	msg := "compliance.controlIds is missing in metadata"
 }
 
 # Security permissions validations
 violations contains msg if {
-	some payload in utils.decoded_payload_list
-	is_metadata_attestation(payload)
-	is_metadata_present(payload)
 	required_permissions := {
 		"id-token",
 		"attestations",
 		"packages",
 		"contents",
 	}
+	some payload in utils.decoded_payload_list
+	is_metadata_attestation(payload)
+	is_metadata_present(payload)
 	some perm in required_permissions
 	not payload.predicate.security.permissions[perm]
 	msg := sprintf("security.permissions.%s is missing in metadata", [perm])
@@ -217,18 +217,18 @@ violations contains msg if {
 
 # Add this rule to validate runner environment
 violations contains msg if {
+	msg := "invalid runner environment"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	payload.predicate.runnerData.environment != "github-hosted"
-	msg := "invalid runner environment"
 }
 
 # Add this rule to validate owner ID
 violations contains msg if {
+	msg := "invalid owner ID"
 	some payload in utils.decoded_payload_list
 	is_metadata_attestation(payload)
 	is_metadata_present(payload)
 	not payload.predicate.ownerData.ownerId in access.approved_owner_ids
-	msg := "invalid owner ID"
 }

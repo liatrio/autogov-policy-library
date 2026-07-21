@@ -104,10 +104,10 @@ violations contains msg if {
 # array). Guards the count rule below — count() over a non-array would otherwise
 # error or miscount, so this denies instead.
 violations contains msg if {
+	msg := "test-result predicate is malformed (failedTests is not an array)"
 	some payload in utils.decoded_payload_list
 	utils.is_test_result(payload)
 	not structurally_valid(payload)
-	msg := "test-result predicate is malformed (failedTests is not an array)"
 }
 
 # Violation: a present, structurally-valid test-result attestation reports more

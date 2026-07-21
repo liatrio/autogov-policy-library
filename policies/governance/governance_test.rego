@@ -232,7 +232,8 @@ test_violations_report if {
 		"dependency_vulnerability_medium": dependency_vulnerability_violations_medium,
 		"dependency_vulnerability_high": dependency_vulnerability_violations_high,
 		"dependency_vulnerability_critical": dependency_vulnerability_violations_critical,
-	} with input as test_input
+	}
+		with input as test_input
 		with data.security.sbom.violations as sbom_violations
 		with data.security.provenance.violations as provenance_violations
 		with data.security.metadata.violations as metadata_violations
@@ -273,7 +274,8 @@ test_violations_report_ignore_deps_unauthorized if {
 		"dependency_vulnerability_medium": dependency_vulnerability_violations_medium,
 		"dependency_vulnerability_high": dependency_vulnerability_violations_high,
 		"dependency_vulnerability_critical": dependency_vulnerability_violations_critical,
-	} with input as test_input
+	}
+		with input as test_input
 		with data.security.sbom.violations as sbom_violations
 		with data.security.provenance.violations as provenance_violations
 		with data.security.metadata.violations as metadata_violations
@@ -314,7 +316,8 @@ test_violations_report_ignore_deps_authorized if {
 		"dependency_vulnerability_medium": set(),
 		"dependency_vulnerability_high": set(),
 		"dependency_vulnerability_critical": set(),
-	} with input as test_input
+	}
+		with input as test_input
 		with data.security.bypass.dep_vuln_authorized as true
 		with data.security.sbom.violations as sbom_violations
 		with data.security.provenance.violations as provenance_violations
@@ -445,7 +448,8 @@ test_no_violations if {
 		"dependency_vulnerability_medium": violations,
 		"dependency_vulnerability_high": violations,
 		"dependency_vulnerability_critical": violations,
-	} with input as test_input
+	}
+		with input as test_input
 		with data.security.sbom.violations as violations
 		with data.security.provenance.violations as violations
 		with data.security.metadata.violations as violations

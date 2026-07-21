@@ -64,10 +64,10 @@ violations contains msg if {
 # posture is undeterminable without it -> fail closed (REQUIRED only when enabled,
 # so the gate stays inert for predicates lacking it).
 violations contains msg if {
+	msg := "source-level: source-review predicate records no technicalControls"
 	source_level_config.require_min_source_posture
 	some payload in sr_payloads
 	not common.has_technical_controls(payload)
-	msg := "source-level: source-review predicate records no technicalControls"
 }
 
 # Violation: technicalControls is present but malformed (a field the gate depends
@@ -75,11 +75,11 @@ violations contains msg if {
 # at eval time, so this fails CLOSED — a non-conforming signed predicate cannot
 # slip the gate via an undefined lookup.
 violations contains msg if {
+	msg := "source-level: technicalControls is malformed (missing or mistyped posture fields)"
 	source_level_config.require_min_source_posture
 	some payload in sr_payloads
 	common.has_technical_controls(payload)
 	not common.technical_controls_valid(payload)
-	msg := "source-level: technicalControls is malformed (missing or mistyped posture fields)"
 }
 
 # Violation: the technical-control posture does not meet L3 (force-push blocked,
@@ -87,15 +87,15 @@ violations contains msg if {
 # list). Only evaluated over a well-formed technicalControls so the message is
 # about the posture, not a malformed predicate.
 violations contains msg if {
+	msg := concat("", [
+		"source-level: technical controls do not meet the L3 posture ",
+		"(force-push, status checks, retained history, authoritative narrow bypass)",
+	])
 	source_level_config.require_min_source_posture
 	some payload in sr_payloads
 	common.has_technical_controls(payload)
 	common.technical_controls_valid(payload)
 	not common.meets_l3_posture(payload)
-	msg := concat("", [
-		"source-level: technical controls do not meet the L3 posture ",
-		"(force-push, status checks, retained history, authoritative narrow bypass)",
-	])
 }
 
 # Violation: continuity is required (default) but not proven. Continuity holds only
@@ -104,24 +104,24 @@ violations contains msg if {
 # continuityComplete OR an empty start is UNDETERMINED and must not satisfy the
 # L3-continuity leg -> fail closed. Governed by require_continuity (default true).
 violations contains msg if {
+	msg := "source-level: continuity not proven: continuityStartRevision empty/undetermined or continuityComplete is false"
 	source_level_config.require_min_source_posture
 	source_level_config.require_continuity
 	some payload in sr_payloads
 	common.has_technical_controls(payload)
 	common.technical_controls_valid(payload)
 	not common.continuity_recorded(payload)
-	msg := "source-level: continuity not proven: continuityStartRevision empty/undetermined or continuityComplete is false"
 }
 
 # Violation: signed commits are required (opt-in) but requiredSignatures is not
 # set. The verifier does NOT demand signatures for L3, so this leg is off by
 # default and only fires when require_signed_commits is enabled.
 violations contains msg if {
+	msg := "source-level: signed commits are required but requiredSignatures is not set"
 	source_level_config.require_min_source_posture
 	source_level_config.require_signed_commits
 	some payload in sr_payloads
 	common.has_technical_controls(payload)
 	common.technical_controls_valid(payload)
 	payload.predicate.technicalControls.requiredSignatures != true
-	msg := "source-level: signed commits are required but requiredSignatures is not set"
 }

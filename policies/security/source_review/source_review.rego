@@ -53,19 +53,19 @@ violations contains msg if {
 # schema at eval time, so this fails CLOSED — a non-conforming signed predicate
 # cannot slip the gate via an undefined lookup.
 violations contains msg if {
+	msg := "source-review predicate is malformed (missing or mistyped summary, approvers, or top-level fields)"
 	some payload in sr_payloads
 	not common.structurally_valid(payload)
-	msg := "source-review predicate is malformed (missing or mistyped summary, approvers, or top-level fields)"
 }
 
 # Violation: the review evidence could not be fully gathered (no merged PR — a
 # direct push or the ListPullRequestsWithCommit default-branch quirk — or reviews
 # were unfetchable). Governed by fail_on_incomplete_review (default false).
 violations contains msg if {
+	msg := "source-review reports incomplete review tooling (reviewToolingComplete=false)"
 	source_review_config.fail_on_incomplete_review == true
 	some payload in sr_payloads
 	payload.predicate.reviewToolingComplete == false
-	msg := "source-review reports incomplete review tooling (reviewToolingComplete=false)"
 }
 
 # Violation: per-reviewer gating was requested (disallow_self_approval /
@@ -75,14 +75,14 @@ violations contains msg if {
 # fail_on_incomplete_review, which governs review-evidence completeness, not the
 # contradiction of requesting per-approver gating without per-approver data.
 violations contains msg if {
-	common.recompute_required == true
-	some payload in sr_payloads
-	not common.can_recompute(payload)
 	msg := concat("", [
 		"source-review gating needs per-approver data ",
 		"(disallow_self_approval/require_non_stale/allow_bot_approvals/require_codeowner_review) ",
 		"but approvers are excluded; regenerate with --include-approvers",
 	])
+	common.recompute_required == true
+	some payload in sr_payloads
+	not common.can_recompute(payload)
 }
 
 # Violation: fewer distinct qualifying approvals than required. Only evaluated
@@ -121,10 +121,10 @@ violations contains msg if {
 # codeownerReviewMet is tri-state and REST-only leaves it null, turning this on
 # fails closed until a future version can authoritatively determine it.
 violations contains msg if {
+	msg := "source-review: codeowner review is required but not met or not determinable"
 	source_review_config.require_codeowner_review == true
 	some payload in sr_payloads
 	payload.predicate.summary.codeownerReviewMet != true
-	msg := "source-review: codeowner review is required but not met or not determinable"
 }
 
 # Violation: a required-approver-association allowlist is enforced but no qualifying
@@ -134,10 +134,10 @@ violations contains msg if {
 # bypass policy's authorized-by-association handling: a qualifying approver is
 # non-stale, non-bot, with a string association in the set.
 violations contains msg if {
+	msg := "source-review: no approver association in the required allowlist"
 	count(source_review_config.required_approver_associations) > 0
 	some payload in sr_payloads
 	not _assoc_satisfied(payload)
-	msg := "source-review: no approver association in the required allowlist"
 }
 
 # _grandfathered is true when enforced_since is set AND this revision's merged PR

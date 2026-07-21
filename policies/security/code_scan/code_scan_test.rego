@@ -37,13 +37,13 @@ cs_findings(findings) := [_env({
 	"results": findings,
 })]
 
-finding(rule, level, sevlevel, baseline, suppressed, uri) := {
+finding(rule, level, sevlevel, baseline, suppressed, finding_uri) := {
 	"ruleId": rule,
 	"level": level,
 	"securitySeverityLevel": sevlevel,
 	"baselineState": baseline,
 	"suppressed": suppressed,
-	"location": {"uri": uri},
+	"location": {"uri": finding_uri},
 }
 
 # --- presence / inertness ---

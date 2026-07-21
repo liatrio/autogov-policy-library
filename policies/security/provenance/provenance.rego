@@ -33,55 +33,55 @@ violations contains msg if {
 }
 
 violations contains msg if {
+	msg := "predicate type is missing"
 	some payload in utils.decoded_payload_list
 	not payload.predicateType
-	msg := "predicate type is missing"
 }
 
 violations contains msg if {
+	msg := "build type is missing"
 	some payload in utils.decoded_payload_list
 	utils.is_slsa_provenance(payload)
 	not payload.predicate.buildDefinition.buildType
-	msg := "build type is missing"
 }
 
 violations contains msg if {
+	msg := "build type is not correct"
 	some payload in utils.decoded_payload_list
 	utils.is_slsa_provenance(payload)
 	not build_type_valid(payload)
-	msg := "build type is not correct"
 }
 
 violations contains msg if {
+	msg := "owner is not correct in build provenance"
 	some payload in utils.decoded_payload_list
 	utils.is_slsa_provenance(payload)
 	not payload.predicate.buildDefinition.internalParameters.github.repository_owner_id in access.approved_owner_ids
-	msg := "owner is not correct in build provenance"
 }
 
 violations contains msg if {
+	msg := "owner is missing in build provenance"
 	some payload in utils.decoded_payload_list
 	utils.is_slsa_provenance(payload)
 	not payload.predicate.buildDefinition.internalParameters.github.repository_owner_id
-	msg := "owner is missing in build provenance"
 }
 
 # Repository-id allowlist (inert unless a consumer configures
 # access.approved_repo_ids). Mirrors the owner-id checks above.
 violations contains msg if {
+	msg := "repository is not correct in build provenance"
 	count(access.approved_repo_ids) > 0
 	some payload in utils.decoded_payload_list
 	utils.is_slsa_provenance(payload)
 	not payload.predicate.buildDefinition.internalParameters.github.repository_id in access.approved_repo_ids
-	msg := "repository is not correct in build provenance"
 }
 
 violations contains msg if {
+	msg := "repository is missing in build provenance"
 	count(access.approved_repo_ids) > 0
 	some payload in utils.decoded_payload_list
 	utils.is_slsa_provenance(payload)
 	not payload.predicate.buildDefinition.internalParameters.github.repository_id
-	msg := "repository is missing in build provenance"
 }
 
 # Validation rules
