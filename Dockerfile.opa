@@ -7,7 +7,7 @@ RUN curl -L -o /tmp/opa https://openpolicyagent.org/downloads/v1.18.1/opa_linux_
     chmod 755 /tmp/opa && \
     mv /tmp/opa /usr/local/bin/opa
 
-RUN curl -L -o /tmp/regal https://github.com/StyraInc/regal/releases/download/v0.41.1/regal_Linux_x86_64 && \
+RUN curl -L -o /tmp/regal https://github.com/StyraInc/regal/releases/download/v0.42.0/regal_Linux_x86_64 && \
     chmod 755 /tmp/regal && \
     mv /tmp/regal /usr/local/bin/regal
 
