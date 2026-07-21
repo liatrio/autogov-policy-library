@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup Regal
         uses: open-policy-agent/setup-regal@761188c3b435761fa254beca508a44875619648f # v2.0.0
         with:
@@ -40,7 +40,7 @@ jobs:
     needs: lint
     steps:
       - name: Check out repository code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup OPA
         uses: open-policy-agent/setup-opa@b2b258e089860efaadaaf71bf6e3aecb4a3eeff1 # v2.4.0
         with:
@@ -76,11 +76,11 @@ jobs:
       actions: read
       pull-requests: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@a2d59424a99724265d80d2a777803eb7184c8fa8 # v1.1.0
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
     secrets: inherit
     with:
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@a2d59424a99724265d80d2a777803eb7184c8fa8 # v1.1.0
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
       policy-data-overlay: '{"source_review_thresholds":{"min_approvals":0}}'
 
   build-blob-offline: #blob
@@ -92,13 +92,13 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@a2d59424a99724265d80d2a777803eb7184c8fa8 # v1.1.0
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
     secrets: inherit
     with:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@a2d59424a99724265d80d2a777803eb7184c8fa8 # v1.1.0
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
       policy-data-overlay: '{"source_review_thresholds":{"min_approvals":0}}'
       autogov-version: v0.38.1
       mutations-config: .autogov-release.yaml
