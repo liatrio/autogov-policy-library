@@ -56,7 +56,25 @@ is_image_subject(payload) if {
 	startswith(payload.subject[0].name, "ghcr.io/")
 }
 
+# Guard against attestations with no (or empty) subject name. Rego's
+# negation-as-failure means an absent payload.subject[0].name makes both the
+# image-prefix and blob-regex violation rule bodies undefined, so neither
+# fires and the gate fails open. This rule closes that gap.
+has_subject_name(payload) if {
+	is_array(payload.subject)
+	count(payload.subject) > 0
+	is_string(payload.subject[0].name)
+	count(payload.subject[0].name) > 0
+}
+
 # Common violations for both images and blobs
+violations contains msg if {
+	msg := "attestation subject with a name is missing"
+	some payload in utils.decoded_payload_list
+	is_metadata_attestation(payload)
+	not has_subject_name(payload)
+}
+
 violations contains msg if {
 	msg := "artifact metadata is missing"
 	some payload in utils.decoded_payload_list
