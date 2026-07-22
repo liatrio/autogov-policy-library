@@ -41,23 +41,23 @@ deny contains msg if {
 
 # Deny if a VSA attestation is missing verification result
 deny contains msg if {
+	msg := "VSA attestation is missing predicate.predicate.verificationResult"
 	some payload in vsa_payloads
 	not payload.predicate.predicate.verificationResult
-	msg := "VSA attestation is missing predicate.predicate.verificationResult"
 }
 
 # Deny if a VSA verification result is FAILED
 deny contains msg if {
+	msg := "VSA verification result indicates FAILED status"
 	some payload in vsa_payloads
 	payload.predicate.predicate.verificationResult == "FAILED"
-	msg := "VSA verification result indicates FAILED status"
 }
 
 # Deny if a VSA verification result is UNKNOWN
 deny contains msg if {
+	msg := "VSA verification result indicates UNKNOWN status"
 	some payload in vsa_payloads
 	payload.predicate.predicate.verificationResult == "UNKNOWN"
-	msg := "VSA verification result indicates UNKNOWN status"
 }
 
 # Deny if a VSA verification result is invalid
