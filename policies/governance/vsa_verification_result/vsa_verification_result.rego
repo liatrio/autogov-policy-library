@@ -8,7 +8,7 @@
 #   - input: schema["vsa-schema"]
 # custom:
 #  control_number: 8
-#  version: 1.0.3
+#  version: 1.1.0
 #  path: policies/governance
 #  filename: vsa_verification_result.rego
 package governance.vsa_verification_result
@@ -16,38 +16,55 @@ package governance.vsa_verification_result
 import data.shared.utils
 import rego.v1
 
-# Extract VSA payload from Sigstore bundle using shared utility
-vsa_payload := utils.has_envelope(input)
+default allow := false
 
-# Get verification result from nested structure
-verification_result := vsa_payload.predicate.predicate.verificationResult
-
-# Allow if VSA verification result is PASSED
+# Allow only if at least one VSA payload is present and every VSA payload
+# present is PASSED
 allow if {
-	verification_result == "PASSED"
+	count(vsa_payloads) > 0
+	every payload in vsa_payloads {
+		payload.predicate.predicate.verificationResult == "PASSED"
+	}
 }
 
-# Deny if VSA attestation is missing verification result
+# Extract all VSA payloads from the array of Sigstore bundles/attestations
+vsa_payloads := [payload |
+	some payload in utils.decoded_payload_list
+	utils.is_vsa(payload)
+]
+
+# Deny if no VSA attestation is present at all
 deny contains msg if {
-	not verification_result
+	count(vsa_payloads) == 0
+	msg := "VSA attestation is missing"
+}
+
+# Deny if a VSA attestation is missing verification result
+deny contains msg if {
 	msg := "VSA attestation is missing predicate.predicate.verificationResult"
+	some payload in vsa_payloads
+	not payload.predicate.predicate.verificationResult
 }
 
-# Deny if VSA verification result is FAILED
+# Deny if a VSA verification result is FAILED
 deny contains msg if {
-	verification_result == "FAILED"
 	msg := "VSA verification result indicates FAILED status"
+	some payload in vsa_payloads
+	payload.predicate.predicate.verificationResult == "FAILED"
 }
 
-# Deny if VSA verification result is UNKNOWN
+# Deny if a VSA verification result is UNKNOWN
 deny contains msg if {
-	verification_result == "UNKNOWN"
 	msg := "VSA verification result indicates UNKNOWN status"
+	some payload in vsa_payloads
+	payload.predicate.predicate.verificationResult == "UNKNOWN"
 }
 
-# Deny if VSA verification result is invalid
+# Deny if a VSA verification result is invalid
 deny contains msg if {
-	verification_result
-	not verification_result in {"PASSED", "FAILED", "UNKNOWN"}
-	msg := sprintf("VSA verification result has invalid status: %s", [verification_result])
+	some payload in vsa_payloads
+	result := payload.predicate.predicate.verificationResult
+	result
+	not result in {"PASSED", "FAILED", "UNKNOWN"}
+	msg := sprintf("VSA verification result has invalid status: %s", [result])
 }

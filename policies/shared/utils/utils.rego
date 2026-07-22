@@ -53,6 +53,11 @@ is_source_review(payload) if {
 	payload.predicateType == "https://autogov.dev/attestation/source-review/v0.2"
 }
 
+# is_vsa checks for the SLSA VSA (verification summary) predicate type
+is_vsa(payload) if {
+	payload.predicateType == "https://slsa.dev/verification_summary/v1"
+}
+
 # Helper function to validate Fulcio certificates
 is_valid_fulcio_cert(raw) := valid if {
 	is_string(raw)
