@@ -63,6 +63,18 @@ test_is_cyclonedx_bom_false if {
 	not utils.is_cyclonedx_bom(payload)
 }
 
+# Test VSA identification
+test_is_vsa_true if {
+	payload := {"predicateType": "https://slsa.dev/verification_summary/v1"}
+	utils.is_vsa(payload)
+}
+
+# Test invalid VSA
+test_is_vsa_false if {
+	payload := {"predicateType": "https://example.com/other"}
+	not utils.is_vsa(payload)
+}
+
 # Test Fulcio certificate validation
 test_is_valid_fulcio_cert_true if {
 	# Valid certificate with all required fields
