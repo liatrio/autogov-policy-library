@@ -316,3 +316,73 @@ test_subject_prefix_override_clears if {
 	not "image subject name must be under ghcr.io/other-org/" in violations
 	not "image subject name must be under ghcr.io/liatrio/" in violations
 }
+
+# Regression tests for #175: a metadata attestation missing a usable subject
+# name must deny, not fail open (fail-closed presence guard).
+
+# No `subject` key at all.
+test_metadata_no_subject_key if {
+	test_metadata := create_test_metadata("5726618", "github-hosted", {"key1": "value1"})
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"_type": "https://in-toto.io/Statement/v1",
+		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
+		"predicate": test_metadata,
+	}))}}]
+
+	result := metadata.allow with input as test_input
+	result == false
+
+	violations := metadata.violations with input as test_input
+	"attestation subject with a name is missing" in violations
+}
+
+# `subject: []` (empty array).
+test_metadata_empty_subject_array if {
+	test_metadata := create_test_metadata("5726618", "github-hosted", {"key1": "value1"})
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"_type": "https://in-toto.io/Statement/v1",
+		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
+		"subject": [],
+		"predicate": test_metadata,
+	}))}}]
+
+	result := metadata.allow with input as test_input
+	result == false
+
+	violations := metadata.violations with input as test_input
+	"attestation subject with a name is missing" in violations
+}
+
+# `subject: [{}]` (no `.name`).
+test_metadata_subject_missing_name if {
+	test_metadata := create_blob_test_metadata("5726618", "github-hosted", {"key1": "value1"})
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"_type": "https://in-toto.io/Statement/v1",
+		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
+		"subject": [{}],
+		"predicate": test_metadata,
+	}))}}]
+
+	result := metadata.allow with input as test_input
+	result == false
+
+	violations := metadata.violations with input as test_input
+	"attestation subject with a name is missing" in violations
+}
+
+# `subject: [{"name": ""}]` (empty string).
+test_metadata_subject_empty_name if {
+	test_metadata := create_blob_test_metadata("5726618", "github-hosted", {"key1": "value1"})
+	test_input := [{"dsseEnvelope": {"payload": base64.encode(json.marshal({
+		"_type": "https://in-toto.io/Statement/v1",
+		"predicateType": "https://cosign.sigstore.dev/attestation/v1",
+		"subject": [{"name": ""}],
+		"predicate": test_metadata,
+	}))}}]
+
+	result := metadata.allow with input as test_input
+	result == false
+
+	violations := metadata.violations with input as test_input
+	"attestation subject with a name is missing" in violations
+}
