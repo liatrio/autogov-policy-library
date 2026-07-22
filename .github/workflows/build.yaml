@@ -100,5 +100,5 @@ jobs:
         schemas.tar.gz
       cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
       policy-data-overlay: '{"source_review_thresholds":{"min_approvals":0}}'
-      autogov-version: v0.38.1
+      autogov-version: v1.0.4
       mutations-config: .autogov-release.yaml
