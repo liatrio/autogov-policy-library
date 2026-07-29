@@ -67,7 +67,12 @@ jobs:
 
   build-image:
     if: github.event.pull_request.draft == false
-    needs: test
+    # needs build-blob-offline (not just test) so its release-cut always
+    # completes first: both jobs independently race to publish the same
+    # release, and only build-blob-offline's release-cut carries the
+    # bundle.tar.gz/schemas.tar.gz assets -- if build-image's release-cut
+    # wins the race instead, the release ships without them.
+    needs: [test, build-blob-offline]
     permissions:
       id-token: write
       attestations: write
