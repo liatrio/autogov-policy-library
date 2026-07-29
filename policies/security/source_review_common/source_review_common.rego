@@ -112,6 +112,35 @@ structurally_valid(payload) if {
 		is_boolean(a.stale)
 		is_boolean(a.isBot)
 	}
+	_pull_request_valid(payload.predicate)
+}
+
+# _pull_request_valid type-checks the optional pullRequest field consumed by the
+# zero-approval-merger gate (source_review.rego). Absent is fine (optional field);
+# when present it must be an object -- a malformed non-object pullRequest (string,
+# number, array, or JSON null) must not silently pass. mergedById is likewise
+# optional-but-typed: absent is fine, present must be a non-negative integer
+# (0 itself is allowed here structurally -- it is the config-side
+# _valid_int_array fix, not this file, that closes the "0 as allowlist sentinel"
+# bypass).
+_pull_request_valid(predicate) if {
+	not "pullRequest" in object.keys(predicate)
+}
+
+_pull_request_valid(predicate) if {
+	"pullRequest" in object.keys(predicate)
+	pr := predicate.pullRequest
+	is_object(pr)
+	_merged_by_id_valid(pr)
+}
+
+_merged_by_id_valid(pr) if {
+	not "mergedById" in object.keys(pr)
+}
+
+_merged_by_id_valid(pr) if {
+	"mergedById" in object.keys(pr)
+	_non_negative_int(pr.mergedById)
 }
 
 # _non_negative_int is true for an integer >= 0 (the valid range for every count).

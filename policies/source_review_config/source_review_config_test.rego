@@ -19,3 +19,53 @@ test_min_approvals_override_resolves if {
 	n := source_review_config.min_approvals with data.source_review_thresholds as {"min_approvals": 2}
 	n == 2
 }
+
+# --- zero_approval_merger_allowlist ---
+
+# inert default: an empty/unset allowlist resolves to the empty set.
+test_zero_approval_merger_allowlist_default_empty if {
+	count(source_review_config.zero_approval_merger_allowlist) == 0
+}
+
+# a valid populated allowlist resolves to the expected set.
+test_zero_approval_merger_allowlist_override_resolves if {
+	cfg := {"zero_approval_merger_allowlist": [138915, 42]}
+
+	# regal ignore:unresolved-reference
+	s := source_review_config.zero_approval_merger_allowlist with data.source_review_thresholds as cfg
+	s == {138915, 42}
+}
+
+# regression lock: 0 must NEVER be accepted into the allowlist. 0 is this same
+# feature's own sentinel for "mergedById absent/unfetchable" (source_review.rego)
+# -- a populated allowlist containing 0 would silently match every absent-merger
+# payload, defeating the gate entirely. This was a confirmed, reproducible bypass
+# during review; _valid_int_array must require e > 0, not e >= 0.
+test_zero_approval_merger_allowlist_rejects_zero if {
+	cfg := {"zero_approval_merger_allowlist": [0]}
+
+	# regal ignore:unresolved-reference
+	errs := source_review_config.config_errors with data.source_review_thresholds as cfg
+	msg := "zero_approval_merger_allowlist must be an array of positive integers"
+	msg in errs
+}
+
+# a negative integer entry is rejected the same way.
+test_zero_approval_merger_allowlist_rejects_negative if {
+	cfg := {"zero_approval_merger_allowlist": [-1]}
+
+	# regal ignore:unresolved-reference
+	errs := source_review_config.config_errors with data.source_review_thresholds as cfg
+	msg := "zero_approval_merger_allowlist must be an array of positive integers"
+	msg in errs
+}
+
+# a fractional (float) entry is rejected the same way.
+test_zero_approval_merger_allowlist_rejects_float if {
+	cfg := {"zero_approval_merger_allowlist": [1.5]}
+
+	# regal ignore:unresolved-reference
+	errs := source_review_config.config_errors with data.source_review_thresholds as cfg
+	msg := "zero_approval_merger_allowlist must be an array of positive integers"
+	msg in errs
+}

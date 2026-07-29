@@ -140,6 +140,64 @@ violations contains msg if {
 	not _assoc_satisfied(payload)
 }
 
+# Violation: min_approvals is configured as 0 (a zero-approval-authorized build,
+# e.g. a release's own self-verify) but the actual merger is not on the
+# zero_approval_merger_allowlist. Inert by default: with an empty allowlist (the
+# default) this never fires regardless of mergedById, so the gate ships opt-in per
+# repo (count(...) > 0 guard). Once populated, fires when mergedById is
+# absent/zero (the producer's supplemental GET failed, or no merger was ever
+# recorded) OR present but not listed -- either way an unauthorized zero-approval
+# merge fails closed. The ambiguity between "fetch failed" and "genuinely absent"
+# is an accepted risk (see config/examples/README.md), not engineered around here.
+#
+# Intentionally NOT grandfathered / enforced_since-exempted: this evaluates the
+# CURRENT policy configuration against the CURRENT merger identity at
+# verification time, rather than retroactively re-litigating historical merges
+# the way the approval-count violation above is, so no exemption window applies.
+#
+# Scope: the design assumes human User-type mergers (the release-bot,
+# Integration:801323, is out of scope -- it doesn't merge via the 0-approval
+# self-verify path today). This rule only checks a numeric mergedById; it does
+# NOT itself enforce merger type.
+violations contains msg if {
+	source_review_config.min_approvals == 0
+	count(source_review_config.zero_approval_merger_allowlist) > 0
+	some payload in sr_payloads
+	merger_id := object.get(payload.predicate, ["pullRequest", "mergedById"], 0)
+	not merger_id in source_review_config.zero_approval_merger_allowlist
+	present := object.get(payload.predicate, ["pullRequest", "mergedById"], null) != null
+	msg := _zero_approval_merger_msg(merger_id, present)
+}
+
+# _zero_approval_merger_msg builds a clear, non-garbled message for the violation
+# above. Gated on is_number(merger_id): a forged non-numeric mergedById (e.g. a
+# string) must never reach a %d format verb, which would otherwise render OPA's
+# garbled "%!d(string=...)" -- it gets its own plain %v branch instead.
+# Distinguishes "absent" from "present but literally 0" via the `present` flag,
+# best-effort (mergedById:0 is not producer-reachable today -- Go's omitempty
+# never emits a literal 0 -- but the field is structurally valid per
+# _non_negative_int, so this is worth getting right for a forged/future input).
+_zero_approval_merger_msg(merger_id, _) := msg if {
+	is_number(merger_id)
+	merger_id != 0
+	msg := sprintf("source-review: merger %d is not on the zero-approval-merger allowlist", [merger_id])
+}
+
+_zero_approval_merger_msg(merger_id, true) := msg if {
+	merger_id == 0
+	msg := "source-review: mergedById is 0 (present but zero) and not on the zero-approval-merger allowlist"
+}
+
+_zero_approval_merger_msg(merger_id, false) := msg if {
+	merger_id == 0
+	msg := "source-review: merger identity is absent (mergedById missing) and not on the zero-approval-merger allowlist"
+}
+
+_zero_approval_merger_msg(merger_id, _) := msg if {
+	not is_number(merger_id)
+	msg := sprintf("source-review: mergedById is not numeric (%v), not on the zero-approval-merger allowlist", [merger_id])
+}
+
 # _grandfathered is true when enforced_since is set AND this revision's merged PR
 # closed strictly before it, so its approval-count violation is suppressed.
 # Fails CLOSED (no grandfathering) when enforced_since is "", when pullRequest /

@@ -307,3 +307,47 @@ test_fractional_min_approvals_not_authorized if {
 	# regal ignore:unresolved-reference
 	not bypass.dep_vuln_authorized with input as sr(_two_authorized, true, true) with data.bypass_thresholds as cfg
 }
+
+# --- blast radius: shared structurally_valid pullRequest extension ---
+#
+# The zero-approval-merger allowlist gate (security.source_review) added
+# _pull_request_valid/_merged_by_id_valid to the SHARED
+# source_review_common.structurally_valid, which this policy also consumes via
+# dep_vuln_authorized. These tests confirm that extension leaves bypass
+# evaluation unaffected: a well-formed pullRequest authorizes exactly as before,
+# and a malformed one fails closed the same way a malformed summary/approvers
+# field already does.
+
+# a payload carrying a well-formed pullRequest authorizes exactly as before the
+# shared structurally_valid extension.
+test_valid_pull_request_field_does_not_affect_authorization if {
+	pred := {
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"pullRequest": {"number": 1, "mergedAt": "2026-06-15T00:00:00Z", "mergedById": 138915},
+		"summary": _summary(2),
+		"approversIncluded": true,
+		"approvers": _two_authorized,
+		"reviewToolingComplete": true,
+	}
+
+	# regal ignore:unresolved-reference
+	bypass.dep_vuln_authorized with input as sr_raw(pred) with data.bypass_thresholds as _enabled
+}
+
+# a malformed (non-object) pullRequest fails closed via the shared
+# structurally_valid check rather than silently authorizing the bypass.
+test_malformed_pull_request_field_fails_closed if {
+	pred := {
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"pullRequest": "not-an-object",
+		"summary": _summary(2),
+		"approversIncluded": true,
+		"approvers": _two_authorized,
+		"reviewToolingComplete": true,
+	}
+
+	# regal ignore:unresolved-reference
+	not bypass.dep_vuln_authorized with input as sr_raw(pred) with data.bypass_thresholds as _enabled
+}
