@@ -129,6 +129,17 @@ required_approver_associations := {a | some a in _cfg.required_approver_associat
 	_valid_str_array(_cfg.required_approver_associations)
 }
 
+# Numeric GitHub user IDs (e.g. [138915]) authorized to merge a min_approvals:0
+# build. Default empty so the gate is inert: with no entries the
+# zero-approval-merger violation (source_review policy) never fires, regardless of
+# mergedById. When non-empty, a min_approvals:0 payload's pullRequest.mergedById
+# must be in this set or the gate denies (see source_review.rego).
+default zero_approval_merger_allowlist := set()
+
+zero_approval_merger_allowlist := {a | some a in _cfg.zero_approval_merger_allowlist} if {
+	_valid_int_array(_cfg.zero_approval_merger_allowlist)
+}
+
 # --- config validation (provided-but-invalid overrides fail closed) ---
 
 # _bool_keys lists every flag that must be a boolean when provided.
@@ -148,8 +159,13 @@ _string_keys := {"enforced_since"}
 # _array_keys must be arrays-of-strings when provided.
 _array_keys := {"required_approver_associations"}
 
+# _int_array_keys must be arrays-of-positive-integers when provided. Kept separate
+# from _array_keys/_valid_str_array: that machinery is strings-only and cannot be
+# reused as-is for a numeric-ID allowlist.
+_int_array_keys := {"zero_approval_merger_allowlist"}
+
 # _allowed_keys is every recognized override key; any other key is a typo.
-_allowed_keys := (({"min_approvals"} | _bool_keys) | _string_keys) | _array_keys
+_allowed_keys := ((({"min_approvals"} | _bool_keys) | _string_keys) | _array_keys) | _int_array_keys
 
 # _valid_count is true for a non-negative integer.
 _valid_count(v) if {
@@ -173,6 +189,22 @@ _valid_str_array(v) if {
 	is_array(v)
 	every e in v {
 		is_string(e)
+	}
+}
+
+# _valid_int_array is true for an array whose every element is a positive integer.
+# Deliberately requires `e > 0`, NOT `e >= 0` like _valid_count's bound -- GitHub
+# user IDs are never 0, and 0 is this same feature's own sentinel for "mergedById
+# absent/unfetchable" (source_review.rego's zero-approval-merger violation).
+# Accepting 0 here would let a populated allowlist silently match every
+# absent-merger payload, defeating the gate entirely (confirmed reproducible
+# bypass via opa eval during review). e == floor(e) rejects fractional entries.
+_valid_int_array(v) if {
+	is_array(v)
+	every e in v {
+		is_number(e)
+		e > 0
+		e == floor(e)
 	}
 }
 
@@ -211,6 +243,14 @@ config_errors contains msg if {
 	k in object.keys(_cfg)
 	not _valid_str_array(_cfg[k])
 	msg := sprintf("%s must be an array of strings", [k])
+}
+
+config_errors contains msg if {
+	is_object(_cfg)
+	some k in _int_array_keys
+	k in object.keys(_cfg)
+	not _valid_int_array(_cfg[k])
+	msg := sprintf("%s must be an array of positive integers", [k])
 }
 
 # unknown/misspelled key -> fail closed (a typo'd key would otherwise be ignored,

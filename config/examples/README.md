@@ -155,6 +155,7 @@ config typo fails closed. A correctly-spelled, absent key uses its default.
 | `fail_on_incomplete_review` | `false` | fail when review evidence is incomplete (no merged PR / unfetchable reviews) |
 | `enforced_since` | `""` | RFC3339 cutoff; a revision merged before it has its approval-count violation suppressed (grandfathered), so enabling the gate is not retroactive. `""` = inert; a standing changes-request still blocks regardless |
 | `required_approver_associations` | `[]` | GitHub author-association values a qualifying (non-stale, non-bot) approver must carry; a non-empty set denies unless some such approver's association is in it (empty = inert) |
+| `zero_approval_merger_allowlist` | `[]` | numeric GitHub user IDs (e.g. `[138915]`) authorized to merge a `min_approvals:0` build; when non-empty, a `min_approvals:0` payload's `pullRequest.mergedById` must be in this set or the gate denies (empty = inert). Entries must be positive integers — `0`, negative numbers, and non-whole-number values are rejected as config errors |
 
 Notes:
 
@@ -163,6 +164,20 @@ Notes:
   cutoff; a missing or unparseable `mergedAt` is never grandfathered (fail
   closed), and a changes-request, incompleteness, malformed-predicate, or config
   violation is never suppressed.
+
+- **Zero-approval-merger allowlist.** `zero_approval_merger_allowlist` gates the
+  `min_approvals:0` path specifically (not the general approval-count check
+  above) — it is NOT grandfathered by `enforced_since`, since it evaluates the
+  current merger identity at verification time rather than re-litigating
+  historical merges. An absent `pullRequest.mergedById` denies just like a
+  not-listed one, and it covers two indistinguishable cases: no merger was ever
+  recorded, **or** the producer's supplemental merged-by GitHub API fetch failed
+  (a transient hiccup). If a self-release build unexpectedly fails this gate,
+  check whether the merger fetch succeeded before assuming the merger truly
+  isn't allowlisted. The allowlist takes numeric GitHub user IDs only, never
+  `0` — `0` is reserved internally as the "absent" sentinel, so a config
+  containing it is rejected rather than silently matching every unrecorded
+  merger.
 
 - **Bot detection** is by GitHub user type only (`User.Type == "Bot"`). A
   human-PAT-driven service account typed `User` is NOT excluded by

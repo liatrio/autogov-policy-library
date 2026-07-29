@@ -1,6 +1,7 @@
 rules:
   style:
     file-length:
-      # the source-review test suite is intentionally comprehensive; allow headroom
-      # above the 500-line default rather than fragmenting the cohesive test file.
-      max-file-length: 700
+      # repo-wide ceiling (applies to every .rego file, not just one); raised above
+      # the 500-line default motivated by, but not limited to, the growing
+      # source-review test suite, rather than fragmenting cohesive files.
+      max-file-length: 800
