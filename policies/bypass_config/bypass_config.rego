@@ -5,7 +5,7 @@
 # authors:
 # - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 # custom:
-#  version: 1.1.1
+#  version: 1.1.2
 #  path: policies/bypass_config
 #  filename: bypass_config.rego
 package bypass_config
