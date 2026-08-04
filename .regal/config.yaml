@@ -1,7 +1,11 @@
 rules:
   style:
     file-length:
-      # repo-wide ceiling (applies to every .rego file, not just one); raised above
-      # the 500-line default motivated by, but not limited to, the growing
-      # source-review test suite, rather than fragmenting cohesive files.
+      # keep the production-code ceiling at the original 800; exempt test files
+      # instead of raising the repo-wide max (a prior bump from 500->700->800 already
+      # widened this for every .rego file to accommodate one growing test file --
+      # scoping the exemption to *_test.rego avoids a third repo-wide ratchet).
       max-file-length: 800
+      ignore:
+        files:
+          - "**/*_test.rego"

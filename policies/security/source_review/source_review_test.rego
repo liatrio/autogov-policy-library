@@ -717,7 +717,295 @@ test_zero_approval_merger_non_numeric_produces_clean_message if {
 	# regal ignore:unresolved-reference
 	msgs := source_review.violations with input as bad with data.source_review_thresholds as cfg
 
-	clean_msg := "source-review: mergedById is not numeric (138915), not on the zero-approval-merger allowlist"
+	clean_msg := "source-review: mergedById is not numeric (\"138915\"), not on the zero-approval-merger allowlist"
+	clean_msg in msgs
+
+	every m in msgs {
+		not contains(m, "%!d")
+	}
+}
+
+# a forged non-numeric changesRequested (e.g. a string) produces a clean,
+# non-garbled message -- never a Go/OPA "%!d(string=...)" format artifact.
+# _changes_requested_present fails closed on ANY non-numeric type by design (not
+# by Rego ordering accident -- see its own doc comment), so the forged string
+# still satisfies it and the violation fires; only the message differs. (The
+# malformed-predicate violation also fires independently via structurally_valid;
+# both are expected to be present.)
+test_changes_requested_non_numeric_produces_clean_message if {
+	bad := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"summary": {
+			"approvals": 1,
+			"distinctApprovers": 1,
+			"changesRequested": "bad",
+			"requiredApprovals": 0,
+			"requirementMet": true,
+			"selfApprovalExcluded": false,
+			"codeownerReviewMet": null,
+		},
+		"approversIncluded": true,
+		"approvers": [_ok],
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as bad
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as bad
+
+	clean_msg := "source-review: changesRequested is not numeric (\"bad\"), treating as an outstanding review"
+	clean_msg in msgs
+
+	every m in msgs {
+		not contains(m, "%!d")
+	}
+}
+
+# regression: this violation's own protection against a forged non-numeric
+# distinctApprovers must not be an accident of comparison ordering. Before this
+# fix, Rego's total value ordering (strings rank above numbers) made a bare
+# `n < min_approvals` comparison always false for a forged string, so THIS RULE
+# never fired for such input -- it relied entirely on the separate
+# malformed-predicate violation (structurally_valid) to deny overall `allow`.
+# _insufficient_approvals now fails closed on ANY non-numeric type by design
+# (not by ordering accident), closing that gap for good. Exercised via the
+# summary-only (approversIncluded:false) path, where effective_distinct returns
+# the raw forged value directly. (The malformed-predicate violation also fires
+# independently via structurally_valid; both are expected to be present.)
+test_distinct_approvals_non_numeric_fails_closed if {
+	bad := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"summary": {
+			"approvals": 0,
+			"distinctApprovers": "bad",
+			"changesRequested": 0,
+			"requiredApprovals": 0,
+			"requirementMet": true,
+			"selfApprovalExcluded": false,
+			"codeownerReviewMet": null,
+		},
+		"approversIncluded": false,
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+	cfg := {"min_approvals": 1}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as bad with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as bad with data.source_review_thresholds as cfg
+
+	clean_msg := "source-review: distinct approval count is not numeric (\"bad\"), need at least 1"
+	clean_msg in msgs
+
+	every m in msgs {
+		not contains(m, "%!d")
+	}
+}
+
+# defense-in-depth: a distinct-approval count is a legitimate value even when
+# JSON/Rego represents it as a whole-number float (e.g. 1.0 -- JSON does not
+# distinguish int from float). is_number(n) alone would not catch this: Go's %d
+# verb rejects a float64 even when it is integer-valued, garbling identically to
+# a forged string ("%!d(float64=1)"). Exercised via the summary-only path so
+# effective_distinct returns the raw value, and with distinct min_approvals/n
+# values so an argument-order regression in the message format would be caught.
+test_distinct_approvals_whole_number_float_formats_cleanly if {
+	bad := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"summary": {
+			"approvals": 1,
+			"distinctApprovers": 1.0,
+			"changesRequested": 0,
+			"requiredApprovals": 0,
+			"requirementMet": true,
+			"selfApprovalExcluded": false,
+			"codeownerReviewMet": null,
+		},
+		"approversIncluded": false,
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+	cfg := {"min_approvals": 2}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as bad with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as bad with data.source_review_thresholds as cfg
+
+	clean_msg := "source-review: 1 distinct approval(s), need at least 2"
+	clean_msg in msgs
+
+	every m in msgs {
+		not contains(m, "%!d")
+	}
+}
+
+# defense-in-depth: same float-representation hazard for changesRequested (see
+# test_distinct_approvals_whole_number_float_formats_cleanly above).
+test_changes_requested_whole_number_float_formats_cleanly if {
+	bad := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"summary": {
+			"approvals": 1,
+			"distinctApprovers": 1,
+			"changesRequested": 2.0,
+			"requiredApprovals": 0,
+			"requirementMet": true,
+			"selfApprovalExcluded": false,
+			"codeownerReviewMet": null,
+		},
+		"approversIncluded": true,
+		"approvers": [_ok],
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as bad
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as bad
+
+	clean_msg := "source-review: 2 outstanding changes-requested review(s)"
+	clean_msg in msgs
+
+	every m in msgs {
+		not contains(m, "%!d")
+	}
+}
+
+# regression: null and boolean are the two forgeable types Rego's total value
+# ordering ranks BELOW numbers (unlike strings/arrays/objects, which rank
+# above), so a bare `n > 0` would silently -- and wrongly -- treat a forged
+# `changesRequested: null` as "no changes requested" and skip this violation
+# entirely, relying solely on the separate malformed-predicate violation
+# (structurally_valid) to deny overall `allow`. _changes_requested_present
+# closes this for every non-numeric type by design, not by ordering luck.
+test_changes_requested_null_fails_closed if {
+	bad := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"summary": {
+			"approvals": 1,
+			"distinctApprovers": 1,
+			"changesRequested": null,
+			"requiredApprovals": 0,
+			"requirementMet": true,
+			"selfApprovalExcluded": false,
+			"codeownerReviewMet": null,
+		},
+		"approversIncluded": true,
+		"approvers": [_ok],
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as bad
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as bad
+
+	clean_msg := "source-review: changesRequested is not numeric (\"null\"), treating as an outstanding review"
+	clean_msg in msgs
+}
+
+# regression: same ordering-accident class as the null case above, for a forged
+# boolean changesRequested (`true > 0` and `false > 0` both evaluate false in
+# Rego).
+test_changes_requested_boolean_fails_closed if {
+	bad := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"summary": {
+			"approvals": 1,
+			"distinctApprovers": 1,
+			"changesRequested": true,
+			"requiredApprovals": 0,
+			"requirementMet": true,
+			"selfApprovalExcluded": false,
+			"codeownerReviewMet": null,
+		},
+		"approversIncluded": true,
+		"approvers": [_ok],
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as bad
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as bad
+
+	clean_msg := "source-review: changesRequested is not numeric (\"true\"), treating as an outstanding review"
+	clean_msg in msgs
+}
+
+# regression: a whole-number-float min_approvals (e.g. 2.0 -- a legitimate,
+# _valid_count-accepted config override, not a forged predicate) must not
+# garble the message's "need at least %d" clause. floor(min_approvals) is
+# applied at every %d call site regardless of n's own shape.
+test_distinct_approvals_float_min_approvals_formats_cleanly if {
+	bad := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"summary": _summary(0, 0),
+		"approversIncluded": true,
+		"approvers": [],
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+	cfg := {"min_approvals": 2.0}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as bad with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as bad with data.source_review_thresholds as cfg
+
+	clean_msg := "source-review: 0 distinct approval(s), need at least 2"
+	clean_msg in msgs
+
+	every m in msgs {
+		not contains(m, "%!d")
+	}
+}
+
+# regression: a whole-number-float mergedById (e.g. 138915.0) must format
+# cleanly, mirroring the same hazard already fixed for the distinct-approval and
+# changes-requested messages above -- _zero_approval_merger_msg is the helper
+# they were both written to mirror, so it must not itself regress.
+test_zero_approval_merger_whole_number_float_formats_cleanly if {
+	bad := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"pullRequest": {"number": 1, "mergedAt": "2026-06-15T00:00:00Z", "mergedById": 999999.0},
+		"summary": _summary(1, 0),
+		"approversIncluded": true,
+		"approvers": [_ok],
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+	cfg := {"min_approvals": 0, "zero_approval_merger_allowlist": [138915]}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as bad with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as bad with data.source_review_thresholds as cfg
+
+	clean_msg := "source-review: merger 999999 is not on the zero-approval-merger allowlist"
 	clean_msg in msgs
 
 	every m in msgs {
