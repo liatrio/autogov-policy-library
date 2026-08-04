@@ -97,8 +97,8 @@ violations contains msg if {
 	common.review_complete(payload)
 	not _grandfathered(payload)
 	n := common.effective_distinct(payload)
-	n < source_review_config.min_approvals
-	msg := sprintf("source-review: %d distinct approval(s), need at least %d", [n, source_review_config.min_approvals])
+	_insufficient_approvals(n, source_review_config.min_approvals)
+	msg := _distinct_approval_msg(n, source_review_config.min_approvals)
 }
 
 # Violation: an outstanding CHANGES_REQUESTED review blocks regardless of the
@@ -107,13 +107,18 @@ violations contains msg if {
 # actually fetched, so a positive count is never an incompleteness artifact and
 # must block even when incomplete-review evidence is otherwise tolerated
 # (fail_on_incomplete_review=false). Bot/self requests are already excluded by the
-# producer; a later dismissal clears it.
+# producer; a later dismissal clears it. Gated by _changes_requested_present, not
+# a bare `n > 0`: Rego's total ordering only ranks strings (and arrays/objects)
+# above numbers, not null/booleans, so a forged `changesRequested: null` or
+# `true` would silently fail `n > 0` and skip this violation -- the same
+# ordering-accident class _insufficient_approvals guards against below. A forged
+# non-numeric value of ANY type must always count as present.
 violations contains msg if {
 	source_review_config.block_on_changes_requested == true
 	some payload in sr_payloads
 	n := payload.predicate.summary.changesRequested
-	n > 0
-	msg := sprintf("source-review: %d outstanding changes-requested review(s)", [n])
+	_changes_requested_present(n)
+	msg := _changes_requested_msg(n)
 }
 
 # Violation: CODEOWNER review required but not met or not determinable. Decoupled
@@ -169,18 +174,125 @@ violations contains msg if {
 	msg := _zero_approval_merger_msg(merger_id, present)
 }
 
+# _insufficient_approvals decides whether the distinct-approval-count violation
+# above should fire. A forged non-numeric n (e.g. a string) ALWAYS counts as
+# insufficient: Rego's total value ordering ranks strings above numbers, so a
+# bare `n < min_approvals` comparison would silently (and accidentally) evaluate
+# to false for a forged string, letting it slip past the gate by ordering
+# accident rather than by design.
+_insufficient_approvals(n, min_approvals) if {
+	is_number(n)
+	n < min_approvals
+}
+
+_insufficient_approvals(n, _) if {
+	not is_number(n)
+}
+
+# _clean_int is true for a value that formats safely with a %d verb: numeric,
+# non-negative, and whole-valued. is_number(n) ALONE is not enough: JSON (and
+# Rego) does not distinguish int from float, so a whole-number value written
+# with a decimal point (e.g. 1.0, however it arrived -- a forged predicate or an
+# honest producer/JSON round-trip) is still a Go float64 under the hood, and %d
+# garbles it as "%!d(float64=1)" exactly like a non-numeric string does. n ==
+# floor(n) confirms it is whole-valued; the %d call site must then format
+# floor(n) (not the raw n) to get a clean result -- floor() re-derives the
+# number in a representation %d accepts. n >= 0 rejects a forged negative count
+# (e.g. -5), which would otherwise format "cleanly" but nonsensically -- every
+# quantity this predicate guards (approval counts, review counts, user IDs) is
+# inherently non-negative, matching common._non_negative_int's convention.
+_clean_int(n) if {
+	is_number(n)
+	n >= 0
+	n == floor(n)
+}
+
+# _changes_requested_present decides whether the changes-requested violation
+# above should fire. A forged non-numeric n (of ANY type -- string, null,
+# boolean, array, object) ALWAYS counts as present: Rego's total value ordering
+# only ranks strings/arrays/objects above numbers, NOT null/booleans, so a bare
+# `n > 0` comparison would silently (and accidentally) evaluate to false for a
+# forged `null` or `true`, letting it slip past the gate by ordering accident
+# rather than by design -- the same class _insufficient_approvals guards below.
+_changes_requested_present(n) if {
+	is_number(n)
+	n > 0
+}
+
+_changes_requested_present(n) if {
+	not is_number(n)
+}
+
+# _distinct_approval_msg builds a clear, non-garbled message for the
+# distinct-approval-count violation above, mirroring _zero_approval_merger_msg's
+# style below. min_approvals is always a validated, non-negative number (never a
+# forged string -- source_review_config's own validation rejects a non-numeric
+# override and falls back to the default), but config validation permits a
+# whole-number float (e.g. 2.0), so it is defensively floored at every %d call
+# site below, same as n. n itself gets a three-way split so the message never
+# claims a numeric value "is not numeric": _clean_int(n) formats cleanly;
+# is_number(n) but not _clean_int(n) (negative or fractional) says so precisely;
+# not is_number(n) is the true not-numeric case.
+_distinct_approval_msg(n, min_approvals) := msg if {
+	_clean_int(n)
+	msg := sprintf("source-review: %d distinct approval(s), need at least %d", [floor(n), floor(min_approvals)])
+}
+
+_distinct_approval_msg(n, min_approvals) := msg if {
+	is_number(n)
+	not _clean_int(n)
+	msg := sprintf(
+		"source-review: distinct approval count %v is not a non-negative whole number, need at least %d",
+		[n, floor(min_approvals)],
+	)
+}
+
+_distinct_approval_msg(n, min_approvals) := msg if {
+	not is_number(n)
+	msg := sprintf(
+		"source-review: distinct approval count is not numeric (%q), need at least %d",
+		[n, floor(min_approvals)],
+	)
+}
+
+# _changes_requested_msg builds a clear, non-garbled message for the
+# changes-requested violation above, mirroring _zero_approval_merger_msg's style
+# below. Same three-way split as _distinct_approval_msg, for the same reason.
+_changes_requested_msg(n) := msg if {
+	_clean_int(n)
+	msg := sprintf("source-review: %d outstanding changes-requested review(s)", [floor(n)])
+}
+
+_changes_requested_msg(n) := msg if {
+	is_number(n)
+	not _clean_int(n)
+	msg := sprintf(
+		"source-review: changesRequested value %v is not a non-negative whole number, treating as an outstanding review",
+		[n],
+	)
+}
+
+_changes_requested_msg(n) := msg if {
+	not is_number(n)
+	msg := sprintf("source-review: changesRequested is not numeric (%q), treating as an outstanding review", [n])
+}
+
 # _zero_approval_merger_msg builds a clear, non-garbled message for the violation
-# above. Gated on is_number(merger_id): a forged non-numeric mergedById (e.g. a
-# string) must never reach a %d format verb, which would otherwise render OPA's
-# garbled "%!d(string=...)" -- it gets its own plain %v branch instead.
-# Distinguishes "absent" from "present but literally 0" via the `present` flag,
-# best-effort (mergedById:0 is not producer-reachable today -- Go's omitempty
-# never emits a literal 0 -- but the field is structurally valid per
-# _non_negative_int, so this is worth getting right for a forged/future input).
+# above, on the same three-way split as _distinct_approval_msg /
+# _changes_requested_msg (this is the helper they were written to mirror --
+# gated on _clean_int, not bare is_number, so a whole-number-float mergedById
+# such as 138915.0 gets floor()'d instead of garbling %d exactly like the other
+# two would have without that guard). Distinguishes "absent" from "present but
+# literally 0" via the `present` flag, best-effort (mergedById:0 is not
+# producer-reachable today -- Go's omitempty never emits a literal 0 -- but the
+# field is structurally valid per _non_negative_int, so this is worth getting
+# right for a forged/future input). merger_id == 0 is a plain numeric equality
+# check (true for both the int 0 and the float 0.0), so it is unaffected by and
+# checked ahead of the _clean_int split below.
 _zero_approval_merger_msg(merger_id, _) := msg if {
-	is_number(merger_id)
 	merger_id != 0
-	msg := sprintf("source-review: merger %d is not on the zero-approval-merger allowlist", [merger_id])
+	_clean_int(merger_id)
+	msg := sprintf("source-review: merger %d is not on the zero-approval-merger allowlist", [floor(merger_id)])
 }
 
 _zero_approval_merger_msg(merger_id, true) := msg if {
@@ -194,8 +306,18 @@ _zero_approval_merger_msg(merger_id, false) := msg if {
 }
 
 _zero_approval_merger_msg(merger_id, _) := msg if {
+	merger_id != 0
+	is_number(merger_id)
+	not _clean_int(merger_id)
+	msg := sprintf(
+		"source-review: mergedById %v is not a non-negative whole number, not on the zero-approval-merger allowlist",
+		[merger_id],
+	)
+}
+
+_zero_approval_merger_msg(merger_id, _) := msg if {
 	not is_number(merger_id)
-	msg := sprintf("source-review: mergedById is not numeric (%v), not on the zero-approval-merger allowlist", [merger_id])
+	msg := sprintf("source-review: mergedById is not numeric (%q), not on the zero-approval-merger allowlist", [merger_id])
 }
 
 # _grandfathered is true when enforced_since is set AND this revision's merged PR
