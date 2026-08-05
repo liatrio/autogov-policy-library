@@ -8,7 +8,7 @@
 # - input: schema["provenance-schema"]
 # custom:
 #  control_number: 1
-#  version: 1.1.2
+#  version: 1.1.3
 #  path: policies/security
 #  filename: provenance.rego
 #  irm_control_ids: [LIATRIO-PROVENANCE-001]
