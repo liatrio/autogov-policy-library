@@ -81,11 +81,11 @@ jobs:
       actions: read
       pull-requests: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@581d0276aa927f4fb793f0832527884151094048 # v1.1.2
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@3d27b7c23ba3de05f8a3bfd3efc617bbe1fb09b6 # v1.1.3
     secrets: inherit
     with:
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@3d27b7c23ba3de05f8a3bfd3efc617bbe1fb09b6 # v1.1.3
       policy-data-overlay: '{"source_review_thresholds":{"min_approvals":0}}'
 
   build-blob-offline: #blob
@@ -97,13 +97,13 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@581d0276aa927f4fb793f0832527884151094048 # v1.1.2
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@3d27b7c23ba3de05f8a3bfd3efc617bbe1fb09b6 # v1.1.3
     secrets: inherit
     with:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@3d27b7c23ba3de05f8a3bfd3efc617bbe1fb09b6 # v1.1.3
       policy-data-overlay: '{"source_review_thresholds":{"min_approvals":0}}'
       autogov-version: v1.0.4
       mutations-config: .autogov-release.yaml
