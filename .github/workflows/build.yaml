@@ -81,7 +81,7 @@ jobs:
       actions: read
       pull-requests: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@581d0276aa927f4fb793f0832527884151094048 # v1.1.2
     secrets: inherit
     with:
       registry: ghcr.io
@@ -97,7 +97,7 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@581d0276aa927f4fb793f0832527884151094048 # v1.1.2
     secrets: inherit
     with:
       subject-path: |
