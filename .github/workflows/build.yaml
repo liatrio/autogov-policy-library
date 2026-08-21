@@ -67,12 +67,7 @@ jobs:
 
   build-image:
     if: github.event.pull_request.draft == false
-    # needs build-blob-offline (not just test) so its release-cut always
-    # completes first: both jobs independently race to publish the same
-    # release, and only build-blob-offline's release-cut carries the
-    # bundle.tar.gz/schemas.tar.gz assets -- if build-image's release-cut
-    # wins the race instead, the release ships without them.
-    needs: [test, build-blob-offline]
+    needs: test
     permissions:
       id-token: write
       attestations: write
@@ -81,12 +76,13 @@ jobs:
       actions: read
       pull-requests: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@581d0276aa927f4fb793f0832527884151094048 # v1.1.2
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@f960ebce1959bba2f9ae1038c839005817196c7a # v1.1.4
     secrets: inherit
     with:
       registry: ghcr.io
       cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
       policy-data-overlay: '{"source_review_thresholds":{"min_approvals":0}}'
+      release-image: false
 
   build-blob-offline: #blob
     if: github.event.pull_request.draft == false
@@ -97,7 +93,7 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@581d0276aa927f4fb793f0832527884151094048 # v1.1.2
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@f960ebce1959bba2f9ae1038c839005817196c7a # v1.1.4
     secrets: inherit
     with:
       subject-path: |
@@ -106,4 +102,23 @@ jobs:
       cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
       policy-data-overlay: '{"source_review_thresholds":{"min_approvals":0}}'
       autogov-version: v1.0.4
+      release-blob: false
+
+  release:
+    if: github.event.pull_request.draft == false
+    needs: [build-image, build-blob-offline]
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+    uses: liatrio/autogov-workflows/.github/workflows/rw-release.yaml@f960ebce1959bba2f9ae1038c839005817196c7a # v1.1.4
+    secrets: inherit
+    with:
       mutations-config: .autogov-release.yaml
+      autogov-version: v1.0.4
+      vsa-artifact-id: >-
+        ${{ needs.build-image.outputs.vsa-artifact-id }},
+        ${{ needs.build-blob-offline.outputs.vsa-artifact-id }}
+      expected-vsa-artifact-count: 2
+      blob-artifact-id: ${{ needs.build-blob-offline.outputs.blob-artifact-id }}
+      expected-blob-artifact-count: 1
