@@ -6,6 +6,10 @@ on:
     types: [completed]
     branches: main
 
+permissions:
+  contents: read # checkout
+  actions: read # gh run view
+
 env:
   SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   GH_TOKEN: ${{ github.token }}

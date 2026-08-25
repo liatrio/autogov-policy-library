@@ -18,6 +18,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# default-deny; jobs that publish/attest/release declare their own writes
+permissions:
+  contents: read
+
 env:
   OPA_VERSION: 1.19.0
   REGAL_VERSION: 0.42.0
