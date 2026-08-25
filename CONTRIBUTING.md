@@ -47,6 +47,16 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`,
 `fix:`, `chore:`, `docs:`) — releases and changelogs are generated from the
 commit history.
 
+## AI-assisted contributions
+
+Using AI tools to draft policy, tests, or docs is fine. You are responsible for
+everything you submit — review and understand it as you would work you wrote by
+hand, and hold it to the same standards as the rest of this guide.
+
+Note meaningful AI assistance in the pull request description, not in commit
+messages or code comments. AI-assisted *review* is tooling and never counts as a
+second reviewing party (see [MAINTAINERS.md](MAINTAINERS.md)).
+
 ## Code of Conduct
 
 This project follows the
