@@ -80,11 +80,11 @@ jobs:
       actions: read
       pull-requests: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@f960ebce1959bba2f9ae1038c839005817196c7a # v1.1.4
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@69ae7bdc931567721161895d6245a27fbab2cd06 # v1.1.5
     secrets: inherit
     with:
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@69ae7bdc931567721161895d6245a27fbab2cd06 # v1.1.5
       policy-data-overlay: '{"source_review_thresholds":{"min_approvals":0}}'
       release-image: false
 
@@ -97,15 +97,15 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@f960ebce1959bba2f9ae1038c839005817196c7a # v1.1.4
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@69ae7bdc931567721161895d6245a27fbab2cd06 # v1.1.5
     secrets: inherit
     with:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@a35a71dae5b9ec8f60a92e7b9ed0ee551acce8ef # v1.1.1
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@69ae7bdc931567721161895d6245a27fbab2cd06 # v1.1.5
       policy-data-overlay: '{"source_review_thresholds":{"min_approvals":0}}'
-      autogov-version: v1.0.4
+      autogov-version: ff839e23f922e176897232c5b4148dc1d4c1b983 # v1.3.0
       release-blob: false
 
   release:
@@ -115,11 +115,11 @@ jobs:
       id-token: write
       contents: write
       actions: read
-    uses: liatrio/autogov-workflows/.github/workflows/rw-release.yaml@f960ebce1959bba2f9ae1038c839005817196c7a # v1.1.4
+    uses: liatrio/autogov-workflows/.github/workflows/rw-release.yaml@69ae7bdc931567721161895d6245a27fbab2cd06 # v1.1.5
     secrets: inherit
     with:
       mutations-config: .autogov-release.yaml
-      autogov-version: v1.0.4
+      autogov-version: ff839e23f922e176897232c5b4148dc1d4c1b983 # v1.3.0
       vsa-artifact-id: >-
         ${{ needs.build-image.outputs.vsa-artifact-id }},
         ${{ needs.build-blob-offline.outputs.vsa-artifact-id }}
