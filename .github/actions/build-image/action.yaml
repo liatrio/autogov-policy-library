@@ -65,23 +65,30 @@ runs:
       run: echo "hash=$(sha256sum bundle.tar.gz | awk '{print "sha256:" $1}')" >> $GITHUB_OUTPUT
     - name: Create config.json with hash
       shell: bash
+      env: # env indirection instead of inline ${{ }} so step output never hits the shell parser
+        BUNDLE_HASH: ${{ steps.hash.outputs.hash }}
       run: |
-        echo '{
+        cat > config.json << EOF
+        {
           "rootfs": {
           "type": "layers",
           "diff_ids": [
-            "${{ steps.hash.outputs.hash }}"
+            "$BUNDLE_HASH"
           ]
           }
-        }' > config.json
+        }
+        EOF
     - name: Setup ORA
       uses: oras-project/setup-oras@1d808f7d7f6995cc68b7bf507bfe5c5446e1dc9d # v2.0.1
     - name: Oras push bundle
       shell: bash
       id: push-bundle
+      env: # env indirection instead of inline ${{ }} so tag/repo values never hit the shell parser
+        IMAGE_REPO: ghcr.io/${{ github.repository }}
+        IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
       run: |
         ORAS_PUSH_DIGEST=$(oras push \
-            "ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.tags }}" \
+            "${IMAGE_REPO}:${IMAGE_TAGS}" \
             bundle.tar.gz:application/vnd.oci.image.layer.v1.tar+gzip \
             --config config.json:application/vnd.oci.image.config.v1+json \
             --format json | jq -r '.digest')
