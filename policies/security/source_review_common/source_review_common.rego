@@ -52,13 +52,13 @@ review_complete(payload) if {
 # approvers[] under the configured filters.
 recompute_distinct(payload) := count({id |
 	some a in object.get(payload.predicate, "approvers", [])
-	id := _reviewer_identity(a)
+	id := reviewer_identity(a)
 	_qualifies(a)
 })
 
-_reviewer_identity(a) := id if {
+reviewer_identity(a) := id if {
 	_reviewer_identity_valid(a)
-	id := a.login
+	id := lower(trim_space(a.login))
 }
 
 _reviewer_identity_valid(a) if {

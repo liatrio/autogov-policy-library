@@ -131,7 +131,7 @@ test_duplicate_approver_entries_do_not_satisfy_minimum if {
 	msgs == {"source-review: 1 distinct approval(s), need at least 2"}
 }
 
-test_case_distinct_logins_count_separately if {
+test_case_variant_logins_count_as_one_identity if {
 	approvers := [
 		approver("Alice", false, false),
 		approver("alice", false, false),
@@ -140,7 +140,11 @@ test_case_distinct_logins_count_separately if {
 	cfg := {"min_approvals": 2}
 
 	# regal ignore:unresolved-reference
-	source_review.allow with input as inp with data.source_review_thresholds as cfg
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+	msgs == {"source-review: 1 distinct approval(s), need at least 2"}
 }
 
 # admin-merge style: tooling complete but zero qualifying approvals -> a

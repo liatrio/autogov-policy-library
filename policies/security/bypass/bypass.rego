@@ -66,11 +66,11 @@ dep_vuln_authorized if {
 # summary.distinctApprovers is type-checked by structurally_valid, a precondition of
 # dep_vuln_authorized above.
 authorized_approvals(payload) := min([
-	count({a.login |
+	count({id |
 		some a in object.get(payload.predicate, "approvers", [])
 		not a.stale
 		not a.isBot
-		is_string(a.login)
+		id := common.reviewer_identity(a)
 		_authorized(a)
 	}),
 	payload.predicate.summary.distinctApprovers,
