@@ -175,18 +175,15 @@ violations contains msg if {
 }
 
 # _insufficient_approvals decides whether the distinct-approval-count violation
-# above should fire. A forged non-numeric n (e.g. a string) ALWAYS counts as
-# insufficient: Rego's total value ordering ranks strings above numbers, so a
-# bare `n < min_approvals` comparison would silently (and accidentally) evaluate
-# to false for a forged string, letting it slip past the gate by ordering
-# accident rather than by design.
+# above should fire. Any invalid count (negative, fractional, or non-numeric)
+# always counts as insufficient so this never depends on cross-type ordering.
 _insufficient_approvals(n, min_approvals) if {
-	is_number(n)
+	utils.is_non_negative_int(n)
 	n < min_approvals
 }
 
 _insufficient_approvals(n, _) if {
-	not is_number(n)
+	not utils.is_non_negative_int(n)
 }
 
 # _changes_requested_present decides whether the changes-requested violation

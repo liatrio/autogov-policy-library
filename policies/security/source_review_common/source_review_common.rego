@@ -85,11 +85,11 @@ _bot_excluded(a) if {
 # reports a higher distinctApprovers than its own approvers[] supports — not a
 # tightening. Do NOT "simplify" it to summary.distinctApprovers: that re-opens that
 # cross-check and the path where a tightening filter recomputes below the summary.
-# Preserve a non-numeric summary for the count diagnostic instead of allowing
-# min's cross-type ordering to replace it with the recomputed numeric count.
+# Preserve an invalid summary for the count diagnostic instead of allowing min's
+# cross-type ordering to replace it with the recomputed numeric count.
 effective_distinct(payload) := min([recompute_distinct(payload), payload.predicate.summary.distinctApprovers]) if {
 	can_recompute(payload)
-	is_number(payload.predicate.summary.distinctApprovers)
+	utils.is_non_negative_int(payload.predicate.summary.distinctApprovers)
 } else := payload.predicate.summary.distinctApprovers
 
 # structurally_valid is true only when the predicate carries every field the gate

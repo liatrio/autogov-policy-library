@@ -1007,6 +1007,85 @@ test_distinct_approvals_non_numeric_fails_closed if {
 	}
 }
 
+test_fractional_distinct_reports_invalid_whole_count_both_paths if {
+	cases := [
+		{"included": true, "distinct": 0.5, "min": 1, "approvers": [_ok]},
+		{"included": false, "distinct": 0.5, "min": 1, "approvers": [_ok]},
+		{"included": true, "distinct": 2.5, "min": 2, "approvers": [_ok, _ok2]},
+		{"included": false, "distinct": 2.5, "min": 2, "approvers": [_ok, _ok2]},
+		{"included": true, "distinct": 1.5, "min": 0, "approvers": [_ok]},
+		{"included": false, "distinct": 1.5, "min": 0, "approvers": [_ok]},
+	]
+	every tc in cases {
+		predicate := json.patch(_base_pred, [
+			{"op": "replace", "path": "/approversIncluded", "value": tc.included},
+			{"op": "replace", "path": "/approvers", "value": tc.approvers},
+			{"op": "replace", "path": "/summary/distinctApprovers", "value": tc.distinct},
+		])
+		inp := [_env(predicate)]
+		cfg := object.union(_summary_config, {"min_approvals": tc.min})
+
+		# regal ignore:unresolved-reference
+		not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+		# regal ignore:unresolved-reference
+		msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+		msg := sprintf(
+			"source-review: distinct approval count %v is not a non-negative whole number, need at least %d",
+			[tc.distinct, floor(tc.min)],
+		)
+		msgs == {_malformed_msg, msg}
+	}
+}
+
+test_fractional_distinct_diagnostic_suppressed_when_incomplete if {
+	cfg := object.union(_summary_config, {
+		"min_approvals": 0,
+		"fail_on_incomplete_review": false,
+	})
+	every included in [true, false] {
+		predicate := json.patch(_base_pred, [
+			{"op": "replace", "path": "/approversIncluded", "value": included},
+			{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+			{"op": "replace", "path": "/reviewToolingComplete", "value": false},
+		])
+		inp := [_env(predicate)]
+
+		# regal ignore:unresolved-reference
+		not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+		# regal ignore:unresolved-reference
+		msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+		msgs == {_malformed_msg}
+	}
+}
+
+test_fractional_distinct_diagnostic_suppressed_when_grandfathered if {
+	cfg := object.union(_summary_config, {
+		"min_approvals": 0,
+		"enforced_since": "2026-06-01T00:00:00Z",
+	})
+	every included in [true, false] {
+		predicate := json.patch(_base_pred, [
+			{"op": "replace", "path": "/approversIncluded", "value": included},
+			{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+			{
+				"op": "add",
+				"path": "/pullRequest",
+				"value": {"number": 1, "mergedAt": "2026-05-01T00:00:00Z"},
+			},
+		])
+		inp := [_env(predicate)]
+
+		# regal ignore:unresolved-reference
+		not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+		# regal ignore:unresolved-reference
+		msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+		msgs == {_malformed_msg}
+	}
+}
+
 # defense-in-depth: a distinct-approval count is a legitimate value even when
 # JSON/Rego represents it as a whole-number float (e.g. 1.0 -- JSON does not
 # distinguish int from float). is_number(n) alone would not catch this: Go's %d
