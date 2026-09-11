@@ -164,7 +164,14 @@ violations contains msg if {
 _has_complete_approval(payload) if {
 	common.structurally_valid(payload)
 	common.review_complete(payload)
-	is_object(payload.predicate.pullRequest)
+	pr := payload.predicate.pullRequest
+	is_object(pr)
+	utils.is_non_negative_int(pr.number)
+	pr.number > 0
+	is_string(pr.mergedAt)
+	pr.mergedAt != ""
+	parsed_merged_at := time.parse_rfc3339_ns(pr.mergedAt)
+	is_number(parsed_merged_at)
 	n := common.effective_distinct(payload)
 	n > 0
 }

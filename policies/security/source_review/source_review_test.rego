@@ -889,6 +889,72 @@ test_zero_approval_merger_reviewed_non_allowlisted_passes if {
 	source_review.allow with input as inp with data.source_review_thresholds as cfg
 }
 
+test_zero_approval_merger_reviewed_empty_pull_request_still_requires_allowlist if {
+	inp := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"pullRequest": {},
+		"summary": _summary(1, 0),
+		"approversIncluded": true,
+		"approvers": [_ok],
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+	cfg := {"min_approvals": 0, "zero_approval_merger_allowlist": [138915]}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	msg := "source-review: merger identity is absent (mergedById missing) and not on the zero-approval-merger allowlist"
+
+	# regal ignore:unresolved-reference
+	msg in source_review.violations with input as inp with data.source_review_thresholds as cfg
+}
+
+test_zero_approval_merger_reviewed_missing_pull_request_number_still_requires_allowlist if {
+	inp := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"pullRequest": {"mergedAt": "2026-06-15T00:00:00Z"},
+		"summary": _summary(1, 0),
+		"approversIncluded": true,
+		"approvers": [_ok],
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+	cfg := {"min_approvals": 0, "zero_approval_merger_allowlist": [138915]}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	msg := "source-review: merger identity is absent (mergedById missing) and not on the zero-approval-merger allowlist"
+
+	# regal ignore:unresolved-reference
+	msg in source_review.violations with input as inp with data.source_review_thresholds as cfg
+}
+
+test_zero_approval_merger_reviewed_missing_pull_request_merged_at_still_requires_allowlist if {
+	inp := [_env({
+		"sourceRepository": "https://github.com/liatrio/autogov",
+		"sourceRevision": "abc123",
+		"pullRequest": {"number": 1},
+		"summary": _summary(1, 0),
+		"approversIncluded": true,
+		"approvers": [_ok],
+		"configuration": [],
+		"reviewToolingComplete": true,
+	})]
+	cfg := {"min_approvals": 0, "zero_approval_merger_allowlist": [138915]}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	msg := "source-review: merger identity is absent (mergedById missing) and not on the zero-approval-merger allowlist"
+
+	# regal ignore:unresolved-reference
+	msg in source_review.violations with input as inp with data.source_review_thresholds as cfg
+}
+
 test_zero_approval_merger_reviewed_missing_identity_passes if {
 	inp := sr_merged_no_merged_by_key([_ok], 0)
 	cfg := {"min_approvals": 0, "zero_approval_merger_allowlist": [138915]}
