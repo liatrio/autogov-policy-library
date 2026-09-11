@@ -58,7 +58,7 @@ recompute_distinct(payload) := count({id |
 
 _reviewer_identity(a) := id if {
 	_reviewer_identity_valid(a)
-	id := lower(trim_space(a.login))
+	id := a.login
 }
 
 _reviewer_identity_valid(a) if {
