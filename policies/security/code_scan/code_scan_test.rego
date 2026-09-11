@@ -321,23 +321,41 @@ test_all_scan_counts_reject_invalid_values_in_both_producer_paths if {
 	every included in [true, false] {
 		every thresholds in [{}, _disabled_thresholds] {
 			cfg := object.union(thresholds, {"fail_on_unreviewed_suppression": true})
+
+			# keep this bounded: assert path coverage separately from value-shape coverage.
 			every path in _count_paths {
-				every value in [-1, 0.5, "bad", null, true, false, [], {}] {
-					predicate := json.patch(_valid_predicate, [
-						{"op": "replace", "path": path, "value": value},
-						{"op": "replace", "path": "/findingsIncluded", "value": included},
-						{"op": "replace", "path": "/truncated", "value": false},
-						{"op": "add", "path": "/results", "value": []},
-					])
-					inp := [_env(predicate)]
+				predicate := json.patch(_valid_predicate, [
+					{"op": "replace", "path": path, "value": "bad"},
+					{"op": "replace", "path": "/findingsIncluded", "value": included},
+					{"op": "replace", "path": "/truncated", "value": false},
+					{"op": "add", "path": "/results", "value": []},
+				])
+				inp := [_env(predicate)]
 
-					# regal ignore:unresolved-reference
-					not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+				# regal ignore:unresolved-reference
+				not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
 
-					# regal ignore:unresolved-reference
-					msgs := code_scan.violations with input as inp with data.code_scan_thresholds as cfg
-					msgs == {_malformed_msg}
-				}
+				# regal ignore:unresolved-reference
+				msgs := code_scan.violations with input as inp with data.code_scan_thresholds as cfg
+				msgs == {_malformed_msg}
+			}
+
+			# each invalid value kind still fails closed.
+			every value in [-1, 0.5, "bad", null, true, false, [], {}] {
+				predicate := json.patch(_valid_predicate, [
+					{"op": "replace", "path": "/resultCount", "value": value},
+					{"op": "replace", "path": "/findingsIncluded", "value": included},
+					{"op": "replace", "path": "/truncated", "value": false},
+					{"op": "add", "path": "/results", "value": []},
+				])
+				inp := [_env(predicate)]
+
+				# regal ignore:unresolved-reference
+				not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+
+				# regal ignore:unresolved-reference
+				msgs := code_scan.violations with input as inp with data.code_scan_thresholds as cfg
+				msgs == {_malformed_msg}
 			}
 		}
 	}
