@@ -30,6 +30,9 @@ _complete_results(payload) if {
 	_counts_valid(payload)
 	results := object.get(payload.predicate, "results", [])
 	is_array(results)
+	every f in results {
+		_finding_valid(f)
+	}
 	n := count(results)
 	n == payload.predicate.resultCount
 	s := payload.predicate.summary
@@ -37,6 +40,62 @@ _complete_results(payload) if {
 	sum([severity.critical, severity.high, severity.medium, severity.low, severity.none]) + s.suppressed <= n
 	level := s.byLevel
 	sum([level.error, level.warning, level.note, level.none]) + s.suppressed <= n
+}
+
+_finding_valid(f) if {
+	_valid_severity(f.securitySeverityLevel)
+	_valid_level(f.level)
+	is_boolean(f.suppressed)
+	_valid_baseline_for_config(f)
+	_valid_uri_for_config(f)
+}
+
+_valid_severity(sev) if sev in {"critical", "high", "medium", "low", "none"}
+
+_valid_level(level) if level in {"error", "warning", "note", "none"}
+
+_valid_baseline_for_config(f) if {
+	not code_scan_config.gate_new_only
+}
+
+_valid_baseline_for_config(f) if {
+	code_scan_config.gate_new_only
+	state := object.get(f, "baselineState", "")
+	state in {"", "new", "updated", "unchanged", "absent"}
+}
+
+_valid_uri_for_config(f) if {
+	count(code_scan_config.ignore_paths) == 0
+}
+
+_valid_uri_for_config(f) if {
+	count(code_scan_config.ignore_paths) > 0
+	not _location_present(f)
+}
+
+_valid_uri_for_config(f) if {
+	count(code_scan_config.ignore_paths) > 0
+	_location_present(f)
+	loc := f.location
+	is_object(loc)
+	not _uri_present(loc)
+}
+
+_valid_uri_for_config(f) if {
+	count(code_scan_config.ignore_paths) > 0
+	_location_present(f)
+	loc := f.location
+	is_object(loc)
+	_uri_present(loc)
+	is_string(loc.uri)
+}
+
+_location_present(f) if {
+	"location" in object.keys(f)
+}
+
+_uri_present(loc) if {
+	"uri" in object.keys(loc)
 }
 
 _invalid_authoritative_results(payload) if {
@@ -79,7 +138,8 @@ _suppressed_excluded(f) if {
 
 _baseline_excluded(f) if {
 	code_scan_config.gate_new_only
-	not f.baselineState in {"new", "updated"}
+	state := object.get(f, "baselineState", "")
+	not state in {"new", "updated"}
 }
 
 _path_ignored(f) if {

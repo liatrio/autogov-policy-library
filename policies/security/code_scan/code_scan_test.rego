@@ -161,6 +161,14 @@ test_authoritative_results_requires_array_even_for_zero_counts if {
 	}
 }
 
+test_authoritative_malformed_result_entries_fail_closed if {
+	predicate := json.patch(_authoritative_predicate(2), [
+		{"op": "add", "path": "/results", "value": [{}, {}]},
+	])
+
+	_assert_decision(predicate, {}, false, _two_summary_msgs | {_malformed_msg})
+}
+
 test_authoritative_result_count_matches_raw_array if {
 	f := finding("r1", "error", "critical", "new", false, "src/a.js")
 	every results in [[], [f], [f, f, f]] {
@@ -591,6 +599,61 @@ test_gate_new_only_catches_new if {
 
 	# regal ignore:unresolved-reference
 	not code_scan.allow with input as cs_findings(f) with data.code_scan_thresholds as cfg
+}
+
+test_gate_new_only_accepts_absent_baseline_state if {
+	f := [finding("r1", "error", "critical", "absent", false, "src/a.js")]
+	cfg := {"gate_new_only": true}
+
+	# regal ignore:unresolved-reference
+	code_scan.allow with input as cs_findings(f) with data.code_scan_thresholds as cfg
+}
+
+test_gate_new_only_accepts_omitted_baseline_state if {
+	base := finding("r1", "error", "critical", "new", false, "src/a.js")
+	f := [object.remove(base, {"baselineState"})]
+	cfg := {"gate_new_only": true}
+
+	# regal ignore:unresolved-reference
+	code_scan.allow with input as cs_findings(f) with data.code_scan_thresholds as cfg
+}
+
+test_ignore_paths_without_location_uri_keeps_threshold_gating if {
+	base := finding("r1", "error", "critical", "new", false, "src/a.js")
+	f := [object.remove(base, {"location"})]
+	cfg := {"ignore_paths": ["test/**"]}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as cs_findings(f) with data.code_scan_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := code_scan.violations with input as cs_findings(f) with data.code_scan_thresholds as cfg
+	msgs == {
+		"code-scan: 1 critical security-severity finding(s) exceed threshold of 0",
+		"code-scan: 1 error-level finding(s) exceed threshold of 0",
+	}
+}
+
+test_ignore_paths_line_only_location_keeps_threshold_gating if {
+	f := [{
+		"ruleId": "r1",
+		"level": "error",
+		"securitySeverityLevel": "critical",
+		"baselineState": "new",
+		"suppressed": false,
+		"location": {"startLine": 42},
+	}]
+	cfg := {"ignore_paths": ["test/**"]}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as cs_findings(f) with data.code_scan_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := code_scan.violations with input as cs_findings(f) with data.code_scan_thresholds as cfg
+	msgs == {
+		"code-scan: 1 critical security-severity finding(s) exceed threshold of 0",
+		"code-scan: 1 error-level finding(s) exceed threshold of 0",
+	}
 }
 
 # --- suppression policy ---
