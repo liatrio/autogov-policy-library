@@ -7,6 +7,7 @@
 package security.code_scan_common
 
 import data.code_scan_config
+import data.shared.utils
 import rego.v1
 
 # can_recompute is true when results[] is authoritative — every fail-kind finding
@@ -92,15 +93,15 @@ effective_level(payload, level) := count_level(payload, level) if {
 # false, so a malformed predicate fails CLOSED.
 structurally_valid(payload) if {
 	s := payload.predicate.summary
-	is_number(s.suppressed)
+	utils.is_non_negative_int(s.suppressed)
 	is_boolean(payload.predicate.invocation.executionSuccessful)
 	is_boolean(payload.predicate.findingsIncluded)
 	is_boolean(payload.predicate.truncated)
-	is_number(payload.predicate.resultCount)
+	utils.is_non_negative_int(payload.predicate.resultCount)
 	every k in {"critical", "high", "medium", "low", "none"} {
-		is_number(s.bySecuritySeverity[k])
+		utils.is_non_negative_int(s.bySecuritySeverity[k])
 	}
 	every k in {"error", "warning", "note", "none"} {
-		is_number(s.byLevel[k])
+		utils.is_non_negative_int(s.byLevel[k])
 	}
 }

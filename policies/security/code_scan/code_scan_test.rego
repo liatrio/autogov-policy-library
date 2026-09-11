@@ -1,6 +1,7 @@
 package security.code_scan_test
 
 import data.security.code_scan
+import data.shared.utils
 import rego.v1
 
 # --- builders ---
@@ -44,6 +45,169 @@ finding(rule, level, sevlevel, baseline, suppressed, finding_uri) := {
 	"baselineState": baseline,
 	"suppressed": suppressed,
 	"location": {"uri": finding_uri},
+}
+
+# Patch a valid predicate AFTER the arithmetic builders run so invalid operands
+# cannot make the fixture undefined before the policy sees them.
+_valid_predicate := predicate if {
+	payload := utils.has_envelope(cs_summary(sev(0, 0, 0, 0, 0), lvl(0, 0, 0, 0), 0)[0])
+	predicate := payload.predicate
+}
+
+_count_paths := [
+	"/summary/suppressed",
+	"/resultCount",
+	"/summary/bySecuritySeverity/critical",
+	"/summary/bySecuritySeverity/high",
+	"/summary/bySecuritySeverity/medium",
+	"/summary/bySecuritySeverity/low",
+	"/summary/bySecuritySeverity/none",
+	"/summary/byLevel/error",
+	"/summary/byLevel/warning",
+	"/summary/byLevel/note",
+	"/summary/byLevel/none",
+]
+
+_malformed_msg := "code-scan predicate is malformed (missing or mistyped summary/invocation fields)"
+
+_disabled_thresholds := {
+	"bySecuritySeverity": {"critical": -1, "high": -1, "medium": -1, "low": -1, "none": -1},
+	"byLevel": {"error": -1, "warning": -1, "note": -1, "none": -1},
+}
+
+test_all_scan_counts_reject_invalid_values_in_both_producer_paths if {
+	every included in [true, false] {
+		every thresholds in [{}, _disabled_thresholds] {
+			cfg := object.union(thresholds, {"fail_on_unreviewed_suppression": true})
+			every path in _count_paths {
+				every value in [-1, 0.5, "bad", null, true, false, [], {}] {
+					predicate := json.patch(_valid_predicate, [
+						{"op": "replace", "path": path, "value": value},
+						{"op": "replace", "path": "/findingsIncluded", "value": included},
+						{"op": "replace", "path": "/truncated", "value": false},
+						{"op": "add", "path": "/results", "value": []},
+					])
+					inp := [_env(predicate)]
+
+					# regal ignore:unresolved-reference
+					not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+
+					# regal ignore:unresolved-reference
+					msgs := code_scan.violations with input as inp with data.code_scan_thresholds as cfg
+					msgs == {_malformed_msg}
+				}
+			}
+		}
+	}
+}
+
+test_all_scan_counts_are_required_in_both_producer_paths if {
+	every included in [true, false] {
+		every path in _count_paths {
+			predicate := json.patch(_valid_predicate, [
+				{"op": "remove", "path": path},
+				{"op": "replace", "path": "/findingsIncluded", "value": included},
+				{"op": "replace", "path": "/truncated", "value": false},
+				{"op": "add", "path": "/results", "value": []},
+			])
+			inp := [_env(predicate)]
+			not code_scan.allow with input as inp
+			msgs := code_scan.violations with input as inp
+			msgs == {_malformed_msg}
+		}
+	}
+}
+
+test_decimal_scan_counts_and_thresholds_format_cleanly if {
+	# Both summary totals are 30, plus 7 suppressed findings = 37 results.
+	inp := cs_summary(sev(2.0, 4.0, 6.0, 8.0, 10.0), lvl(3.0, 5.0, 9.0, 13.0), 7.0)
+	cfg := {
+		"bySecuritySeverity": {"critical": 1.0, "high": 3.0, "medium": 5.0, "low": 7.0, "none": 9.0},
+		"byLevel": {"error": 2.0, "warning": 4.0, "note": 8.0, "none": 12.0},
+		"fail_on_unreviewed_suppression": true,
+	}
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := code_scan.violations with input as inp with data.code_scan_thresholds as cfg
+	msgs == {
+		"code-scan: 2 critical security-severity finding(s) exceed threshold of 1",
+		"code-scan: 4 high security-severity finding(s) exceed threshold of 3",
+		"code-scan: 6 medium security-severity finding(s) exceed threshold of 5",
+		"code-scan: 8 low security-severity finding(s) exceed threshold of 7",
+		"code-scan: 10 none security-severity finding(s) exceed threshold of 9",
+		"code-scan: 3 error-level finding(s) exceed threshold of 2",
+		"code-scan: 5 warning-level finding(s) exceed threshold of 4",
+		"code-scan: 9 note-level finding(s) exceed threshold of 8",
+		"code-scan: 13 none-level finding(s) exceed threshold of 12",
+		"code-scan: 7 suppressed finding(s) present; suppressions are not permitted",
+	}
+
+	# regal ignore:unresolved-reference
+	code_scan.allow with input as inp with data.code_scan_thresholds as _disabled_thresholds
+}
+
+test_decimal_scan_counts_at_threshold_allow if {
+	payload := utils.has_envelope(cs_summary(sev(1.0, 1.0, 1.0, 1.0, 1.0), lvl(2.0, 1.0, 1.0, 1.0), 1.0)[0])
+
+	# Preserve a decimal-form resultCount as well as all decimal summary counts.
+	base := object.union(payload.predicate, {"resultCount": 6.0})
+	embedded := object.union(base, {
+		"findingsIncluded": true,
+		"truncated": false,
+		"results": [
+			finding("r1", "error", "critical", "new", false, "src/a.js"),
+			finding("r2", "error", "high", "new", false, "src/b.js"),
+			finding("r3", "warning", "medium", "new", false, "src/c.js"),
+			finding("r4", "note", "low", "new", false, "src/d.js"),
+			finding("r5", "none", "none", "new", false, "src/e.js"),
+			finding("r6", "error", "critical", "new", true, "src/f.js"),
+		],
+	})
+	cfg := {
+		"bySecuritySeverity": {"critical": 1.0, "high": 1.0, "medium": 1.0, "low": 1.0, "none": 1.0},
+		"byLevel": {"error": 2.0, "warning": 1.0, "note": 1.0, "none": 1.0},
+	}
+
+	every predicate in [base, embedded] {
+		inp := [_env(predicate)]
+
+		# regal ignore:unresolved-reference
+		code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+
+		# regal ignore:unresolved-reference
+		msgs := code_scan.violations with input as inp with data.code_scan_thresholds as cfg
+		msgs == set()
+	}
+}
+
+test_recomputed_scan_counts_retain_filters_and_decimal_thresholds if {
+	findings := [
+		finding("r1", "error", "critical", "new", false, "src/a.js"),
+		finding("r2", "error", "critical", "updated", false, "src/b.js"),
+		finding("r3", "error", "critical", "new", true, "src/c.js"),
+		finding("r4", "error", "critical", "unchanged", false, "src/d.js"),
+		finding("r5", "error", "critical", "new", false, "test/a.js"),
+	]
+	cfg := {
+		"bySecuritySeverity": {"critical": 1.0},
+		"byLevel": {"error": 1.0},
+		"gate_new_only": true,
+		"ignore_paths": ["test/**"],
+	}
+	inp := cs_findings(findings)
+
+	# regal ignore:unresolved-reference
+	not code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := code_scan.violations with input as inp with data.code_scan_thresholds as cfg
+	msgs == {
+		"code-scan: 2 critical security-severity finding(s) exceed threshold of 1",
+		"code-scan: 2 error-level finding(s) exceed threshold of 1",
+	}
 }
 
 # --- presence / inertness ---

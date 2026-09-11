@@ -31,7 +31,7 @@ _max_failed := data.max_failed_tests
 default max_failed_tests := 0
 
 max_failed_tests := _max_failed if {
-	_valid_max(_max_failed)
+	utils.is_non_negative_int(_max_failed)
 }
 
 # Whether a test-result attestation must be present. Defaults to false so the
@@ -54,15 +54,6 @@ result_present if {
 
 # --- config validation (provided-but-invalid overrides fail closed) ---
 
-# _valid_max is true for a non-negative integer. Rejects strings (quoted "0"),
-# fractions, and negatives — these would otherwise slip the count gate (OPA orders
-# a number below a string, so failed > "0" is false).
-_valid_max(v) if {
-	is_number(v)
-	v >= 0
-	v == floor(v)
-}
-
 # config_errors reports each PROVIDED test-result override that has the wrong type
 # or is out of range. The gate denies when this is non-empty, so a config typo
 # fails CLOSED instead of silently reverting to the looser default. Unlike the
@@ -74,7 +65,7 @@ _valid_max(v) if {
 # (inert).
 config_errors contains "max_failed_tests must be a non-negative integer" if {
 	_max_failed != null
-	not _valid_max(_max_failed)
+	not utils.is_non_negative_int(_max_failed)
 }
 
 config_errors contains "require_test_results must be a boolean" if {
@@ -118,7 +109,7 @@ violations contains msg if {
 	structurally_valid(payload)
 	failed := count(payload.predicate.failedTests)
 	failed > max_failed_tests
-	msg := sprintf("test-result reports %d failed test(s), exceeds threshold of %d", [failed, max_failed_tests])
+	msg := sprintf("test-result reports %d failed test(s), exceeds threshold of %d", [failed, floor(max_failed_tests)])
 }
 
 # Violation: presence is required but no test-result attestation is present.
