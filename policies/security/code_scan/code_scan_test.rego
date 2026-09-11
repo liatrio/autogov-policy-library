@@ -146,7 +146,17 @@ test_authoritative_results_requires_array_even_for_zero_counts if {
 			"second": finding("r2", "error", "critical", "new", false, "src/b.js"),
 		}] {
 			predicate := object.union(_authoritative_predicate(scan.count), {"results": results})
-			_assert_unavailable_findings(predicate, scan.msgs, {_malformed_msg})
+
+			# keep this focused: non-array authoritative results must fail closed.
+			_assert_decision(predicate, {}, false, scan.msgs | {_malformed_msg})
+
+			# recompute-required filters still surface incompleteness diagnostics.
+			_assert_decision(
+				predicate,
+				{"count_suppressed": true, "fail_on_incomplete_scan": false},
+				false,
+				scan.msgs | {_malformed_msg, _per_finding_msg},
+			)
 		}
 	}
 }
