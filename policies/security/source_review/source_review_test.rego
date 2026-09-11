@@ -1038,6 +1038,86 @@ test_fractional_distinct_reports_invalid_whole_count_both_paths if {
 	}
 }
 
+test_fractional_distinct_1_5_min_1_approvers_included_reports_exact_diagnostic if {
+	predicate := json.patch(_base_pred, [
+		{"op": "replace", "path": "/approversIncluded", "value": true},
+		{"op": "replace", "path": "/approvers", "value": [_ok]},
+		{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+	])
+	inp := [_env(predicate)]
+	cfg := object.union(_summary_config, {"min_approvals": 1})
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+	msgs == {
+		_malformed_msg,
+		"source-review: distinct approval count 1.5 is not a non-negative whole number, need at least 1",
+	}
+}
+
+test_fractional_distinct_1_5_min_1_summary_only_reports_exact_diagnostic if {
+	predicate := json.patch(_base_pred, [
+		{"op": "replace", "path": "/approversIncluded", "value": false},
+		{"op": "replace", "path": "/approvers", "value": [_ok]},
+		{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+	])
+	inp := [_env(predicate)]
+	cfg := object.union(_summary_config, {"min_approvals": 1})
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+	msgs == {
+		_malformed_msg,
+		"source-review: distinct approval count 1.5 is not a non-negative whole number, need at least 1",
+	}
+}
+
+test_fractional_distinct_1_5_min_2_approvers_included_reports_exact_diagnostic if {
+	predicate := json.patch(_base_pred, [
+		{"op": "replace", "path": "/approversIncluded", "value": true},
+		{"op": "replace", "path": "/approvers", "value": [_ok, _ok2]},
+		{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+	])
+	inp := [_env(predicate)]
+	cfg := object.union(_summary_config, {"min_approvals": 2})
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+	msgs == {
+		_malformed_msg,
+		"source-review: distinct approval count 1.5 is not a non-negative whole number, need at least 2",
+	}
+}
+
+test_fractional_distinct_1_5_min_2_summary_only_reports_exact_diagnostic if {
+	predicate := json.patch(_base_pred, [
+		{"op": "replace", "path": "/approversIncluded", "value": false},
+		{"op": "replace", "path": "/approvers", "value": [_ok, _ok2]},
+		{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+	])
+	inp := [_env(predicate)]
+	cfg := object.union(_summary_config, {"min_approvals": 2})
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+	msgs == {
+		_malformed_msg,
+		"source-review: distinct approval count 1.5 is not a non-negative whole number, need at least 2",
+	}
+}
+
 test_fractional_distinct_diagnostic_suppressed_when_incomplete if {
 	cfg := object.union(_summary_config, {
 		"min_approvals": 0,
