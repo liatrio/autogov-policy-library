@@ -145,33 +145,28 @@ violations contains msg if {
 	not _assoc_satisfied(payload)
 }
 
-# Violation: min_approvals is configured as 0 (a zero-approval-authorized build,
-# e.g. a release's own self-verify) but the actual merger is not on the
-# zero_approval_merger_allowlist. Inert by default: with an empty allowlist (the
-# default) this never fires regardless of mergedById, so the gate ships opt-in per
-# repo (count(...) > 0 guard). Once populated, fires when mergedById is
-# absent/zero (the producer's supplemental GET failed, or no merger was ever
-# recorded) OR present but not listed -- either way an unauthorized zero-approval
-# merge fails closed. The ambiguity between "fetch failed" and "genuinely absent"
-# is an accepted risk (see config/examples/README.md), not engineered around here.
-#
-# Intentionally NOT grandfathered / enforced_since-exempted: this evaluates the
-# CURRENT policy configuration against the CURRENT merger identity at
-# verification time, rather than retroactively re-litigating historical merges
-# the way the approval-count violation above is, so no exemption window applies.
-#
-# Scope: the design assumes human User-type mergers (the release-bot,
-# Integration:801323, is out of scope -- it doesn't merge via the 0-approval
-# self-verify path today). This rule only checks a numeric mergedById; it does
-# NOT itself enforce merger type.
+# require an allowlisted merger only when a min_approvals:0 build lacks complete
+# merged-pr evidence with a qualifying approval. incomplete review evidence
+# cannot bypass merger authorization. the opt-in check fails closed on absent or
+# unknown merger ids and is not grandfathered. merger ids represent human github
+# users.
 violations contains msg if {
 	source_review_config.min_approvals == 0
 	count(source_review_config.zero_approval_merger_allowlist) > 0
 	some payload in sr_payloads
+	not _has_complete_approval(payload)
 	merger_id := object.get(payload.predicate, ["pullRequest", "mergedById"], 0)
 	not merger_id in source_review_config.zero_approval_merger_allowlist
 	present := object.get(payload.predicate, ["pullRequest", "mergedById"], null) != null
 	msg := _zero_approval_merger_msg(merger_id, present)
+}
+
+_has_complete_approval(payload) if {
+	common.structurally_valid(payload)
+	common.review_complete(payload)
+	is_object(payload.predicate.pullRequest)
+	n := common.effective_distinct(payload)
+	n > 0
 }
 
 # _insufficient_approvals decides whether the distinct-approval-count violation

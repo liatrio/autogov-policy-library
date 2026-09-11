@@ -130,11 +130,9 @@ required_approver_associations := {a | some a in _cfg.required_approver_associat
 	_valid_str_array(_cfg.required_approver_associations)
 }
 
-# Numeric GitHub user IDs (e.g. [138915]) authorized to merge a min_approvals:0
-# build. Default empty so the gate is inert: with no entries the
-# zero-approval-merger violation (source_review policy) never fires, regardless of
-# mergedById. When non-empty, a min_approvals:0 payload's pullRequest.mergedById
-# must be in this set or the gate denies (see source_review.rego).
+# numeric github user ids authorized to merge a min_approvals:0 build without
+# complete merged-pr evidence containing a qualifying approval. the empty default
+# keeps the gate inert.
 default zero_approval_merger_allowlist := set()
 
 zero_approval_merger_allowlist := {a | some a in _cfg.zero_approval_merger_allowlist} if {

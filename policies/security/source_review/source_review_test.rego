@@ -822,7 +822,9 @@ test_enforced_since_invalid_date_fails_closed if {
 
 # like sr_merged but also carries pullRequest.mergedById, for the
 # zero-approval-merger allowlist tests.
-sr_merged_by(approvers, changes, merged_by_id) := [_env({
+sr_merged_by(approvers, changes, merged_by_id) := sr_merged_by_with_status(approvers, changes, merged_by_id, true)
+
+sr_merged_by_with_status(approvers, changes, merged_by_id, review_complete) := [_env({
 	"sourceRepository": "https://github.com/liatrio/autogov",
 	"sourceRevision": "abc123",
 	"pullRequest": {"number": 1, "mergedAt": "2026-06-15T00:00:00Z", "mergedById": merged_by_id},
@@ -830,7 +832,7 @@ sr_merged_by(approvers, changes, merged_by_id) := [_env({
 	"approversIncluded": true,
 	"approvers": approvers,
 	"configuration": [],
-	"reviewToolingComplete": true,
+	"reviewToolingComplete": review_complete,
 })]
 
 # realistic producer-fetch-failure shape: pullRequest present (mergedAt/number)
@@ -874,6 +876,80 @@ test_zero_approval_merger_not_listed_fails_closed if {
 	not source_review.allow with input as inp with data.source_review_thresholds as cfg
 
 	msg := "source-review: merger 42 is not on the zero-approval-merger allowlist"
+
+	# regal ignore:unresolved-reference
+	msg in source_review.violations with input as inp with data.source_review_thresholds as cfg
+}
+
+test_zero_approval_merger_reviewed_non_allowlisted_passes if {
+	inp := sr_merged_by([_ok], 0, 42)
+	cfg := {"min_approvals": 0, "zero_approval_merger_allowlist": [138915]}
+
+	# regal ignore:unresolved-reference
+	source_review.allow with input as inp with data.source_review_thresholds as cfg
+}
+
+test_zero_approval_merger_reviewed_missing_identity_passes if {
+	inp := sr_merged_no_merged_by_key([_ok], 0)
+	cfg := {"min_approvals": 0, "zero_approval_merger_allowlist": [138915]}
+
+	# regal ignore:unresolved-reference
+	source_review.allow with input as inp with data.source_review_thresholds as cfg
+}
+
+test_zero_approval_merger_reviewed_without_pull_request_fails_closed if {
+	inp := sr_approvers([_ok], 0, true)
+	cfg := {"min_approvals": 0, "zero_approval_merger_allowlist": [138915]}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	msg := "source-review: merger identity is absent (mergedById missing) and not on the zero-approval-merger allowlist"
+
+	# regal ignore:unresolved-reference
+	msg in source_review.violations with input as inp with data.source_review_thresholds as cfg
+}
+
+test_zero_approval_merger_incomplete_review_still_requires_allowlisted_merger if {
+	inp := sr_merged_by_with_status([_ok], 0, 42, false)
+	cfg := {"min_approvals": 0, "zero_approval_merger_allowlist": [138915]}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	msg := "source-review: merger 42 is not on the zero-approval-merger allowlist"
+
+	# regal ignore:unresolved-reference
+	msg in source_review.violations with input as inp with data.source_review_thresholds as cfg
+}
+
+test_zero_approval_merger_unqualified_reviews_still_require_allowlisted_merger if {
+	cfg := {"min_approvals": 0, "zero_approval_merger_allowlist": [138915]}
+	msg := "source-review: merger 42 is not on the zero-approval-merger allowlist"
+
+	every approvers in [[_stale], [_bot], [_stale, _bot]] {
+		inp := sr_merged_by(approvers, 0, 42)
+
+		# regal ignore:unresolved-reference
+		not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+		# regal ignore:unresolved-reference
+		msg in source_review.violations with input as inp with data.source_review_thresholds as cfg
+	}
+}
+
+test_zero_approval_merger_reviewed_path_preserves_association_gate if {
+	inp := sr_merged_by([_assoc_approver("alice", "CONTRIBUTOR")], 0, 42)
+	cfg := {
+		"min_approvals": 0,
+		"required_approver_associations": ["OWNER"],
+		"zero_approval_merger_allowlist": [138915],
+	}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	msg := "source-review: no approver association in the required allowlist"
 
 	# regal ignore:unresolved-reference
 	msg in source_review.violations with input as inp with data.source_review_thresholds as cfg
@@ -1376,9 +1452,9 @@ test_zero_approval_merger_whole_number_float_formats_cleanly if {
 		"sourceRepository": "https://github.com/liatrio/autogov",
 		"sourceRevision": "abc123",
 		"pullRequest": {"number": 1, "mergedAt": "2026-06-15T00:00:00Z", "mergedById": 999999.0},
-		"summary": _summary(1, 0),
+		"summary": _summary(0, 0),
 		"approversIncluded": true,
-		"approvers": [_ok],
+		"approvers": [],
 		"configuration": [],
 		"reviewToolingComplete": true,
 	})]
