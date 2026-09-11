@@ -75,6 +75,230 @@ _disabled_thresholds := {
 	"byLevel": {"error": -1, "warning": -1, "note": -1, "none": -1},
 }
 
+# --- authoritative findings completeness ---
+
+_per_finding_msg := concat("", [
+	"code-scan gating needs per-finding data ",
+	"(count_suppressed/gate_new_only/ignore_paths) but findings are excluded; ",
+	"regenerate with --include-findings",
+])
+
+_two_summary_msgs := {
+	"code-scan: 2 critical security-severity finding(s) exceed threshold of 0",
+	"code-scan: 2 error-level finding(s) exceed threshold of 0",
+}
+
+_filter_configs := [
+	{},
+	{"count_suppressed": true},
+	{"gate_new_only": true},
+	{"ignore_paths": ["test/**"]},
+]
+
+_authoritative_predicate(n) := predicate if {
+	payload := utils.has_envelope(cs_summary(sev(n, 0, 0, 0, 0), lvl(n, 0, 0, 0), 0)[0])
+	predicate := object.union(payload.predicate, {"findingsIncluded": true, "truncated": false})
+}
+
+# Exercise the public decision and its entire diagnostic set through a DSSE
+# envelope, including when findings are unavailable and thresholds are disabled.
+# This test helper intentionally evaluates the policy with isolated input/config.
+_assert_decision(predicate, cfg, expected_allow, expected_msgs) if {
+	inp := [_env(predicate)]
+
+	# regal ignore:unresolved-reference,external-reference,with-outside-test-context
+	allowed := code_scan.allow with input as inp with data.code_scan_thresholds as cfg
+	allowed == expected_allow
+
+	# regal ignore:unresolved-reference,external-reference,with-outside-test-context
+	msgs := code_scan.violations with input as inp with data.code_scan_thresholds as cfg
+	msgs == expected_msgs
+}
+
+_assert_unavailable_findings(predicate, summary_msgs, structural_msgs) if {
+	every thresholds in [
+		{"config": {}, "msgs": summary_msgs},
+		# regal ignore:external-reference
+		{"config": _disabled_thresholds, "msgs": set()},
+	] {
+		# regal ignore:external-reference
+		every filter_cfg in _filter_configs {
+			# regal ignore:external-reference
+			filter_msgs := {_per_finding_msg | count(filter_cfg) > 0}
+			expected := (structural_msgs | thresholds.msgs) | filter_msgs
+			every fail_on_incomplete in [true, false] {
+				cfg := object.union_n([thresholds.config, filter_cfg, {"fail_on_incomplete_scan": fail_on_incomplete}])
+				_assert_decision(predicate, cfg, count(expected) == 0, expected)
+			}
+		}
+	}
+}
+
+test_authoritative_missing_results_preserves_summary_diagnostics if {
+	# Reported producer-shaped omission: two critical/error findings, no results.
+	_assert_unavailable_findings(_authoritative_predicate(2), _two_summary_msgs, {_malformed_msg})
+}
+
+test_authoritative_results_requires_array_even_for_zero_counts if {
+	every scan in [{"count": 0, "msgs": set()}, {"count": 2, "msgs": _two_summary_msgs}] {
+		every results in [null, true, false, 0, 2, "", "xx", {}, {
+			"first": finding("r1", "error", "critical", "new", false, "src/a.js"),
+			"second": finding("r2", "error", "critical", "new", false, "src/b.js"),
+		}] {
+			predicate := object.union(_authoritative_predicate(scan.count), {"results": results})
+			_assert_unavailable_findings(predicate, scan.msgs, {_malformed_msg})
+		}
+	}
+}
+
+test_authoritative_result_count_matches_raw_array if {
+	f := finding("r1", "error", "critical", "new", false, "src/a.js")
+	every results in [[], [f], [f, f, f]] {
+		predicate := object.union(_authoritative_predicate(2), {"results": results})
+		_assert_unavailable_findings(predicate, _two_summary_msgs, {_malformed_msg})
+	}
+
+	# Extra findings contradict a zero count even when summary thresholds allow.
+	zero := object.union(_authoritative_predicate(0), {"results": [f]})
+	_assert_unavailable_findings(zero, set(), {_malformed_msg})
+}
+
+test_authoritative_summary_axes_and_suppressions_fit_raw_array if {
+	# Cardinality matches resultCount in every case. Each summary axis, separately,
+	# must fit the raw array after adding suppressions, including disabled buckets.
+	every scan in [
+		{"sev": sev(2, 0, 0, 0, 0), "level": lvl(0, 0, 0, 0), "suppressed": 0, "msgs": {
+			"code-scan: 2 critical security-severity finding(s) exceed threshold of 0",
+		}},
+		{"sev": sev(0, 0, 0, 0, 0), "level": lvl(2, 0, 0, 0), "suppressed": 0, "msgs": {
+			"code-scan: 2 error-level finding(s) exceed threshold of 0",
+		}},
+		{"sev": sev(0, 0, 1, 1, 0), "level": lvl(0, 0, 0, 0), "suppressed": 0, "msgs": set()},
+		{"sev": sev(0, 0, 0, 0, 0), "level": lvl(0, 1, 1, 0), "suppressed": 0, "msgs": set()},
+		{"sev": sev(0, 0, 0, 0, 2), "level": lvl(0, 0, 0, 0), "suppressed": 0, "msgs": set()},
+		{"sev": sev(0, 0, 0, 0, 0), "level": lvl(0, 0, 0, 2), "suppressed": 0, "msgs": set()},
+		{"sev": sev(0, 0, 0, 0, 0), "level": lvl(0, 0, 0, 0), "suppressed": 2, "msgs": set()},
+		{"sev": sev(0, 0, 1, 0, 0), "level": lvl(0, 0, 0, 0), "suppressed": 1, "msgs": set()},
+		{"sev": sev(0, 0, 0, 0, 0), "level": lvl(0, 1, 0, 0), "suppressed": 1, "msgs": set()},
+	] {
+		predicate := object.union(_authoritative_predicate(0), {
+			"summary": {"bySecuritySeverity": scan.sev, "byLevel": scan.level, "suppressed": scan.suppressed},
+			"resultCount": 1,
+			"results": [finding("r1", "warning", "medium", "unchanged", true, "test/a.js")],
+		})
+		_assert_unavailable_findings(predicate, scan.msgs, {_malformed_msg})
+	}
+}
+
+test_authoritative_invalid_suppressions_retain_suppression_diagnostic if {
+	predicate := json.patch(_authoritative_predicate(0), [
+		{"op": "replace", "path": "/summary/suppressed", "value": 2},
+		{"op": "add", "path": "/results", "value": []},
+	])
+	cfg := object.union(_disabled_thresholds, {"fail_on_unreviewed_suppression": true, "fail_on_incomplete_scan": false})
+	_assert_decision(predicate, cfg, false, {
+		_malformed_msg,
+		"code-scan: 2 suppressed finding(s) present; suppressions are not permitted",
+	})
+}
+
+test_authoritative_genuine_empty_results_allow_including_omitted if {
+	# The producer's omitempty tag omits results for a genuine empty scan.
+	all_filters := {"count_suppressed": true, "gate_new_only": true, "ignore_paths": ["test/**"]}
+	every predicate in [_authoritative_predicate(0), object.union(_authoritative_predicate(0), {"results": []})] {
+		every cfg in _filter_configs {
+			_assert_decision(predicate, cfg, true, set())
+		}
+		_assert_decision(predicate, all_filters, true, set())
+	}
+}
+
+test_summary_only_and_truncated_results_retain_summary_gating if {
+	every flags in [
+		{"findingsIncluded": false, "truncated": false},
+		{"findingsIncluded": false, "truncated": true},
+		{"findingsIncluded": true, "truncated": true},
+	] {
+		every embedded in [{}, {"results": []}, {"results": [finding("r1", "error", "critical", "new", false, "src/a.js")]}] {
+			predicate := object.union_n([_authoritative_predicate(2), flags, embedded])
+			_assert_unavailable_findings(predicate, _two_summary_msgs, set())
+			_assert_decision(predicate, {"bySecuritySeverity": {"critical": 2}, "byLevel": {"error": 2}}, true, set())
+		}
+	}
+}
+
+test_complete_findings_can_all_be_filtered_despite_positive_raw_counts if {
+	every scan in [
+		{
+			"finding": finding("r1", "error", "critical", "new", true, "src/a.js"),
+			"count": 0, "suppressed": 1, "config": {},
+		},
+		{
+			"finding": finding("r1", "error", "critical", "unchanged", false, "src/a.js"),
+			"count": 1, "suppressed": 0, "config": {"gate_new_only": true},
+		},
+		{
+			"finding": finding("r1", "error", "critical", "new", false, "test/a.js"),
+			"count": 1, "suppressed": 0, "config": {"ignore_paths": ["test/**"]},
+		},
+	] {
+		predicate := json.patch(_authoritative_predicate(scan.count), [
+			{"op": "replace", "path": "/summary/suppressed", "value": scan.suppressed},
+			{"op": "replace", "path": "/resultCount", "value": 1},
+			{"op": "add", "path": "/results", "value": [scan.finding]},
+		])
+		_assert_decision(predicate, scan.config, true, set())
+	}
+}
+
+test_complete_findings_filter_before_thresholds_with_realistic_summaries if {
+	predicate := json.patch(_authoritative_predicate(4), [
+		{"op": "replace", "path": "/summary/suppressed", "value": 1},
+		{"op": "replace", "path": "/resultCount", "value": 5},
+		{"op": "add", "path": "/results", "value": [
+			finding("r1", "error", "critical", "new", false, "src/a.js"),
+			finding("r2", "error", "critical", "updated", false, "src/b.js"),
+			finding("r3", "error", "critical", "new", true, "src/c.js"),
+			finding("r4", "error", "critical", "unchanged", false, "src/d.js"),
+			finding("r5", "error", "critical", "new", false, "test/a.js"),
+		]},
+	])
+	every filters in [
+		{"config": {}, "count": 4, "msgs": {
+			"code-scan: 4 critical security-severity finding(s) exceed threshold of 3",
+			"code-scan: 4 error-level finding(s) exceed threshold of 3",
+		}},
+		{"config": {"gate_new_only": true}, "count": 3, "msgs": {
+			"code-scan: 3 critical security-severity finding(s) exceed threshold of 2",
+			"code-scan: 3 error-level finding(s) exceed threshold of 2",
+		}},
+		{"config": {"ignore_paths": ["test/**"]}, "count": 3, "msgs": {
+			"code-scan: 3 critical security-severity finding(s) exceed threshold of 2",
+			"code-scan: 3 error-level finding(s) exceed threshold of 2",
+		}},
+		{"config": {"gate_new_only": true, "ignore_paths": ["test/**"]}, "count": 2, "msgs": {
+			"code-scan: 2 critical security-severity finding(s) exceed threshold of 1",
+			"code-scan: 2 error-level finding(s) exceed threshold of 1",
+		}},
+		{"config": {"count_suppressed": true, "gate_new_only": true, "ignore_paths": ["test/**"]}, "count": 3, "msgs": {
+			"code-scan: 3 critical security-severity finding(s) exceed threshold of 2",
+			"code-scan: 3 error-level finding(s) exceed threshold of 2",
+		}},
+	] {
+		at_threshold := object.union(filters.config, {
+			"bySecuritySeverity": {"critical": filters.count}, "byLevel": {"error": filters.count},
+		})
+		_assert_decision(predicate, at_threshold, true, set())
+		below_threshold := object.union(filters.config, {
+			"bySecuritySeverity": {"critical": filters.count - 1}, "byLevel": {"error": filters.count - 1},
+		})
+		_assert_decision(predicate, below_threshold, false, filters.msgs)
+	}
+	_assert_decision(predicate, object.union(_disabled_thresholds, {"fail_on_unreviewed_suppression": true}), false, {
+		"code-scan: 1 suppressed finding(s) present; suppressions are not permitted",
+	})
+}
+
 test_all_scan_counts_reject_invalid_values_in_both_producer_paths if {
 	every included in [true, false] {
 		every thresholds in [{}, _disabled_thresholds] {

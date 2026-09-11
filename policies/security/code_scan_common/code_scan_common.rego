@@ -10,12 +10,38 @@ import data.code_scan_config
 import data.shared.utils
 import rego.v1
 
-# can_recompute is true when results[] is authoritative — every fail-kind finding
-# is present (findingsIncluded) and none were dropped (not truncated). Only then
-# may the policy count over results[]; otherwise it must use the summary counts.
+# Recompute only after checking the authoritative claim against the raw findings.
+# Contradictions must retain summary diagnostics instead of counting an empty or
+# partial results container as a complete scan.
 can_recompute(payload) if {
+	_claims_authoritative_results(payload)
+	_complete_results(payload)
+}
+
+_claims_authoritative_results(payload) if {
 	payload.predicate.findingsIncluded == true
-	not payload.predicate.truncated
+	payload.predicate.truncated == false
+}
+
+# The producer omits empty results. Explicit non-arrays are malformed even when
+# counts are zero. Check raw cardinality before any configured finding filters;
+# summary axes count unsuppressed findings, while resultCount includes all of them.
+_complete_results(payload) if {
+	_counts_valid(payload)
+	results := object.get(payload.predicate, "results", [])
+	is_array(results)
+	n := count(results)
+	n == payload.predicate.resultCount
+	s := payload.predicate.summary
+	severity := s.bySecuritySeverity
+	sum([severity.critical, severity.high, severity.medium, severity.low, severity.none]) + s.suppressed <= n
+	level := s.byLevel
+	sum([level.error, level.warning, level.note, level.none]) + s.suppressed <= n
+}
+
+_invalid_authoritative_results(payload) if {
+	_claims_authoritative_results(payload)
+	not _complete_results(payload)
 }
 
 # recompute_required is true when the configured filters need per-finding data
@@ -92,11 +118,16 @@ effective_level(payload, level) := count_level(payload, level) if {
 # silently skip that gate (fail-open). The policy fires a violation when this is
 # false, so a malformed predicate fails CLOSED.
 structurally_valid(payload) if {
-	s := payload.predicate.summary
-	utils.is_non_negative_int(s.suppressed)
+	_counts_valid(payload)
 	is_boolean(payload.predicate.invocation.executionSuccessful)
 	is_boolean(payload.predicate.findingsIncluded)
 	is_boolean(payload.predicate.truncated)
+	not _invalid_authoritative_results(payload)
+}
+
+_counts_valid(payload) if {
+	s := payload.predicate.summary
+	utils.is_non_negative_int(s.suppressed)
 	utils.is_non_negative_int(payload.predicate.resultCount)
 	every k in {"critical", "high", "medium", "low", "none"} {
 		utils.is_non_negative_int(s.bySecuritySeverity[k])
