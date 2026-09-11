@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 env:
-  OPA_VERSION: 1.19.0
+  OPA_VERSION: 1.20.1
   REGAL_VERSION: 0.42.0
 
 jobs:
