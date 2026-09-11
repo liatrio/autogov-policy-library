@@ -3,6 +3,14 @@ package shared.utils
 import data.shared.access
 import rego.v1
 
+# Counts accept decimal-form whole numbers, but reject other JSON types,
+# negatives, and fractions. Use floor(v) when formatting valid values with %d.
+is_non_negative_int(v) if {
+	is_number(v)
+	v >= 0
+	v == floor(v)
+}
+
 decoded_payload_list := [decoded |
 	some attestation in input
 	decoded := has_envelope(attestation)

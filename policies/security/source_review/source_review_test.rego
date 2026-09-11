@@ -265,6 +265,204 @@ _base_pred := {
 	"reviewToolingComplete": true,
 }
 
+# Disable the filters that require embedded reviewers so both producer paths
+# expose the same count diagnostics in the malformed-count matrix.
+_summary_config := {
+	"disallow_self_approval": false,
+	"require_non_stale": false,
+	"allow_bot_approvals": true,
+}
+
+_malformed_msg := "source-review predicate is malformed (missing or mistyped summary, approvers, or top-level fields)"
+
+test_non_numeric_distinct_preserved_in_both_producer_paths if {
+	cases := [
+		{"value": "bad", "rendered": "\"bad\""},
+		{"value": null, "rendered": "\"null\""},
+		{"value": true, "rendered": "\"true\""},
+		{"value": false, "rendered": "\"false\""},
+		{"value": [], "rendered": "\"[]\""},
+		{"value": {}, "rendered": "\"{}\""},
+	]
+	every included in [true, false] {
+		every tc in cases {
+			predicate := json.patch(_base_pred, [
+				{"op": "replace", "path": "/summary/distinctApprovers", "value": tc.value},
+				{"op": "replace", "path": "/approversIncluded", "value": included},
+			])
+			inp := [_env(predicate)]
+
+			# regal ignore:unresolved-reference
+			not source_review.allow with input as inp with data.source_review_thresholds as _summary_config
+
+			# regal ignore:unresolved-reference
+			msgs := source_review.violations with input as inp with data.source_review_thresholds as _summary_config
+			diagnostic := concat("", [
+				"source-review: distinct approval count is not numeric (",
+				tc.rendered,
+				"), need at least 1",
+			])
+			msgs == {_malformed_msg, diagnostic}
+		}
+	}
+}
+
+test_all_source_counts_reject_invalid_values if {
+	cases := [
+		{"value": -1, "diagnostics": {
+			"distinctApprovers": "source-review: distinct approval count -1 is not a non-negative whole number, need at least 1",
+		}},
+		{"value": 0.5, "diagnostics": {
+			"distinctApprovers": concat("", [
+				"source-review: distinct approval count 0.5 is not a non-negative whole number, ",
+				"need at least 1",
+			]),
+			"changesRequested": concat("", [
+				"source-review: changesRequested value 0.5 is not a non-negative whole number, ",
+				"treating as an outstanding review",
+			]),
+		}},
+		{"value": "bad", "diagnostics": {
+			"distinctApprovers": "source-review: distinct approval count is not numeric (\"bad\"), need at least 1",
+			"changesRequested": "source-review: changesRequested is not numeric (\"bad\"), treating as an outstanding review",
+		}},
+		{"value": null, "diagnostics": {
+			"distinctApprovers": "source-review: distinct approval count is not numeric (\"null\"), need at least 1",
+			"changesRequested": "source-review: changesRequested is not numeric (\"null\"), treating as an outstanding review",
+		}},
+		{"value": true, "diagnostics": {
+			"distinctApprovers": "source-review: distinct approval count is not numeric (\"true\"), need at least 1",
+			"changesRequested": "source-review: changesRequested is not numeric (\"true\"), treating as an outstanding review",
+		}},
+		{"value": false, "diagnostics": {
+			"distinctApprovers": "source-review: distinct approval count is not numeric (\"false\"), need at least 1",
+			"changesRequested": "source-review: changesRequested is not numeric (\"false\"), treating as an outstanding review",
+		}},
+		{"value": [], "diagnostics": {
+			"distinctApprovers": "source-review: distinct approval count is not numeric (\"[]\"), need at least 1",
+			"changesRequested": "source-review: changesRequested is not numeric (\"[]\"), treating as an outstanding review",
+		}},
+		{"value": {}, "diagnostics": {
+			"distinctApprovers": "source-review: distinct approval count is not numeric (\"{}\"), need at least 1",
+			"changesRequested": "source-review: changesRequested is not numeric (\"{}\"), treating as an outstanding review",
+		}},
+	]
+	every included in [true, false] {
+		every field in ["approvals", "distinctApprovers", "changesRequested", "requiredApprovals"] {
+			every tc in cases {
+				predicate := json.patch(_base_pred, [
+					{"op": "replace", "path": ["summary", field], "value": tc.value},
+					{"op": "replace", "path": "/approversIncluded", "value": included},
+				])
+				inp := [_env(predicate)]
+
+				# regal ignore:unresolved-reference
+				not source_review.allow with input as inp with data.source_review_thresholds as _summary_config
+
+				# regal ignore:unresolved-reference
+				msgs := source_review.violations with input as inp with data.source_review_thresholds as _summary_config
+				expected := {_malformed_msg} | {msg | msg := tc.diagnostics[field]}
+				msgs == expected
+			}
+		}
+	}
+}
+
+test_all_source_counts_are_required if {
+	every included in [true, false] {
+		every field in ["approvals", "distinctApprovers", "changesRequested", "requiredApprovals"] {
+			predicate := json.patch(_base_pred, [
+				{"op": "remove", "path": ["summary", field]},
+				{"op": "replace", "path": "/approversIncluded", "value": included},
+			])
+			inp := [_env(predicate)]
+
+			# regal ignore:unresolved-reference
+			not source_review.allow with input as inp with data.source_review_thresholds as _summary_config
+
+			# regal ignore:unresolved-reference
+			msgs := source_review.violations with input as inp with data.source_review_thresholds as _summary_config
+			msgs == {_malformed_msg}
+		}
+	}
+}
+
+test_decimal_source_counts_and_minimum_in_both_producer_paths if {
+	cfg := object.union(_summary_config, {"min_approvals": 2.0})
+	every included in [true, false] {
+		predicate := json.patch(_base_pred, [
+			{"op": "replace", "path": "/summary/approvals", "value": 1.0},
+			{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.0},
+			{"op": "replace", "path": "/summary/changesRequested", "value": 0.0},
+			{"op": "replace", "path": "/summary/requiredApprovals", "value": 0.0},
+			{"op": "replace", "path": "/approversIncluded", "value": included},
+		])
+		inp := [_env(predicate)]
+
+		# regal ignore:unresolved-reference
+		source_review.allow with input as inp with data.source_review_thresholds as _summary_config
+
+		# regal ignore:unresolved-reference
+		not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+		# regal ignore:unresolved-reference
+		msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+		msgs == {"source-review: 1 distinct approval(s), need at least 2"}
+	}
+}
+
+test_numeric_summary_still_constrained_by_reviewer_count_and_filters if {
+	cases := [
+		{"approvers": [_ok], "distinct": 10, "cfg": {"min_approvals": 2}},
+		{"approvers": [_ok, _stale, _bot], "distinct": 3, "cfg": {"min_approvals": 2}},
+		{"approvers": [_ok, _stale, _bot], "distinct": 1, "cfg": {
+			"min_approvals": 2,
+			"require_non_stale": false,
+			"allow_bot_approvals": true,
+		}},
+	]
+	every tc in cases {
+		predicate := json.patch(_base_pred, [
+			{"op": "replace", "path": "/summary/distinctApprovers", "value": tc.distinct},
+			{"op": "replace", "path": "/approvers", "value": tc.approvers},
+		])
+		inp := [_env(predicate)]
+
+		# regal ignore:unresolved-reference
+		not source_review.allow with input as inp with data.source_review_thresholds as tc.cfg
+
+		# regal ignore:unresolved-reference
+		msgs := source_review.violations with input as inp with data.source_review_thresholds as tc.cfg
+		msgs == {"source-review: 1 distinct approval(s), need at least 2"}
+	}
+}
+
+test_invalid_minimum_overrides_have_exact_policy_diagnostic if {
+	inp := [_env(_base_pred)]
+	every value in [-1, 0.5, "0", null, true, false, [], {}] {
+		cfg := {"min_approvals": value}
+
+		# regal ignore:unresolved-reference
+		not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+		# regal ignore:unresolved-reference
+		msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+		msgs == {"source-review configuration is invalid: min_approvals must be a non-negative integer"}
+	}
+}
+
+test_zero_minimum_and_positive_decimal_merger_id_allow if {
+	inp := sr_merged_by([], 0, 42.0)
+	cfg := {"min_approvals": 0.0, "zero_approval_merger_allowlist": [42.0]}
+
+	# regal ignore:unresolved-reference
+	source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+	msgs == set()
+}
+
 test_malformed_field_coupling if {
 	source_review.allow with input as [_env(_base_pred)]
 
@@ -806,6 +1004,165 @@ test_distinct_approvals_non_numeric_fails_closed if {
 
 	every m in msgs {
 		not contains(m, "%!d")
+	}
+}
+
+test_fractional_distinct_reports_invalid_whole_count_both_paths if {
+	cases := [
+		{"included": true, "distinct": 0.5, "min": 1, "approvers": [_ok]},
+		{"included": false, "distinct": 0.5, "min": 1, "approvers": [_ok]},
+		{"included": true, "distinct": 2.5, "min": 2, "approvers": [_ok, _ok2]},
+		{"included": false, "distinct": 2.5, "min": 2, "approvers": [_ok, _ok2]},
+		{"included": true, "distinct": 1.5, "min": 0, "approvers": [_ok]},
+		{"included": false, "distinct": 1.5, "min": 0, "approvers": [_ok]},
+	]
+	every tc in cases {
+		predicate := json.patch(_base_pred, [
+			{"op": "replace", "path": "/approversIncluded", "value": tc.included},
+			{"op": "replace", "path": "/approvers", "value": tc.approvers},
+			{"op": "replace", "path": "/summary/distinctApprovers", "value": tc.distinct},
+		])
+		inp := [_env(predicate)]
+		cfg := object.union(_summary_config, {"min_approvals": tc.min})
+
+		# regal ignore:unresolved-reference
+		not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+		# regal ignore:unresolved-reference
+		msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+		msg := sprintf(
+			"source-review: distinct approval count %v is not a non-negative whole number, need at least %d",
+			[tc.distinct, floor(tc.min)],
+		)
+		msgs == {_malformed_msg, msg}
+	}
+}
+
+test_fractional_distinct_1_5_min_1_approvers_included_reports_exact_diagnostic if {
+	predicate := json.patch(_base_pred, [
+		{"op": "replace", "path": "/approversIncluded", "value": true},
+		{"op": "replace", "path": "/approvers", "value": [_ok]},
+		{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+	])
+	inp := [_env(predicate)]
+	cfg := object.union(_summary_config, {"min_approvals": 1})
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+	msgs == {
+		_malformed_msg,
+		"source-review: distinct approval count 1.5 is not a non-negative whole number, need at least 1",
+	}
+}
+
+test_fractional_distinct_1_5_min_1_summary_only_reports_exact_diagnostic if {
+	predicate := json.patch(_base_pred, [
+		{"op": "replace", "path": "/approversIncluded", "value": false},
+		{"op": "replace", "path": "/approvers", "value": [_ok]},
+		{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+	])
+	inp := [_env(predicate)]
+	cfg := object.union(_summary_config, {"min_approvals": 1})
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+	msgs == {
+		_malformed_msg,
+		"source-review: distinct approval count 1.5 is not a non-negative whole number, need at least 1",
+	}
+}
+
+test_fractional_distinct_1_5_min_2_approvers_included_reports_exact_diagnostic if {
+	predicate := json.patch(_base_pred, [
+		{"op": "replace", "path": "/approversIncluded", "value": true},
+		{"op": "replace", "path": "/approvers", "value": [_ok, _ok2]},
+		{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+	])
+	inp := [_env(predicate)]
+	cfg := object.union(_summary_config, {"min_approvals": 2})
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+	msgs == {
+		_malformed_msg,
+		"source-review: distinct approval count 1.5 is not a non-negative whole number, need at least 2",
+	}
+}
+
+test_fractional_distinct_1_5_min_2_summary_only_reports_exact_diagnostic if {
+	predicate := json.patch(_base_pred, [
+		{"op": "replace", "path": "/approversIncluded", "value": false},
+		{"op": "replace", "path": "/approvers", "value": [_ok, _ok2]},
+		{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+	])
+	inp := [_env(predicate)]
+	cfg := object.union(_summary_config, {"min_approvals": 2})
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+	msgs == {
+		_malformed_msg,
+		"source-review: distinct approval count 1.5 is not a non-negative whole number, need at least 2",
+	}
+}
+
+test_fractional_distinct_diagnostic_suppressed_when_incomplete if {
+	cfg := object.union(_summary_config, {
+		"min_approvals": 0,
+		"fail_on_incomplete_review": false,
+	})
+	every included in [true, false] {
+		predicate := json.patch(_base_pred, [
+			{"op": "replace", "path": "/approversIncluded", "value": included},
+			{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+			{"op": "replace", "path": "/reviewToolingComplete", "value": false},
+		])
+		inp := [_env(predicate)]
+
+		# regal ignore:unresolved-reference
+		not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+		# regal ignore:unresolved-reference
+		msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+		msgs == {_malformed_msg}
+	}
+}
+
+test_fractional_distinct_diagnostic_suppressed_when_grandfathered if {
+	cfg := object.union(_summary_config, {
+		"min_approvals": 0,
+		"enforced_since": "2026-06-01T00:00:00Z",
+	})
+	every included in [true, false] {
+		predicate := json.patch(_base_pred, [
+			{"op": "replace", "path": "/approversIncluded", "value": included},
+			{"op": "replace", "path": "/summary/distinctApprovers", "value": 1.5},
+			{
+				"op": "add",
+				"path": "/pullRequest",
+				"value": {"number": 1, "mergedAt": "2026-05-01T00:00:00Z"},
+			},
+		])
+		inp := [_env(predicate)]
+
+		# regal ignore:unresolved-reference
+		not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+		# regal ignore:unresolved-reference
+		msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+		msgs == {_malformed_msg}
 	}
 }
 

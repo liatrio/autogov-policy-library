@@ -98,8 +98,12 @@ violations contains msg if {
 	some bucket, threshold in sev_thresholds
 	threshold >= 0
 	n := common.effective_sev(payload, bucket)
+	utils.is_non_negative_int(n)
 	n > threshold
-	msg := sprintf("code-scan: %d %s security-severity finding(s) exceed threshold of %d", [n, bucket, threshold])
+	msg := sprintf(
+		"code-scan: %d %s security-severity finding(s) exceed threshold of %d",
+		[floor(n), bucket, floor(threshold)],
+	)
 }
 
 # Violation: a SARIF level bucket exceeds its threshold.
@@ -108,8 +112,9 @@ violations contains msg if {
 	some level, threshold in level_thresholds
 	threshold >= 0
 	n := common.effective_level(payload, level)
+	utils.is_non_negative_int(n)
 	n > threshold
-	msg := sprintf("code-scan: %d %s-level finding(s) exceed threshold of %d", [n, level, threshold])
+	msg := sprintf("code-scan: %d %s-level finding(s) exceed threshold of %d", [floor(n), level, floor(threshold)])
 }
 
 # Violation: suppressed findings present and suppressions are not permitted.
@@ -117,6 +122,7 @@ violations contains msg if {
 	code_scan_config.fail_on_unreviewed_suppression == true
 	some payload in cs_payloads
 	suppressed := payload.predicate.summary.suppressed
+	utils.is_non_negative_int(suppressed)
 	suppressed > 0
-	msg := sprintf("code-scan: %d suppressed finding(s) present; suppressions are not permitted", [suppressed])
+	msg := sprintf("code-scan: %d suppressed finding(s) present; suppressions are not permitted", [floor(suppressed)])
 }

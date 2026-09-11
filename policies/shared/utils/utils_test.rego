@@ -3,6 +3,18 @@ package shared.utils_test
 import data.shared.utils
 import rego.v1
 
+test_is_non_negative_int_accepts_whole_numbers if {
+	every value in [0, 1, 42, 0.0, 1.0, 42.0] {
+		utils.is_non_negative_int(value)
+	}
+}
+
+test_is_non_negative_int_rejects_invalid_values if {
+	every value in [-1, -1.0, -0.5, 0.5, 1.5, "0", "1.0", "", null, true, false, [], [1], {}, {"count": 1}] {
+		not utils.is_non_negative_int(value)
+	}
+}
+
 # Test payload decoding
 test_decoded_payload_list if {
 	test_input := [

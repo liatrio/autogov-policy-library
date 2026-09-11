@@ -175,36 +175,15 @@ violations contains msg if {
 }
 
 # _insufficient_approvals decides whether the distinct-approval-count violation
-# above should fire. A forged non-numeric n (e.g. a string) ALWAYS counts as
-# insufficient: Rego's total value ordering ranks strings above numbers, so a
-# bare `n < min_approvals` comparison would silently (and accidentally) evaluate
-# to false for a forged string, letting it slip past the gate by ordering
-# accident rather than by design.
+# above should fire. Any invalid count (negative, fractional, or non-numeric)
+# always counts as insufficient so this never depends on cross-type ordering.
 _insufficient_approvals(n, min_approvals) if {
-	is_number(n)
+	utils.is_non_negative_int(n)
 	n < min_approvals
 }
 
 _insufficient_approvals(n, _) if {
-	not is_number(n)
-}
-
-# _clean_int is true for a value that formats safely with a %d verb: numeric,
-# non-negative, and whole-valued. is_number(n) ALONE is not enough: JSON (and
-# Rego) does not distinguish int from float, so a whole-number value written
-# with a decimal point (e.g. 1.0, however it arrived -- a forged predicate or an
-# honest producer/JSON round-trip) is still a Go float64 under the hood, and %d
-# garbles it as "%!d(float64=1)" exactly like a non-numeric string does. n ==
-# floor(n) confirms it is whole-valued; the %d call site must then format
-# floor(n) (not the raw n) to get a clean result -- floor() re-derives the
-# number in a representation %d accepts. n >= 0 rejects a forged negative count
-# (e.g. -5), which would otherwise format "cleanly" but nonsensically -- every
-# quantity this predicate guards (approval counts, review counts, user IDs) is
-# inherently non-negative, matching common._non_negative_int's convention.
-_clean_int(n) if {
-	is_number(n)
-	n >= 0
-	n == floor(n)
+	not utils.is_non_negative_int(n)
 }
 
 # _changes_requested_present decides whether the changes-requested violation
@@ -230,17 +209,17 @@ _changes_requested_present(n) if {
 # override and falls back to the default), but config validation permits a
 # whole-number float (e.g. 2.0), so it is defensively floored at every %d call
 # site below, same as n. n itself gets a three-way split so the message never
-# claims a numeric value "is not numeric": _clean_int(n) formats cleanly;
-# is_number(n) but not _clean_int(n) (negative or fractional) says so precisely;
-# not is_number(n) is the true not-numeric case.
+# claims a numeric value "is not numeric": a validated count formats cleanly;
+# a negative or fractional number says so precisely; not is_number(n) is the
+# true not-numeric case.
 _distinct_approval_msg(n, min_approvals) := msg if {
-	_clean_int(n)
+	utils.is_non_negative_int(n)
 	msg := sprintf("source-review: %d distinct approval(s), need at least %d", [floor(n), floor(min_approvals)])
 }
 
 _distinct_approval_msg(n, min_approvals) := msg if {
 	is_number(n)
-	not _clean_int(n)
+	not utils.is_non_negative_int(n)
 	msg := sprintf(
 		"source-review: distinct approval count %v is not a non-negative whole number, need at least %d",
 		[n, floor(min_approvals)],
@@ -259,13 +238,13 @@ _distinct_approval_msg(n, min_approvals) := msg if {
 # changes-requested violation above, mirroring _zero_approval_merger_msg's style
 # below. Same three-way split as _distinct_approval_msg, for the same reason.
 _changes_requested_msg(n) := msg if {
-	_clean_int(n)
+	utils.is_non_negative_int(n)
 	msg := sprintf("source-review: %d outstanding changes-requested review(s)", [floor(n)])
 }
 
 _changes_requested_msg(n) := msg if {
 	is_number(n)
-	not _clean_int(n)
+	not utils.is_non_negative_int(n)
 	msg := sprintf(
 		"source-review: changesRequested value %v is not a non-negative whole number, treating as an outstanding review",
 		[n],
@@ -280,18 +259,18 @@ _changes_requested_msg(n) := msg if {
 # _zero_approval_merger_msg builds a clear, non-garbled message for the violation
 # above, on the same three-way split as _distinct_approval_msg /
 # _changes_requested_msg (this is the helper they were written to mirror --
-# gated on _clean_int, not bare is_number, so a whole-number-float mergedById
-# such as 138915.0 gets floor()'d instead of garbling %d exactly like the other
-# two would have without that guard). Distinguishes "absent" from "present but
+# gated on utils.is_non_negative_int, so a whole-number-float mergedById such as
+# 138915.0 gets floor()'d instead of garbling %d exactly like the other two would
+# have without that guard). Distinguishes "absent" from "present but
 # literally 0" via the `present` flag, best-effort (mergedById:0 is not
 # producer-reachable today -- Go's omitempty never emits a literal 0 -- but the
-# field is structurally valid per _non_negative_int, so this is worth getting
-# right for a forged/future input). merger_id == 0 is a plain numeric equality
+# field is structurally valid per utils.is_non_negative_int, so this is worth
+# getting right for a forged/future input). merger_id == 0 is a plain numeric equality
 # check (true for both the int 0 and the float 0.0), so it is unaffected by and
-# checked ahead of the _clean_int split below.
+# checked ahead of the shared validator split below.
 _zero_approval_merger_msg(merger_id, _) := msg if {
 	merger_id != 0
-	_clean_int(merger_id)
+	utils.is_non_negative_int(merger_id)
 	msg := sprintf("source-review: merger %d is not on the zero-approval-merger allowlist", [floor(merger_id)])
 }
 
@@ -308,7 +287,7 @@ _zero_approval_merger_msg(merger_id, false) := msg if {
 _zero_approval_merger_msg(merger_id, _) := msg if {
 	merger_id != 0
 	is_number(merger_id)
-	not _clean_int(merger_id)
+	not utils.is_non_negative_int(merger_id)
 	msg := sprintf(
 		"source-review: mergedById %v is not a non-negative whole number, not on the zero-approval-merger allowlist",
 		[merger_id],

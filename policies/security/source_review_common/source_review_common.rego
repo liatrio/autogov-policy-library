@@ -6,6 +6,7 @@
 # - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 package security.source_review_common
 
+import data.shared.utils
 import data.source_level_config
 import data.source_review_config
 import rego.v1
@@ -84,8 +85,11 @@ _bot_excluded(a) if {
 # reports a higher distinctApprovers than its own approvers[] supports — not a
 # tightening. Do NOT "simplify" it to summary.distinctApprovers: that re-opens that
 # cross-check and the path where a tightening filter recomputes below the summary.
+# Preserve an invalid summary for the count diagnostic instead of allowing min's
+# cross-type ordering to replace it with the recomputed numeric count.
 effective_distinct(payload) := min([recompute_distinct(payload), payload.predicate.summary.distinctApprovers]) if {
 	can_recompute(payload)
+	utils.is_non_negative_int(payload.predicate.summary.distinctApprovers)
 } else := payload.predicate.summary.distinctApprovers
 
 # structurally_valid is true only when the predicate carries every field the gate
@@ -99,10 +103,10 @@ structurally_valid(payload) if {
 
 	# counts must be non-negative — a forged negative (e.g. changesRequested: -1)
 	# would otherwise pass is_number and slip the count-based gates (n > 0 false).
-	_non_negative_int(s.approvals)
-	_non_negative_int(s.distinctApprovers)
-	_non_negative_int(s.changesRequested)
-	_non_negative_int(s.requiredApprovals)
+	utils.is_non_negative_int(s.approvals)
+	utils.is_non_negative_int(s.distinctApprovers)
+	utils.is_non_negative_int(s.changesRequested)
+	utils.is_non_negative_int(s.requiredApprovals)
 	is_boolean(s.requirementMet)
 	is_boolean(s.selfApprovalExcluded)
 	_codeowner_typed(s)
@@ -140,14 +144,7 @@ _merged_by_id_valid(pr) if {
 
 _merged_by_id_valid(pr) if {
 	"mergedById" in object.keys(pr)
-	_non_negative_int(pr.mergedById)
-}
-
-# _non_negative_int is true for an integer >= 0 (the valid range for every count).
-_non_negative_int(v) if {
-	is_number(v)
-	v >= 0
-	v == floor(v)
+	utils.is_non_negative_int(pr.mergedById)
 }
 
 # codeownerReviewMet is tri-state: boolean or JSON null (not determinable).

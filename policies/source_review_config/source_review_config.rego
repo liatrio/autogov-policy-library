@@ -10,6 +10,7 @@
 #  filename: source_review_config.rego
 package source_review_config
 
+import data.shared.utils
 import rego.v1
 
 # Resolved configuration for the source-review gating policy.
@@ -40,7 +41,7 @@ _cfg := data.source_review_thresholds
 default min_approvals := 1
 
 min_approvals := _cfg.min_approvals if {
-	_valid_count(_cfg.min_approvals)
+	utils.is_non_negative_int(_cfg.min_approvals)
 }
 
 # --- flags ---
@@ -167,13 +168,6 @@ _int_array_keys := {"zero_approval_merger_allowlist"}
 # _allowed_keys is every recognized override key; any other key is a typo.
 _allowed_keys := ((({"min_approvals"} | _bool_keys) | _string_keys) | _array_keys) | _int_array_keys
 
-# _valid_count is true for a non-negative integer.
-_valid_count(v) if {
-	is_number(v)
-	v >= 0
-	v == floor(v)
-}
-
 # _valid_rfc3339 is true for the empty string (inert default) or a parseable
 # RFC3339 timestamp. A non-empty unparseable value is rejected so a typo cannot
 # silently disable grandfathering.
@@ -193,18 +187,17 @@ _valid_str_array(v) if {
 }
 
 # _valid_int_array is true for an array whose every element is a positive integer.
-# Deliberately requires `e > 0`, NOT `e >= 0` like _valid_count's bound -- GitHub
+# Deliberately adds `e > 0` to the shared non-negative integer bound -- GitHub
 # user IDs are never 0, and 0 is this same feature's own sentinel for "mergedById
 # absent/unfetchable" (source_review.rego's zero-approval-merger violation).
 # Accepting 0 here would let a populated allowlist silently match every
 # absent-merger payload, defeating the gate entirely (confirmed reproducible
-# bypass via opa eval during review). e == floor(e) rejects fractional entries.
+# bypass via opa eval during review).
 _valid_int_array(v) if {
 	is_array(v)
 	every e in v {
-		is_number(e)
+		utils.is_non_negative_int(e)
 		e > 0
-		e == floor(e)
 	}
 }
 
@@ -220,7 +213,7 @@ config_errors contains "source_review_thresholds must be an object" if {
 config_errors contains "min_approvals must be a non-negative integer" if {
 	is_object(_cfg)
 	"min_approvals" in object.keys(_cfg)
-	not _valid_count(_cfg.min_approvals)
+	not utils.is_non_negative_int(_cfg.min_approvals)
 }
 
 config_errors contains msg if {
