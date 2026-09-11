@@ -254,6 +254,20 @@ test_duplicate_login_counted_once if {
 	not bypass.dep_vuln_authorized with input as sr(dup, true, true) with data.bypass_thresholds as _enabled
 }
 
+test_case_variant_logins_count_as_one_identity_for_bypass if {
+	dup := [approver("Alice", "OWNER", false, false), approver("alice", "MEMBER", false, false)]
+
+	# regal ignore:unresolved-reference
+	not bypass.dep_vuln_authorized with input as sr(dup, true, true) with data.bypass_thresholds as _enabled
+}
+
+test_distinct_authorized_logins_still_authorize_bypass if {
+	distinct := [approver("alice", "OWNER", false, false), approver("bob", "MEMBER", false, false)]
+
+	# regal ignore:unresolved-reference
+	bypass.dep_vuln_authorized with input as sr(distinct, true, true) with data.bypass_thresholds as _enabled
+}
+
 # an HONEST summary (distinctApprovers=1) with a padded approvers[] (alice listed
 # twice) must not authorize a min-2 bypass — the inflation cross-check floors the
 # recomputed count against the producer's strict summary, mirroring the
