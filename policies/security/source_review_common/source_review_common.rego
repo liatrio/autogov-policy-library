@@ -48,13 +48,23 @@ review_complete(payload) if {
 	payload.predicate.reviewToolingComplete == true
 }
 
-# recompute_distinct counts the qualifying approvers in approvers[] under the
-# configured filters. The PR author is already absent from approvers[] (the
-# producer excludes self), so self-approval can never be re-added here.
-recompute_distinct(payload) := count([a |
+# recompute_distinct counts distinct qualifying reviewer identities in
+# approvers[] under the configured filters.
+recompute_distinct(payload) := count({id |
 	some a in object.get(payload.predicate, "approvers", [])
+	id := _reviewer_identity(a)
 	_qualifies(a)
-])
+})
+
+_reviewer_identity(a) := id if {
+	_reviewer_identity_valid(a)
+	id := lower(trim_space(a.login))
+}
+
+_reviewer_identity_valid(a) if {
+	is_string(a.login)
+	trim_space(a.login) != ""
+}
 
 _qualifies(a) if {
 	not _stale_excluded(a)
@@ -113,6 +123,7 @@ structurally_valid(payload) if {
 	is_boolean(payload.predicate.approversIncluded)
 	is_boolean(payload.predicate.reviewToolingComplete)
 	every a in object.get(payload.predicate, "approvers", []) {
+		_reviewer_identity_valid(a)
 		is_boolean(a.stale)
 		is_boolean(a.isBot)
 	}

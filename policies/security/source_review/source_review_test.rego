@@ -119,6 +119,18 @@ test_min_approvals_override_passes if {
 	source_review.allow with input as inp with data.source_review_thresholds as cfg
 }
 
+test_duplicate_approver_entries_do_not_satisfy_minimum if {
+	inp := sr_approvers([_ok, _ok], 0, true)
+	cfg := {"min_approvals": 2}
+
+	# regal ignore:unresolved-reference
+	not source_review.allow with input as inp with data.source_review_thresholds as cfg
+
+	# regal ignore:unresolved-reference
+	msgs := source_review.violations with input as inp with data.source_review_thresholds as cfg
+	msgs == {"source-review: 1 distinct approval(s), need at least 2"}
+}
+
 # admin-merge style: tooling complete but zero qualifying approvals -> a
 # DEFINITIVE fail (not incompleteness), even if incomplete-review is tolerated.
 test_zero_approvals_fails_even_if_incomplete_tolerated if {
