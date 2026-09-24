@@ -48,6 +48,15 @@ Org-specific defaults (`approved_owner_ids`, `subject_prefix`, `signer_org`) are
 defined in `policies/shared/access/access.rego`; adapt them for your own org (see the
 org-specific constraints note below).
 
+#### Test-result evidence limits
+
+`max_failed_tests` counts entries in a present attestation's `failedTests`
+array. An empty array passes this gate even when no tests ran. Setting
+`require_test_results: true` requires an attestation, but does not require a
+positive executed-test count or establish coverage. Enforce those requirements
+in the test-producing workflow or a separately defined policy; this gate alone
+cannot prove them. Present malformed `failedTests` values still deny.
+
 #### VSA-Based Deployment Gating
 
 The `governance/vsa_verification_result` policy enables **Verification Summary Attestation (VSA) based deployment gating**. This policy:
