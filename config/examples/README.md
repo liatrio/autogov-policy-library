@@ -155,7 +155,7 @@ config typo fails closed. A correctly-spelled, absent key uses its default.
 | `fail_on_incomplete_review` | `false` | fail when review evidence is incomplete (no merged PR / unfetchable reviews) |
 | `enforced_since` | `""` | RFC3339 cutoff; a revision merged before it has its approval-count violation suppressed (grandfathered), so enabling the gate is not retroactive. `""` = inert; a standing changes-request still blocks regardless |
 | `required_approver_associations` | `[]` | GitHub author-association values a qualifying (non-stale, non-bot) approver must carry; a non-empty set denies unless some such approver's association is in it (empty = inert) |
-| `zero_approval_merger_allowlist` | `[]` | numeric GitHub user IDs (e.g. `[138915]`) authorized to merge a `min_approvals:0` build; when non-empty, a `min_approvals:0` payload's `pullRequest.mergedById` must be in this set or the gate denies (empty = inert). Entries must be positive integers — `0`, negative numbers, and non-whole-number values are rejected as config errors |
+| `zero_approval_merger_allowlist` | `[]` | numeric GitHub user IDs (e.g. `[138915]`) authorized to merge a `min_approvals:0` build without complete merged-PR evidence containing a qualifying approval. A reviewed build does not require merger allowlisting. Empty = inert; entries must be positive integers |
 
 Notes:
 
@@ -165,19 +165,20 @@ Notes:
   closed), and a changes-request, incompleteness, malformed-predicate, or config
   violation is never suppressed.
 
-- **Zero-approval-merger allowlist.** `zero_approval_merger_allowlist` gates the
-  `min_approvals:0` path specifically (not the general approval-count check
-  above) — it is NOT grandfathered by `enforced_since`, since it evaluates the
-  current merger identity at verification time rather than re-litigating
-  historical merges. An absent `pullRequest.mergedById` denies just like a
-  not-listed one, and it covers two indistinguishable cases: no merger was ever
-  recorded, **or** the producer's supplemental merged-by GitHub API fetch failed
-  (a transient hiccup). If a self-release build unexpectedly fails this gate,
-  check whether the merger fetch succeeded before assuming the merger truly
-  isn't allowlisted. The allowlist takes numeric GitHub user IDs only, never
-  `0` — `0` is reserved internally as the "absent" sentinel, so a config
-  containing it is rejected rather than silently matching every unrecorded
-  merger.
+- **Zero-approval-merger allowlist.** `zero_approval_merger_allowlist` applies
+  when `min_approvals:0` and the attestation lacks complete merged-PR evidence
+  containing a qualifying approval. Such an approval is alternate authorization,
+  so its merger need not be allowlisted. Other source-review violations still
+  apply. Incomplete review evidence or a missing `pullRequest` never grants this
+  exemption. On the zero-approval path, an absent `pullRequest.mergedById` denies
+  like a not-listed one; this may mean no merger was recorded or the producer's
+  supplemental GitHub API fetch failed. The check is not grandfathered by
+  `enforced_since`. IDs must be positive integers; `0` is the internal absent
+  sentinel and is rejected as configuration.
+  The exemption uses the same approval-count rules as the rest of the gate:
+  embedded reviewers constrain the signed summary. Summary-only evidence can
+  establish an approval only when every reviewer-dependent filter is explicitly
+  disabled; the default filters require embedded reviewer evidence.
 
 - **Bot detection** is by GitHub user type only (`User.Type == "Bot"`). A
   human-PAT-driven service account typed `User` is NOT excluded by
