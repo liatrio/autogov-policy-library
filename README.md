@@ -55,7 +55,7 @@ array. An empty array passes this gate even when no tests ran. Setting
 `require_test_results: true` requires an attestation, but does not require a
 positive executed-test count or establish coverage. Enforce those requirements
 in the test-producing workflow or a separately defined policy; this gate alone
-cannot prove them. Present malformed `failedTests` values still deny.
+cannot prove them. Missing or non-array `failedTests` values still deny.
 
 #### VSA-Based Deployment Gating
 
