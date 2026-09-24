@@ -175,6 +175,10 @@ Notes:
   supplemental GitHub API fetch failed. The check is not grandfathered by
   `enforced_since`. IDs must be positive integers; `0` is the internal absent
   sentinel and is rejected as configuration.
+  The exemption uses the same approval-count rules as the rest of the gate:
+  embedded reviewers constrain the signed summary. Summary-only evidence can
+  establish an approval only when every reviewer-dependent filter is explicitly
+  disabled; the default filters require embedded reviewer evidence.
 
 - **Bot detection** is by GitHub user type only (`User.Type == "Bot"`). A
   human-PAT-driven service account typed `User` is NOT excluded by
