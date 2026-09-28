@@ -5,7 +5,7 @@
 # authors:
 # - AutoGov Team https://github.com/orgs/liatrio/teams/tag-autogov
 # custom:
-#  version: 1.1.7
+#  version: 1.1.8
 #  path: policies/security/code_scan
 #  filename: code_scan.rego
 package security.code_scan
