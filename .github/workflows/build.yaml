@@ -24,7 +24,7 @@ permissions:
 
 env:
   OPA_VERSION: 1.20.2
-  REGAL_VERSION: 0.42.0
+  REGAL_VERSION: 0.43.0
 
 jobs:
   lint:
