@@ -15,7 +15,7 @@
       "matchDepTypes": [
         "action"
       ],
-      "pinDigests": true,
+      "pinDigests": false,
       "groupName": "GitHub Actions",
       "groupSlug": "github-actions"
     },
