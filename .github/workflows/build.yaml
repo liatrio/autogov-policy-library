@@ -80,11 +80,11 @@ jobs:
       actions: read
       pull-requests: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@d4c4d30aab12b8a0cfbae82489a19f4cb6209fca # v1.2.3
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-image.yaml@d397979634bba731651d0cb0ae1bcb80d767216e # v1.2.4
     secrets: inherit
     with:
       registry: ghcr.io
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@d4c4d30aab12b8a0cfbae82489a19f4cb6209fca # v1.2.3
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-image.yaml@d397979634bba731651d0cb0ae1bcb80d767216e # v1.2.4
       policy-data-overlay: '{"source_review_thresholds":{"min_approvals":0}}'
       release-image: false
 
@@ -97,13 +97,13 @@ jobs:
       contents: write
       actions: read
       artifact-metadata: write
-    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@d4c4d30aab12b8a0cfbae82489a19f4cb6209fca # v1.2.3
+    uses: liatrio/autogov-workflows/.github/workflows/rw-build-blob-offline.yaml@d397979634bba731651d0cb0ae1bcb80d767216e # v1.2.4
     secrets: inherit
     with:
       subject-path: |
         bundle.tar.gz
         schemas.tar.gz
-      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@d4c4d30aab12b8a0cfbae82489a19f4cb6209fca # v1.2.3
+      cert-identity: https://github.com/liatrio/autogov-workflows/.github/workflows/rw-attest-blob-offline.yaml@d397979634bba731651d0cb0ae1bcb80d767216e # v1.2.4
       policy-data-overlay: '{"source_review_thresholds":{"min_approvals":0}}'
       autogov-version: c78ba4d39b3e7a2fc752389f738aeddd53b8eba5 # v1.4.5
       release-blob: false
@@ -115,7 +115,7 @@ jobs:
       id-token: write
       contents: write
       actions: read
-    uses: liatrio/autogov-workflows/.github/workflows/rw-release.yaml@d4c4d30aab12b8a0cfbae82489a19f4cb6209fca # v1.2.3
+    uses: liatrio/autogov-workflows/.github/workflows/rw-release.yaml@d397979634bba731651d0cb0ae1bcb80d767216e # v1.2.4
     secrets: inherit
     with:
       mutations-config: .autogov-release.yaml
