@@ -1,4 +1,9 @@
 rules:
+  idiomatic:
+    prefer-string-interpolation:
+      # keep sprintf: template strings need OPA >= 1.12.0, but the bundle is built with
+      # OPA 1.2.0 (.github/actions/build-*) and older autogov CLIs embed OPA < 1.12.0
+      level: ignore
   style:
     file-length:
       # keep the production-code ceiling at the original 800; exempt test files
